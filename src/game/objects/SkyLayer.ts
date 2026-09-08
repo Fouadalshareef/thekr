@@ -39,11 +39,33 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
 
     const { width, height } = this.scene.scale
 
-    // 1) خلفية متدرجة ثلاثية (أعلى/وسط/أسفل)
-    this.bg = this.scene.add.graphics()
-    this.bg.fillGradientStyle(this.theme.top, this.theme.top, this.theme.middle, this.theme.bottom, 1)
-    this.bg.fillRect(0, 0, width, height)
-    this.add(this.bg)
+    // 1) خلفية الصورة: نهار الصحراء (mor) ليلاً الصحراء (ni)
+    //    — الفجر/النهار/الغروب تستخدم صورة النهار، والليل يستخدم صورة المساء.
+    //    في حال عدم توفر الصورة يبقى التدرج اللوني كاحتياط.
+    const bgKey = this.theme.period === 'night' ? 'bg-ni' : 'bg-mor'
+    if (this.scene.textures.exists(bgKey)) {
+      const img = this.scene.textures.get(bgKey).getSourceImage()
+      const cover = Math.max(width / img.width, height / img.height)
+      const bgImage = this.scene.add
+        .image(width / 2, height / 2, bgKey)
+        .setOrigin(0.5, 0.5)
+        .setDisplaySize(img.width * cover, img.height * cover)
+      this.add(bgImage)
+
+      // طبقة تعتيم خفيفة لتوافق الأجواء (ليل أغمق، نهار شفاف تماماً)
+      const tint = this.scene.add.graphics()
+      if (this.theme.period === 'night') tint.fillStyle(0x0b1024, 0.35)
+      else if (this.theme.period === 'sunset') tint.fillStyle(0x7c2d12, 0.18)
+      else if (this.theme.period === 'dawn') tint.fillStyle(0x9d174d, 0.12)
+      tint.fillRect(0, 0, width, height)
+      this.add(tint)
+    } else {
+      // احتياط: خلفية متدرجة ثلاثية (أعلى/وسط/أسفل)
+      this.bg = this.scene.add.graphics()
+      this.bg.fillGradientStyle(this.theme.top, this.theme.top, this.theme.middle, this.theme.bottom, 1)
+      this.bg.fillRect(0, 0, width, height)
+      this.add(this.bg)
+    }
 
     // 2) نجوم تتلألأ
     if (this.theme.stars) {
