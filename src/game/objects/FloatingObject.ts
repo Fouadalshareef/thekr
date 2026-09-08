@@ -40,9 +40,8 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   private readonly startX: number
   private phase: number
   private popped = false
-    /** هل الجسم ما يزال في مرحلة الاندفاع الأولي السريع بعد الظهور؟ */
+  /** هل الجسم ما يزال في مرحلة الاندفاع الأولي السريع بعد الظهور؟ */
   private burst = true
-  private comboGlow: Phaser.GameObjects.Graphics | null = null
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: FloatingObjectOptions) {
     super(scene, x, y)
@@ -149,7 +148,6 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     glow.lineStyle(3, color, 0.9)
     glow.strokeCircle(0, 0, this.opts.hitRadius * 1.22)
     this.addAt(glow, 0)
-    this.comboGlow = glow
     this.scene.tweens.add({ targets: glow, alpha: { from: 0.45, to: 1 }, scale: { from: 0.92, to: 1.12 }, yoyo: true, repeat: -1, duration: 480, ease: 'Sine.easeInOut' })
     this.scene.add.particles(this.x, this.y, 'pixel-glow', { speed: { min: 30, max: 85 }, angle: { min: 0, max: 360 }, lifespan: 650, scale: { start: 0.28, end: 0 }, tint: color, quantity: 1, frequency: 180, blendMode: 'ADD' }).setDepth(1499)
   }

@@ -26,7 +26,7 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
       // إتاحة التقاط أحداث اللمس عبر الطبقات الشفافة بدون اقتطاع
       // (يمنع "قتل" أحداث النصف السفلي بواسطة عناصر شفافة أعلى الشاشة)
       topOnly: false,
-    },
+    } as Phaser.Types.Core.InputConfig,
     scale: {
       mode: Phaser.Scale.RESIZE,
       autoCenter: Phaser.Scale.CENTER_BOTH,
