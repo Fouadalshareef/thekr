@@ -301,7 +301,7 @@ export default class MainScene extends Phaser.Scene {
     y: number,
     icon: 'gear' | 'sliders' | 'pause' | 'play' | 'leaf' | 'quran',
     color: number,
-    colorHi: number,
+    _colorHi: number,
     onTap: () => void,
   ): Phaser.GameObjects.Container {
     const btn = this.add.container(x, y)

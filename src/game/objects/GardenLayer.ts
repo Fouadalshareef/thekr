@@ -27,7 +27,6 @@ export default class GardenLayer extends Phaser.GameObjects.Container {
     const groundY = height - 40
 
     if (unlocked.includes('rainbow')) this.buildRainbow(width, groundY)
-    if (unlocked.includes('grass')) this.buildGrass(width, groundY)
     if (unlocked.includes('fountain')) this.buildFountain(width / 2, groundY - 6)
     if (unlocked.includes('tree')) this.buildTree(width - 110, groundY - 4)
     if (unlocked.includes('bush')) this.buildBush(110, groundY - 4)
@@ -35,41 +34,6 @@ export default class GardenLayer extends Phaser.GameObjects.Container {
     if (unlocked.includes('flower-yellow')) this.buildFlowers(width, groundY, 'flower-yellow')
     if (unlocked.includes('bird')) this.buildBirds(width, height)
     if (unlocked.includes('butterflies')) this.buildButterflies(width, groundY)
-  }
-
-  /** تلال عشبية طبيعية جذابة: أرضية سفلية بتدرج أخضر زاهٍ وحواف دائرية. */
-  private buildGrass(width: number, groundY: number): void {
-    const g = this.scene.add.graphics()
-    const base = this.scene.scale.height
-
-    // 1) طبقة ظلال سفلية تعطي عمقاً (تدرج داكن نحو الأسفل)
-    const groundG = this.scene.add.graphics()
-    groundG.fillGradientStyle(0x166534, 0x166534, 0x14532d, 0x14532d, 1)
-    groundG.fillRect(-20, groundY, width + 40, base - groundY + 10)
-    this.add(groundG)
-
-    // 2) تلّ عشبي رئيسي مرتفع بحواف دائرية ناعمة
-    g.fillStyle(0x16a34a, 1)
-    g.fillEllipse(width * 0.5, groundY - 6, width * 0.55, 96)
-
-    // 3) تلّان جانبيان متداخلان يمنحان العمق الطبيعي
-    g.fillStyle(0x22c55e, 1)
-    g.fillEllipse(width * 0.16, groundY + 10, width * 0.4, 84)
-    g.fillEllipse(width * 0.85, groundY + 10, width * 0.42, 88)
-
-    // 4) تدرّج أخضر فاتح فوقية لإشراقة زاهية
-    g.fillStyle(0x4ade80, 1)
-    g.fillEllipse(width * 0.32, groundY - 14, width * 0.34, 60)
-    g.fillEllipse(width * 0.7, groundY - 12, width * 0.3, 56)
-
-    // 5) خصلات عشب منتصبة عبر الأرض
-    g.fillStyle(0x86efac, 1)
-    for (let x = 12; x < width; x += 42) {
-      const h = Phaser.Math.Between(12, 22)
-      const tipX = x + (Phaser.Math.Between(0, 6) - 3)
-      g.fillTriangle(x, groundY + 16, tipX, groundY - h, x + 8, groundY + 16)
-    }
-    this.add(g)
   }
 
   /** زهور ملونة موزعة على العشب. */

@@ -56,9 +56,9 @@
         if (localStorage.getItem('has_update') === 'true') showUpdateBadge()
       } catch (e) {}
 
-      // على GitHub Pages يُعطَّل Service Worker لأن صفحة/أصولاً تُخدم من مسار فرعي،
-      // وتسجيل SW بمسارات مطلقة يقطع الدولار الواصلة للعبة. (على الاستضافة بمسار جذر يمكن تفعيله.)
-      if (false && 'serviceWorker' in navigator) {
+      // على GitHub Pages تُخدم الصفحة من مسار فرعي لكن المسارات هنا نسبية (./sw.js)
+      // لذلك يعمل التسجيل بشكل صحيح ويُطلق حدث beforeinstallprompt (نافذة التثبيت).
+      if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./sw.js').then((reg) => {
             // فحص فوري للتحديث عند الفتح
