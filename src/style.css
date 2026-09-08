@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #0f172a;
+  font-family: 'Segoe UI', Tahoma, 'Arial', sans-serif;
+}
+
+#app {
+  height: 100%;
+}
+
+#game-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#game-container canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  /* إزالة تأخير اللمس الافتراضي في المتصفح وتفعيل الاستجابة الفورية */
+  touch-action: none;
+  /* منع ظهور قائمة السياق عند الضغط المطوّل على الهاتف */
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* إصلاح انزياح اللمس RTL:
+   حسابات Phaser الداخلية للإحداثيات تعتمد نظام LTR دائماً،
+   لذلك يجب عزل الـ Canvas عن اتجاه النص RTL الموروث من <html dir="rtl"> */
+canvas {
+  direction: ltr;
+  touch-action: none;
+}
+
+/* شريط علوي تُرسم فوق اللعبة بواسطة Tailwind (من UIOverlay) */
+body {
+  overflow: hidden;
+}
+
+/* ضمان أن modal الـ Dashboard لا يحجب canvas عند إخفائه */
+#dashboard-modal.hidden {
+  pointer-events: none !important;
+}
+
+/* إصلاح التمرير داخل نافذة الإعدادات على الجوال:
+   1. touch-action: pan-y  — تفعيل السحب العمودي فقط
+   2. -webkit-overflow-scrolling: touch — قصور ذاتي سلس على iOS
+   3. overscroll-behavior: contain — منع التمرير من الانتشار خارج النافذة */
+#dashboard-modal {
+  touch-action: pan-y;
+}
+
+#dashboard-modal #dash-scroll {
+  max-height: 85vh;
+  overflow-y: scroll;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+/* عند فتح نافذة الإعدادات: تُضاف هذه الـ class على body مؤقتاً
+   لإعادة تفعيل touch-action العمودي وتجاوز أي قيمة موروثة من الـ game canvas */
+body.modal-open {
+  touch-action: pan-y !important;
+}
