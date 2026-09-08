@@ -16,7 +16,7 @@ export function initChangelog(): void {
   changelogModal.className = 'fixed inset-0 z-[70] flex items-center justify-center p-4'
   changelogModal.innerHTML = `
     <div id="changelog-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div class="relative w-[90%] max-w-[400px] rounded-2xl border border-emerald-400/50 bg-slate-900/97 p-6 shadow-2xl space-y-4 animate-[fadeIn_0.25s_ease-out]">
+    <div class="juicy-panel relative w-[90%] max-w-[400px] p-6 space-y-4 animate-[fadeIn_0.25s_ease-out]">
       <div class="flex items-center gap-3">
         <span class="text-3xl">🎉</span>
         <div>
@@ -28,8 +28,7 @@ export function initChangelog(): void {
         ${CHANGELOG.map((item) => `<li class="rounded-lg bg-slate-800/70 px-3 py-2 leading-relaxed">${item}</li>`).join('')}
       </ul>
       <button id="changelog-close" type="button"
-        class="w-full rounded-xl bg-gradient-to-l from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400
-               active:scale-95 transition-all px-4 py-2.5 text-sm font-bold text-white cursor-pointer">
+        class="juicy-btn juicy-green w-full px-4 py-3 text-sm cursor-pointer">
         رائع، لنبدأ! ✨
       </button>
     </div>

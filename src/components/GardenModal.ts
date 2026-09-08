@@ -64,15 +64,15 @@ export function initGardenModal(): void {
   modal.className = 'fixed inset-0 z-[60] hidden items-start justify-center p-4 touch-pan-y'
   modal.innerHTML = `
     <div id="garden-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
-    <div id="garden-scroll" class="relative w-[90%] max-w-[420px] max-h-[85vh] overflow-y-auto rounded-2xl border border-emerald-500/40 bg-slate-900/95 p-6 shadow-2xl space-y-6" style="touch-action: pan-y !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
+    <div id="garden-scroll" class="juicy-panel relative w-[90%] max-w-[420px] max-h-[85vh] overflow-y-auto p-6 space-y-6" style="touch-action: pan-y !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
       <div class="flex items-center justify-between">
         <h2 class="flex items-center gap-2 text-xl font-bold text-emerald-100">
           <span class="text-lg">🌱</span>
           مزرعة الحسنات
         </h2>
         <button id="garden-close" type="button"
-          class="inline-flex w-8 h-8 items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer">
-          <span class="text-sm">❌</span>
+          class="juicy-btn juicy-rose w-10 h-10 cursor-pointer">
+          <span class="text-base">❌</span>
         </button>
       </div>
       <div id="garden-body" class="space-y-4"></div>

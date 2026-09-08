@@ -68,4 +68,71 @@ body {
    لإعادة تفعيل touch-action العمودي وتجاوز أي قيمة موروثة من الـ game canvas */
 body.modal-open {
   touch-action: pan-y !important;
+body.modal-open {
+  touch-action: pan-y !important;
+}
+
+/* ============================================================
+   Juicy Cartoon UI — نظام الواجهة الكرتونية المبهجة
+   ألواح بحدود سميكة وظل صلب + أزرار ثلاثية الأبعاد بحركة ضغط
+   ============================================================ */
+
+/* لوح كرتوني صلب (بديل الزجاج الباهت Glassmorphism) */
+.juicy-panel {
+  border: 4px solid #0f172a;
+  border-radius: 26px;
+  background: #334761;
+  box-shadow:
+    0 10px 0 #0f172a,
+    0 16px 28px rgba(0, 0, 0, 0.4),
+    inset 0 3px 0 rgba(255, 255, 255, 0.14);
+}
+
+/* زر كرتوني ثلاثي الأبعاد: وجه زاهٍ + إضاءة علوية + ظل سفلي صلب */
+.juicy-btn {
+  --juicy: #f97316;            /* لون الوجه (برتقالي افتراضي) */
+  --juicy-dark: #0f172a;       /* لون الحد/الظل */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--juicy-dark);
+  border-radius: 9999px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--juicy) 78%, white) 0%, var(--juicy) 55%, color-mix(in srgb, var(--juicy) 82%, black) 100%);
+  box-shadow:
+    0 5px 0 var(--juicy-dark),
+    inset 0 3px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.06s ease, box-shadow 0.06s ease, filter 0.15s ease;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.juicy-btn:hover { filter: brightness(1.07); }
+/* استجابة الضغط: ينزل الوجه 4px ليغطي الظل السفلي (إحساس زر حقيقي) */
+.juicy-btn:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 1px 0 var(--juicy-dark),
+    inset 0 3px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.18);
+}
+
+/* ألوان جاهزة للأزرار الكرتونية */
+.juicy-orange  { --juicy: #f97316; }
+.juicy-green   { --juicy: #22c55e; }
+.juicy-blue    { --juicy: #38bdf8; }
+.juicy-gold    { --juicy: #fbbf24; color: #7c2d12; text-shadow: none; }
+.juicy-rose    { --juicy: #fb7185; }
+.juicy-teal    { --juicy: #2dd4bf; }
+
+/* صف كرتوني داخل الألواح (بطاقات الإحصائيات وغيرها) */
+.juicy-card {
+  border: 3px solid #0f172a;
+  border-radius: 18px;
+  background: #3b506b;
+  box-shadow: 0 4px 0 #0f172a, inset 0 2px 0 rgba(255, 255, 255, 0.12);
+}
 }

@@ -77,7 +77,7 @@ function renderContent(): string {
 
   const statRows = DHIKR_LABELS.map(
     ({ id, label }) => `
-      <div class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3">
+      <div class="juicy-card flex items-center justify-between px-4 py-3">
         <span class="text-xl text-slate-100">${label}</span>
         <span class="font-mono text-xl font-bold text-emerald-300">${stats[id] ?? 0}</span>
       </div>`,
@@ -292,15 +292,15 @@ export function initDashboard(): void {
   modal.className = 'fixed inset-0 z-[60] hidden items-start justify-center p-4'
   modal.innerHTML = `
     <div id="dash-backdrop" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-    <div id="dash-scroll" class="relative w-[90%] max-w-[420px] max-h-[85vh] overflow-y-auto rounded-2xl border border-emerald-400/40 bg-slate-900/95 p-6 shadow-2xl space-y-6">
+    <div id="dash-scroll" class="juicy-panel relative w-[90%] max-w-[420px] max-h-[85vh] overflow-y-auto p-6 space-y-6">
       <div class="flex items-center justify-between">
         <h2 class="flex items-center gap-2 text-xl font-bold text-emerald-100">
           <span class="text-lg">⚙️</span>
           لوحة التحكم
         </h2>
         <button id="dash-close" type="button"
-          class="inline-flex w-8 h-8 items-center justify-center rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer">
-          <span class="text-sm">❌</span>
+          class="juicy-btn juicy-rose w-10 h-10 cursor-pointer">
+          <span class="text-base">❌</span>
         </button>
       </div>
       <div id="dash-body" class="space-y-5"></div>

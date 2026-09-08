@@ -6,7 +6,7 @@ export function initAdviceModal(): void {
   modal.className = 'fixed inset-0 z-[70] hidden items-center justify-center p-4 touch-pan-y'
   modal.innerHTML = `
     <div id="advice-backdrop" class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
-    <div id="advice-scroll" class="relative w-[95%] max-w-[480px] max-h-[85vh] overflow-y-auto rounded-3xl border border-teal-500/30 bg-slate-900/95 p-6 shadow-2xl space-y-6" style="touch-action: pan-y !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
+    <div id="advice-scroll" class="juicy-panel relative w-[95%] max-w-[480px] max-h-[85vh] overflow-y-auto p-6 space-y-6" style="touch-action: pan-y !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
 
       <div class="flex flex-col items-center gap-3 text-center mb-2">
         <div class="w-14 h-14 bg-teal-900/50 rounded-full flex items-center justify-center border border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.3)]">
@@ -59,7 +59,7 @@ export function initAdviceModal(): void {
       </div>
 
       <button id="advice-close" type="button"
-        class="w-full py-4 mt-4 bg-gradient-to-l from-teal-600 to-emerald-500 hover:from-teal-500 hover:to-emerald-400 text-white rounded-xl font-bold text-lg shadow-[0_4px_15px_rgba(16,185,129,0.3)] transition-all active:scale-[0.98]">
+        class="juicy-btn juicy-green w-full py-4 mt-4 text-lg cursor-pointer">
         ابدأ الأذكار 🌿
       </button>
 

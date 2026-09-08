@@ -96,6 +96,7 @@ export default class MainScene extends Phaser.Scene {
   private focusButtons: {
     bg: Phaser.GameObjects.Graphics
     label: Phaser.GameObjects.Text
+    draw: (c: number) => void
   }[] = []
 
   // نظام الاستراحة (Rest Banner)
@@ -278,7 +279,23 @@ export default class MainScene extends Phaser.Scene {
     })
   }
 
-  /** زر دائري زجاجي (Glassmorphism) أنيق مع ظل متناسق وإيموجي بدلاً من الرسم المتجهي. */
+  /** تفتيح لون (يعيد صيغة 0xRRGGBB). */
+  private lighter = (c: number, f = 1.35): number => {
+    const r = Math.min(255, Math.round(((c >> 16) & 0xff) * f))
+    const g = Math.min(255, Math.round(((c >> 8) & 0xff) * f))
+    const b = Math.min(255, Math.round((c & 0xff) * f))
+    return (r << 16) | (g << 8) | b
+  }
+
+  /** تغميق لون (يعيد صيغة 0xRRGGBB). */
+  private darker = (c: number, f = 0.6): number => {
+    const r = Math.min(255, Math.round(((c >> 16) & 0xff) * f))
+    const g = Math.min(255, Math.round(((c >> 8) & 0xff) * f))
+    const b = Math.min(255, Math.round((c & 0xff) * f))
+    return (r << 16) | (g << 8) | b
+  }
+
+  /** زر دائري كرتوني ثلاثي الأبعاد (Juicy Bevel) بإيموجي بارز وضغط يغوص. */
   private buildRoundButton(
     x: number,
     y: number,
@@ -289,28 +306,43 @@ export default class MainScene extends Phaser.Scene {
   ): Phaser.GameObjects.Container {
     const btn = this.add.container(x, y)
     btn.setDepth(2000)
-    const r = 32 // زجاجي دائري أنيق 64px
+    const r = 30 // قطر الزر
+    const lift = 6 // سُمك الزر / مسافة الغوص عند الضغط
 
-    const bg = this.add.graphics()
-    // ظل ناعم تحت الزر
-    bg.fillStyle(0x020617, 0.38)
-    bg.fillCircle(2, 5, r + 3)
-    // جسم زجاجي شفاف (Glassmorphism)
-    bg.fillStyle(color, 0.30)
-    bg.fillCircle(0, 0, r)
-    bg.fillStyle(0xffffff, 0.07)
-    bg.fillCircle(0, 0, r)
-    // حد زجاجي فاتح
-    bg.lineStyle(2, colorHi, 0.85)
-    bg.strokeCircle(0, 0, r)
-    // لمعة علوية زجاجية
-    bg.fillStyle(0xffffff, 0.18)
-    bg.fillEllipse(0, -r * 0.38, r * 1.3, r * 0.5)
-    // حلقة داخلية رفيعة
-    bg.lineStyle(1, 0xffffff, 0.3)
-    bg.strokeCircle(0, 0, r - 5)
+    // ظل أرضي ساقط
+    const ground = this.add.graphics()
+    ground.fillStyle(0x000000, 0.32)
+    ground.fillCircle(1, lift + 4, r + 5)
+    ground.fillStyle(0x000000, 0.18)
+    ground.fillCircle(1, lift + 2, r + 10)
 
-    // الأيقونة الإيموجي (بدلاً من الرسم المتجهي)
+    // حافة الزر السفلية (الجسم البارز — بلون أغمق للبروز)
+    const side = this.add.graphics()
+    side.fillStyle(this.darker(color, 0.55), 1)
+    side.fillCircle(0, lift, r + 1)
+    side.lineStyle(3, this.darker(color, 0.35), 1)
+    side.strokeCircle(0, lift, r + 1)
+
+    // جزء متحرّك (وجه + أيقونة) — يغوص عند الضغط
+    const movable = this.add.container(0, 0)
+
+    const face = this.add.graphics()
+    // الوجه الزاهي الرئيسي
+    face.fillStyle(color, 1)
+    face.fillCircle(0, 0, r + 1)
+    // تدرّج علوي أنعم (إضافي كتيّار ضوئي)
+    face.fillStyle(this.lighter(color, 1.18), 0.6)
+    face.fillCircle(0, -2, r - 1)
+    // حافة بيضاء ناصعة تحيط بالوجه
+    face.lineStyle(4, 0xffffff, 0.95)
+    face.strokeCircle(0, 0, r + 1)
+    // لمعة علوية كبيرة (Glossy Highlight)
+    face.fillStyle(0xffffff, 0.42)
+    face.fillEllipse(0, -r * 0.42, r * 1.6, r * 0.6)
+    face.fillStyle(0xffffff, 0.18)
+    face.fillCircle(-r * 0.4, -r * 0.45, r * 0.5)
+
+    // الأيقونة الإيموجي
     const emojiByIcon: Record<'gear' | 'sliders' | 'pause' | 'play' | 'leaf' | 'quran', string> = {
       gear: '⚙️',
       sliders: '🎚️',
@@ -320,26 +352,35 @@ export default class MainScene extends Phaser.Scene {
       quran: '🕌',
     }
     const emojiIcon = this.add
-      .text(0, 1, emojiByIcon[icon], {
+      .text(0, 0, emojiByIcon[icon], {
         fontFamily: 'system-ui, "Segoe UI Emoji", Tahoma, sans-serif',
         fontSize: `${r * 0.85}px`,
         color: '#ffffff',
       })
       .setOrigin(0.5, 0.5)
-    btn.add([bg, emojiIcon])
-    btn.setSize(r * 2 + 12, r * 2 + 12)
-    // دائرة ضغط مركزية موسّعة
-    btn.setInteractive(new Phaser.Geom.Circle(0, 0, r + 16), Phaser.Geom.Circle.Contains)
+    emojiIcon.setShadow(0, 3, '#000000', 5, true, true)
 
-    // تأثير انضغاط بصري ناعم عند اللمس
+    movable.add([face, emojiIcon])
+    btn.add([ground, side, movable])
+    btn.setSize(r * 2 + 14, r * 2 + 14)
+    btn.setInteractive(new Phaser.Geom.Circle(0, 0, r + 18), Phaser.Geom.Circle.Contains)
+
+    const press = (down: boolean) => {
+      this.tweens.killTweensOf(movable)
+      this.tweens.add({ targets: movable, y: down ? lift : 0, duration: 80, ease: down ? 'Quad.easeIn' : 'Back.easeOut' })
+    }
+
+    // Juicy Press: الوجه يغوص فيغطي الظل، ثم يعود مع ارتداد
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
       this.tweens.killTweensOf(btn)
-      this.tweens.add({ targets: btn, scale: 0.95, duration: 70, ease: 'Quad.easeOut' })
+      this.tweens.add({ targets: btn, scale: 0.96, duration: 70, ease: 'Quad.easeOut' })
+      press(true)
       onTap()
     })
     const release = () => {
       this.tweens.killTweensOf(btn)
-      this.tweens.add({ targets: btn, scale: 1, duration: 90, ease: 'Quad.easeOut' })
+      this.tweens.add({ targets: btn, scale: 1, duration: 110, ease: 'Back.easeOut' })
+      press(false)
     }
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, release)
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, release)
@@ -381,27 +422,44 @@ export default class MainScene extends Phaser.Scene {
     this.tweens.add({ targets: this.comboText, scale: { from: 1.2, to: 1 }, duration: 220, ease: 'Back.easeOut' })
   }
 
-  /** عداد الجلسة الحالية أسفل زر الإيقاف — مُدمج وأنيق مع إطار ذهبي رفيع. */
+  /** عداد الجلسة الحالية — بطاقة كرتونية بارزة (3D Bevel). */
   private buildSessionCounter(): void {
     const x = this.scale.width - 56
-    // إطار خلفية داكن (Pill) مضغوط
+    const w = 92
+    const h = 96
+    const topY = 106
+    const lift = 5
+    const base = 0x0ea5e9 // أزرق كريستالي
+    const sideCol = this.darker(base, 0.55)
+
+    // ظل أرضي ساقط
     this.sessionPill = this.add.graphics()
-    this.sessionPill.fillStyle(0x0f172a, 0.68)
-    this.sessionPill.fillRoundedRect(x - 42, 110, 84, 90, 14)
-    this.sessionPill.lineStyle(1.5, 0xffd166, 0.5)
-    this.sessionPill.strokeRoundedRect(x - 42, 110, 84, 90, 14)
+    this.sessionPill.fillStyle(0x000000, 0.3)
+    this.sessionPill.fillRoundedRect(x - w / 2, topY + lift + 3, w, h, 20)
+    // جسم الحافة (لون أغمق)
+    this.sessionPill.fillStyle(sideCol, 1)
+    this.sessionPill.fillRoundedRect(x - w / 2, topY + lift - 2, w, h, 20)
+    // الوجه الزاهي
+    this.sessionPill.fillStyle(base, 1)
+    this.sessionPill.fillRoundedRect(x - w / 2, topY, w, h, 20)
+    // لمعة علوية عريضة
+    this.sessionPill.fillStyle(0xffffff, 0.28)
+    this.sessionPill.fillRoundedRect(x - w / 2 + 7, topY + 5, w - 14, 26, 13)
+    // حد أبيض ناصع
+    this.sessionPill.lineStyle(3, 0xffffff, 0.92)
+    this.sessionPill.strokeRoundedRect(x - w / 2, topY, w, h, 20)
     this.sessionPill.setDepth(1999)
 
     this.sessionLabel = this.add
-      .text(x, 127, 'الجلسة', {
+      .text(x, topY + 22, 'الجلسة', {
         fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
         fontSize: '16px',
         fontStyle: 'bold',
-        color: '#cbd5e1',
+        color: '#ffffff',
       })
       .setOrigin(0.5)
       .setDepth(2000)
-      .setShadow(0, 1, 'rgba(0,0,0,0.6)', 3, true, true)
+      .setShadow(0, 1, 'rgba(0,0,0,0.5)', 2, true, true)
 
     this.sessionText = this.add
       .text(x, 170, '0', {
@@ -450,17 +508,32 @@ export default class MainScene extends Phaser.Scene {
     })
     this.modePanel.add(dim)
 
-    // نافذة عريضة مريحة (~90% من عرض الشاشة)
+    // نافذة عريضة مريحة (~90% من عرض الشاشة) — بطاقة كرتونية بارزة
     const panelW = Math.min(width * 0.9, 480)
     const panelH = 400
     const card = this.add.container(width / 2, height / 2)
+    const lift = 8
+    const base = 0x6d28d9 // بنفسجي ملكي
+    const sideCol = this.darker(base, 0.5)
     const gfx = this.add.graphics()
-    gfx.fillStyle(0x0b1220, 0.97)
-    gfx.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 26)
-    gfx.lineStyle(2, 0x8b5cf6, 0.9)
-    gfx.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 26)
-    gfx.lineStyle(1, 0xffffff, 0.1)
-    gfx.strokeRoundedRect(-panelW / 2 + 8, -panelH / 2 + 8, panelW - 16, panelH - 16, 20)
+    // ظل أرضي ساقط
+    gfx.fillStyle(0x000000, 0.4)
+    gfx.fillRoundedRect(-panelW / 2, -panelH / 2 + lift + 2, panelW, panelH, 28)
+    // جسم الحافة (لون أغمق)
+    gfx.fillStyle(sideCol, 1)
+    gfx.fillRoundedRect(-panelW / 2, -panelH / 2 + lift - 2, panelW, panelH, 28)
+    // الوجه
+    gfx.fillStyle(base, 1)
+    gfx.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 28)
+    // تدرّج علوي ناعم
+    gfx.fillStyle(this.lighter(base, 1.15), 0.55)
+    gfx.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, 90, 28)
+    // لمعة علوية عريضة
+    gfx.fillStyle(0xffffff, 0.18)
+    gfx.fillRoundedRect(-panelW / 2 + 10, -panelH / 2 + 10, panelW - 20, 40, 18)
+    // حد أبيض ناصع
+    gfx.lineStyle(3, 0xffffff, 0.9)
+    gfx.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 28)
     card.add(gfx)
 
     const title = this.add
@@ -493,17 +566,32 @@ export default class MainScene extends Phaser.Scene {
 
       const drawBg = (hovered: boolean) => {
         bg.clear()
-        bg.fillStyle(hovered ? 0x334155 : 0x1e293b, 1)
-        bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 16)
-        bg.lineStyle(2, isActive ? 0xfacc15 : hovered ? 0xa78bfa : 0x334155, 1)
-        bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 16)
-        if (hovered) {
-          bg.fillStyle(0xffffff, 0.06)
-          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH / 2, 16)
+        const btnColor = isActive ? 0x16a34a : hovered ? 0x64748b : 0x475569
+        const btnSide = this.darker(btnColor, 0.5)
+        const liftB = 5
+        // ظل سفلي
+        bg.fillStyle(0x000000, 0.3)
+        bg.fillRoundedRect(-btnW / 2, -btnH / 2 + liftB + 2, btnW, btnH, 18)
+        // جسم الحافة
+        bg.fillStyle(btnSide, 1)
+        bg.fillRoundedRect(-btnW / 2, -btnH / 2 + liftB - 1, btnW, btnH, 18)
+        // وجه
+        bg.fillStyle(btnColor, 1)
+        bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 18)
+        // لمعة علوية
+        bg.fillStyle(0xffffff, 0.25)
+        bg.fillRoundedRect(-btnW / 2 + 6, -btnH / 2 + 5, btnW - 12, btnH / 2, 14)
+        // حد أبيض ناصع
+        bg.lineStyle(2.5, 0xffffff, 0.85)
+        bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 18)
+        // إطار ذهبي للزر النشط
+        if (isActive) {
+          bg.lineStyle(3, 0xfde047, 1)
+          bg.strokeRoundedRect(-btnW / 2 - 2, -btnH / 2 - 2, btnW + 4, btnH + 4, 20)
         }
       }
       drawBg(false)
-      if (isActive) label.setColor('#fde047')
+      if (isActive) label.setColor('#fff7cc')
 
       const btn = this.add.container(0, yy)
       btn.add([bg, label])
@@ -513,12 +601,15 @@ export default class MainScene extends Phaser.Scene {
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => drawBg(true))
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => drawBg(false))
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
-        this.tweens.add({ targets: btn, scale: 0.96, duration: 60, ease: 'Quad.easeOut' })
+        this.tweens.add({ targets: btn, scale: 0.95, y: 2, duration: 70, ease: 'Quad.easeOut' })
         if (opt.mode === 'zen') {
           this.scene.start('ZenScene')
           return
         }
         this.setMode(opt.mode)
+      })
+      btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, () => {
+        this.tweens.add({ targets: btn, scale: 1, y: 0, duration: 100, ease: 'Back.easeOut' })
       })
       card.add(btn)
     })
@@ -567,10 +658,27 @@ export default class MainScene extends Phaser.Scene {
     const startY = -(listHeight / 2) + 10
 
     const card = this.add.container(0, 0)
+    const lift = 7
+    const base = 0x059669 // أخضر زمردي
+    const sideCol = this.darker(base, 0.55)
     const cardBg = this.add.graphics()
-    cardBg.fillStyle(0x0f172a, 0.95)
+    // ظل أرضي
+    cardBg.fillStyle(0x000000, 0.4)
+    cardBg.fillRoundedRect(-180, -cardHeight / 2 + lift + 2, 360, cardHeight, 20)
+    // جسم الحافة
+    cardBg.fillStyle(sideCol, 1)
+    cardBg.fillRoundedRect(-180, -cardHeight / 2 + lift - 2, 360, cardHeight, 20)
+    // وجه
+    cardBg.fillStyle(base, 1)
     cardBg.fillRoundedRect(-180, -cardHeight / 2, 360, cardHeight, 20)
-    cardBg.lineStyle(2, 0x10b981, 0.5)
+    // تدرّج علوي
+    cardBg.fillStyle(this.lighter(base, 1.12), 0.5)
+    cardBg.fillRoundedRect(-180, -cardHeight / 2, 360, 60, 20)
+    // لمعة علوية
+    cardBg.fillStyle(0xffffff, 0.16)
+    cardBg.fillRoundedRect(-172, -cardHeight / 2 + 8, 344, 30, 14)
+    // حد أبيض ناصع
+    cardBg.lineStyle(3, 0xffffff, 0.88)
     cardBg.strokeRoundedRect(-180, -cardHeight / 2, 360, cardHeight, 20)
     card.add(cardBg)
 
@@ -589,8 +697,22 @@ export default class MainScene extends Phaser.Scene {
     SEQUENCE_DHIKRS.forEach((dhikr, i) => {
       const y = startY + i * itemHeight
       const bg = this.add.graphics()
-      bg.fillStyle(0x1e293b, 1)
-      bg.fillRoundedRect(-150, -18, 300, 36, 12)
+      const drawItem = (c: number) => {
+        const sideI = this.darker(c, 0.5)
+        const liftB = 4
+        bg.clear()
+        bg.fillStyle(0x000000, 0.3)
+        bg.fillRoundedRect(-150, -18 + liftB + 2, 300, 36, 14)
+        bg.fillStyle(sideI, 1)
+        bg.fillRoundedRect(-150, -18 + liftB - 1, 300, 36, 14)
+        bg.fillStyle(c, 1)
+        bg.fillRoundedRect(-150, -18, 300, 36, 14)
+        bg.fillStyle(0xffffff, 0.22)
+        bg.fillRoundedRect(-145, -14, 290, 15, 11)
+        bg.lineStyle(2, 0xffffff, 0.8)
+        bg.strokeRoundedRect(-150, -18, 300, 36, 14)
+      }
+      drawItem(0x475569)
       const label = this.add
         .text(0, 0, `${i + 1}. ${dhikr.name} (${dhikr.target})`, {
           fontFamily: '"Segoe UI", Tahoma, sans-serif',
@@ -602,19 +724,29 @@ export default class MainScene extends Phaser.Scene {
       btn.add([bg, label])
       btn.setInteractive(new Phaser.Geom.Rectangle(-150, -18, 300, 36), Phaser.Geom.Rectangle.Contains)
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
+        this.tweens.add({ targets: btn, scale: 0.96, duration: 60, ease: 'Quad.easeOut' })
         this.setMode('focus', i)
         this.toggleFocusPanel(false)
       })
       card.add(btn)
-      this.focusButtons.push({ bg, label })
+      this.focusButtons.push({ bg, label, draw: drawItem })
     })
 
     // زر الإغلاق
     const closeY = startY + (SEQUENCE_DHIKRS.length) * itemHeight + 15
     const close = this.add.container(0, closeY)
     const closeBg = this.add.graphics()
-    closeBg.fillStyle(0xdc2626, 0.9)
+    const closeSide = this.darker(0xdc2626, 0.55)
+    closeBg.fillStyle(0x000000, 0.3)
+    closeBg.fillRoundedRect(-70, -18 + 6, 140, 36, 18)
+    closeBg.fillStyle(closeSide, 1)
+    closeBg.fillRoundedRect(-70, -18 + 5, 140, 36, 18)
+    closeBg.fillStyle(0xdc2626, 1)
     closeBg.fillRoundedRect(-70, -18, 140, 36, 18)
+    closeBg.fillStyle(0xffffff, 0.25)
+    closeBg.fillRoundedRect(-65, -14, 130, 15, 12)
+    closeBg.lineStyle(2.5, 0xffffff, 0.9)
+    closeBg.strokeRoundedRect(-70, -18, 140, 36, 18)
     const closeText = this.add
       .text(0, 0, 'إغلاق', {
         fontFamily: '"Segoe UI", Tahoma, sans-serif',
@@ -640,10 +772,8 @@ export default class MainScene extends Phaser.Scene {
     const selected = gameMode.getFocusIndex()
     this.focusButtons.forEach((item, i) => {
       const isActive = i === selected
-      item.bg.clear()
-      item.bg.fillStyle(isActive ? 0x10b981 : 0x1e293b, 1)
-      item.bg.fillRoundedRect(-150, -18, 300, 36, 12)
-      item.label.setColor(isActive ? '#052e16' : '#e2e8f0')
+      item.draw(isActive ? 0x10b981 : 0x475569)
+      item.label.setColor(isActive ? '#ffffff' : '#e2e8f0')
     })
   }
 
