@@ -311,6 +311,8 @@ export default class MainScene extends Phaser.Scene {
     const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon])
       .setOrigin(0.5)
       .setDisplaySize(66, 66)
+    // مركز اللوحة الذهبية يقع عند y=5 (اللوحة من -28 الى 38) لذلك نضع الايقونة هناك لتتوسط حقلها تماماً.
+    svgIcon.setY(5)
     btn.add(svgIcon)
     if (icon === 'pause') {
       this.pauseIcon = svgIcon
@@ -349,6 +351,14 @@ export default class MainScene extends Phaser.Scene {
       () => this.togglePause(),
     )
     this.pauseButton.setScrollFactor(0)
+    this.refreshPauseIcon()
+  }
+
+  /** تحديث ايقونة الايقاف مع الحفاظ على الحجم بعد التبديل. */
+  private refreshPauseIcon(): void {
+    if (!this.pauseIcon) return
+    this.pauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
+    this.pauseIcon.setDisplaySize(32, 32)
   }
 
   /** عداد الجلسة الحالية أسفل زر الإيقاف — مُدمج وأنيق مع إطار ذهبي رفيع. */
@@ -443,11 +453,11 @@ export default class MainScene extends Phaser.Scene {
     console.log('[DEBUG] togglePause called. Paused:', this.paused)
     if (this.paused) {
       this.physics.pause()
-      this.pauseIcon?.setTexture('hud-play')
+      this.refreshPauseIcon()
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(false))
     } else {
       this.physics.resume()
-      this.pauseIcon?.setTexture('hud-pause')
+      this.refreshPauseIcon()
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
     }
   }
