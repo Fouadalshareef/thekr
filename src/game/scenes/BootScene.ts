@@ -70,23 +70,6 @@ export default class BootScene extends Phaser.Scene {
     card.lineStyle(1, 0xffffff, 0.12)
     card.strokeRoundedRect(cx - cardW / 2 + 8, cardY - cardH / 2 + 8, cardW - 16, cardH - 16, 18)
 
-    // 5-ب) أيقونة اللعبة (اللوجو) أعلى البطاقة — بإطار ذهبي كرتوني
-    if (this.textures.exists('game-logo')) {
-      const logoSize = 96
-      const logo = this.add
-        .image(cx, cardY - cardH / 2 + 16 + logoSize / 2, 'game-logo')
-        .setDisplaySize(logoSize, logoSize)
-        .setAlpha(0)
-      // إطار دائري ذهبي حول الأيقونة
-      const ring = this.add.graphics()
-      ring.lineStyle(4, 0xfacc15, 0.9)
-      ring.strokeCircle(logo.x, logo.y, logoSize / 2 + 6)
-      ring.fillStyle(0x0a1f18, 0.85)
-      ring.fillCircle(logo.x, logo.y, logoSize / 2 + 6)
-      ring.setDepth(logo.depth - 1)
-      this.tweens.add({ targets: logo, alpha: 1, scale: { from: 0.6, to: 1 }, duration: 900, ease: 'Back.easeOut' })
-    }
-
     // 6) البسملة أعلى البطاقة
     const bismillah = this.add
       .text(cx, cardY - cardH / 2 + 40, 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', {
