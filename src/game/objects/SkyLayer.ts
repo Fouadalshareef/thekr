@@ -12,7 +12,9 @@ import { getTimeTheme, type TimeTheme } from '../../services/TimeThemeService'
 export default class SkyLayer extends Phaser.GameObjects.Container {
   private theme: TimeTheme
   private bg!: Phaser.GameObjects.Graphics
+  private backgroundImage?: Phaser.GameObjects.Image
   private stars: Phaser.GameObjects.Arc[] = []
+  private glow?: Phaser.GameObjects.Graphics
   private clouds: Phaser.GameObjects.Container[] = []
 
   constructor(scene: Phaser.Scene, forced?: TimeTheme) {
@@ -38,27 +40,33 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
     this.clouds = []
 
     const { width, height } = this.scene.scale
+    const hour = new Date().getHours()
+    const period: 'dawn' | 'day' | 'sunset' | 'night' = hour >= 5 && hour <= 8 ? 'dawn' : hour >= 9 && hour <= 16 ? 'day' : hour >= 17 && hour <= 19 ? 'sunset' : 'night'
 
-    // 1) خلفية الصورة: نهار الصحراء (mor) ليلاً الصحراء (ni)
+    // 1) خلفية mor.png ثابتة بالكامل؛ السحاب جزء من الصورة ولا توجد طبقة Parallax فوقها.
     //    — الفجر/النهار/الغروب تستخدم صورة النهار، والليل يستخدم صورة المساء.
     //    في حال عدم توفر الصورة يبقى التدرج اللوني كاحتياط.
-    const bgKey = this.theme.period === 'night' ? 'bg-ni' : 'bg-mor'
+    const bgKey = 'bg-mor-static'
     if (this.scene.textures.exists(bgKey)) {
       const img = this.scene.textures.get(bgKey).getSourceImage()
       const cover = Math.max(width / img.width, height / img.height)
-      const bgImage = this.scene.add
-        .image(width / 2, height / 2, bgKey)
-        .setOrigin(0.5, 0.5)
-        .setDisplaySize(img.width * cover, img.height * cover)
-      this.add(bgImage)
+      this.backgroundImage = this.scene.add.image(width / 2, height / 2, bgKey).setOrigin(0.5).setDisplaySize(img.width * cover, img.height * cover)
+      this.add(this.backgroundImage)
 
-      // طبقة تعتيم خفيفة لتوافق الأجواء (ليل أغمق، نهار شفاف تماماً)
       const tint = this.scene.add.graphics()
-      if (this.theme.period === 'night') tint.fillStyle(0x0b1024, 0.35)
-      else if (this.theme.period === 'sunset') tint.fillStyle(0x7c2d12, 0.18)
-      else if (this.theme.period === 'dawn') tint.fillStyle(0x9d174d, 0.12)
+      if (period === 'night') tint.fillStyle(0x1a237e, 0.48)
+      else if (period === 'sunset') tint.fillStyle(0xff7043, 0.22)
+      else if (period === 'dawn') tint.fillStyle(0xffb74d, 0.18)
+      else tint.fillStyle(0xffffff, 0)
       tint.fillRect(0, 0, width, height)
       this.add(tint)
+
+      // توهج نبضي علوي لا يحرّك الخلفية أو السحاب المدمج داخلها.
+      this.glow = this.scene.add.graphics()
+      this.glow.fillStyle(0xffd27d, period === 'night' ? 0.04 : 0.16)
+      this.glow.fillCircle(width * 0.78, height * 0.12, Math.min(width, height) * 0.18)
+      this.add(this.glow)
+      this.scene.tweens.add({ targets: this.glow, alpha: { from: 0.55, to: 1 }, scale: { from: 0.96, to: 1.06 }, yoyo: true, repeat: -1, duration: 2600, ease: 'Sine.easeInOut' })
     } else {
       // احتياط: خلفية متدرجة ثلاثية (أعلى/وسط/أسفل)
       this.bg = this.scene.add.graphics()
@@ -68,7 +76,7 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
     }
 
     // 2) نجوم تتلألأ
-    if (this.theme.stars) {
+    if (period === 'night') {
       for (let i = 0; i < 90; i++) {
         const x = Phaser.Math.Between(0, width)
         const y = Phaser.Math.Between(0, height * 0.7)
@@ -88,10 +96,7 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
       }
     }
 
-    // 3) السحب فقط (أُزيلت الشمس والقمر نهائياً — سماء نظيفة هادئة)
-    if (this.theme.clouds) {
-      this.buildCloud(width, height)
-    }
+    // السحاب مدمج داخل mor.png ويظل ثابتاً؛ لا نبني أي طبقات سحاب متحركة.
   }
 
   /**
@@ -192,4 +197,5 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
     this.clouds.push(cloud)
     this.add(cloud)
   }
-}
+}
+

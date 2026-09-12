@@ -12,8 +12,9 @@ export default class BootScene extends Phaser.Scene {
   preload(): void {
     // تحميل صور اللعبة: الأيقونة وخلفيتي النهار/الليل للمرحلة الصحراوية
     this.load.image('game-logo', 'game/logo.jfif')
-    this.load.image('bg-mor', 'game/mor.jfif') // نهار الصحراء
-    this.load.image('bg-ni', 'game/ni.jfif') // مساء/ليل الصحراء
+    this.load.image('bg-mor', 'game/mor.jfif') // احتياط نهاري
+    this.load.image('bg-ni', 'game/ni.jfif') // احتياط ليلي
+    this.load.image('bg-mor-static', 'game/mor.png') // خلفية الصحراء الثابتة بسحاب مدمج
     // أصول SVG شفافة عالية الجودة لأزرار HUD (تُحوّل Phaser داخلياً إلى Textures).
     this.load.svg('hud-settings', 'game/icons/settings.svg', { width: 52, height: 52 })
     this.load.svg('hud-theme', 'game/icons/theme.svg', { width: 52, height: 52 })
