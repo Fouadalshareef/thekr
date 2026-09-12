@@ -70,10 +70,7 @@ export function initGardenModal(): void {
           <span class="text-lg">🌱</span>
           مزرعة الحسنات
         </h2>
-        <button id="garden-close" type="button"
-          class="juicy-btn juicy-rose w-10 h-10 cursor-pointer">
-          <span class="text-base">❌</span>
-        </button>
+        <button id="garden-close" type="button" class="modal-close-button" aria-label="إغلاق"><img src="game/icons/close.svg" alt=""></button>
       </div>
       <div id="garden-body" class="space-y-4"></div>
     </div>

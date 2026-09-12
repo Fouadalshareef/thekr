@@ -308,7 +308,7 @@ export default class MainScene extends Phaser.Scene {
     btn.setDepth(2000)
     const r = 33 // تكبير الزر 27% تقريباً من 52 إلى 66px
     // الأيقونة SVG تُكبّر مع الزر، مع منطقة لمس إضافية 14px حولها.
-    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-pause', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon])
+    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon])
       .setOrigin(0.5)
       .setDisplaySize(66, 66)
     btn.add(svgIcon)
@@ -359,7 +359,7 @@ export default class MainScene extends Phaser.Scene {
       leaf: '🌿',
       quran: '🕌',
     }
-    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-pause', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon]).setDisplaySize(52, 52)
+    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon]).setDisplaySize(52, 52)
     /* legacy emoji removed */
     /* const emojiIcon = this.add
       .text(0, 0, emojiByIcon[icon], {
@@ -477,19 +477,27 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private pauseForModal = (): void => {
+    this.paused = true
     this.data.set('paused', true)
     this.physics.pause()
+    this.pauseIcon?.setTexture('hud-play')
   }
 
   private resumeFromModal = (): void => {
     this.data.set('paused', this.paused)
-    this.physics.resume()
+    if (!this.paused) this.physics.resume()
   }
 
   private togglePause(): void {
     this.paused = !this.paused
     this.data.set('paused', this.paused)
-    // رمز pause.svg ثابت؛ حالة الإيقاف تُحفظ في بيانات المشهد دون إعادة إظهار إيموجي قديم.
+    if (this.paused) {
+      this.physics.pause()
+      this.pauseIcon?.setTexture('hud-play')
+    } else {
+      this.physics.resume()
+      this.pauseIcon?.setTexture('hud-pause')
+    }
   }
 
   // ------------------------------------------------------------------

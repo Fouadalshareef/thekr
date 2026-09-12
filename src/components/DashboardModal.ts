@@ -298,10 +298,7 @@ export function initDashboard(): void {
           <span class="text-lg">⚙️</span>
           لوحة التحكم
         </h2>
-        <button id="dash-close" type="button"
-          class="juicy-btn juicy-rose w-10 h-10 cursor-pointer">
-          <span class="text-base">❌</span>
-        </button>
+        <button id="dash-close" type="button" class="modal-close-button" aria-label="إغلاق"><img src="game/icons/close.svg" alt=""></button>
       </div>
       <div id="dash-body" class="space-y-5"></div>
     </div>

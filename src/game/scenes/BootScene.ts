@@ -19,7 +19,10 @@ export default class BootScene extends Phaser.Scene {
     this.load.svg('hud-theme', 'game/icons/theme.svg', { width: 52, height: 52 })
     this.load.svg('hud-farm', 'game/icons/farm.svg', { width: 52, height: 52 })
     this.load.svg('hud-quran', 'game/icons/quran.svg', { width: 52, height: 52 })
-    this.load.svg('hud-pause', 'game/icons/pause.svg', { width: 52, height: 52 })
+    this.load.svg('hud-pause', 'game/icons/pause.svg', { width: 66, height: 66 })
+    this.load.svg('hud-play', 'game/icons/play.svg', { width: 66, height: 66 })
+    this.load.svg('modal-close', 'game/icons/close.svg', { width: 56, height: 56 })
+    this.load.svg('modal-index', 'game/icons/index.svg', { width: 120, height: 45 })
   }
 
   create(): void {

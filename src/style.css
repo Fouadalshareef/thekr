@@ -134,6 +134,30 @@ body.modal-open {
     inset 0 -3px 0 rgba(0, 0, 0, 0.18);
 }
 
+/* أزرار النوافذ الحديثة: تعتمد على SVG ولا تستخدم الحدود السوداء أو الظلال الثقيلة. */
+.modal-close-button,
+.modal-index-button {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .12s ease, filter .12s ease;
+}
+.modal-close-button { width: 56px; height: 56px; }
+.modal-close-button img { width: 56px; height: 56px; display: block; }
+.modal-index-button { width: 120px; height: 45px; }
+.modal-index-button img { width: 120px; height: 45px; display: block; }
+.modal-close-button:hover,
+.modal-index-button:hover { filter: brightness(1.06); transform: scale(1.03); }
+.modal-close-button:active,
+.modal-index-button:active { transform: scale(.96); }
+
 /* ألوان جاهزة للأزرار الكرتونية */
 .juicy-orange  { --juicy: #f97316; }
 .juicy-green   { --juicy: #22c55e; }
