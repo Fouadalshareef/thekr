@@ -1,69 +1,167 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+
   <defs>
+
+    <!-- الإطار الذهبي/البرتقالي -->
     <linearGradient id="sg-frame" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#FFFDE7"/>
-      <stop offset="0.25" stop-color="#FFD600"/>
-      <stop offset="0.6" stop-color="#FF8F00"/>
-      <stop offset="1" stop-color="#E65100"/>
+      <stop offset="0" stop-color="#FFF8DC"/>
+      <stop offset="0.2" stop-color="#FFD54F"/>
+      <stop offset="0.5" stop-color="#FB8C00"/>
+      <stop offset="0.8" stop-color="#E65100"/>
+      <stop offset="1" stop-color="#BF360C"/>
     </linearGradient>
-    <linearGradient id="sg-bg" x1="0" y1="0" x2="0.4" y2="1">
-      <stop offset="0" stop-color="#64B5F6"/>
-      <stop offset="0.5" stop-color="#1565C0"/>
-      <stop offset="1" stop-color="#0A1A5C"/>
+
+    <!-- لمعة الإطار العلوية -->
+    <linearGradient id="sg-frame-shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
     </linearGradient>
-    <radialGradient id="sg-lens" cx="0.35" cy="0.2" r="0.7">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/>
-      <stop offset="0.4" stop-color="#fff" stop-opacity="0.1"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+
+    <!-- الخلفية الزرقاء (شعاعي) -->
+    <radialGradient id="sg-bg" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0" stop-color="#42A5F5"/>
+      <stop offset="0.45" stop-color="#1976D2"/>
+      <stop offset="0.85" stop-color="#0D47A1"/>
+      <stop offset="1" stop-color="#062578"/>
     </radialGradient>
-    <filter id="sg-drop">
-      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity="0.6"/>
+
+    <!-- انعكاس زجاجي علوي -->
+    <linearGradient id="sg-lens" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.35"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- تدرج الترس الأبيض -->
+    <linearGradient id="sg-gear" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.6" stop-color="#F5F9FF"/>
+      <stop offset="1" stop-color="#D6E4F0"/>
+    </linearGradient>
+
+    <!-- ظل الزر -->
+    <filter id="sg-drop" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="4" stdDeviation="4"
+        flood-color="#000" flood-opacity="0.55"/>
     </filter>
-    <filter id="sg-glow">
-      <feGaussianBlur stdDeviation="3" result="b"/>
-      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+
+    <!-- ظل الترس -->
+    <filter id="sg-gear-shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0.6" dy="1.5" stdDeviation="1.4"
+        flood-color="#001233" flood-opacity="0.55"/>
     </filter>
+
   </defs>
 
-  <!-- ظل خارجي -->
-  <rect x="6" y="9" width="88" height="88" rx="23" fill="#000" opacity="0.45" filter="url(#sg-drop)"/>
 
-  <!-- إطار ذهبي سميك -->
-  <rect x="2" y="2" width="96" height="96" rx="26" fill="url(#sg-frame)"/>
+  <!-- ظل خارجي للزر -->
+  <rect x="6" y="9" width="88" height="88" rx="25"
+    fill="#000" opacity="0.45" filter="url(#sg-drop)"/>
 
-  <!-- حافة بيضاء علوية للإطار (لمعة) -->
-  <rect x="3" y="3" width="94" height="30" rx="25" fill="#fff" opacity="0.25"/>
 
-  <!-- حافة داكنة سفلية (عمق) -->
-  <rect x="2" y="72" width="96" height="26" rx="20" fill="#000" opacity="0.25"/>
+  <!-- الإطار الذهبي (Squircle) -->
+  <rect x="2" y="2" width="96" height="96" rx="28"
+    fill="url(#sg-frame)"/>
+
+  <!-- لمعة الإطار العلوية -->
+  <rect x="4" y="4" width="92" height="40" rx="26"
+    fill="url(#sg-frame-shine)" opacity="0.55"/>
+
+  <!-- عمق سفلي للإطار -->
+  <rect x="2" y="70" width="96" height="28" rx="24"
+    fill="#000" opacity="0.22"/>
+
 
   <!-- الخلفية الزرقاء الرئيسية -->
-  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#sg-bg)"/>
+  <rect x="9" y="9" width="82" height="82" rx="22"
+    fill="url(#sg-bg)"/>
 
-  <!-- ضوء زجاجي علوي -->
-  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#sg-lens)"/>
+  <!-- الانعكاس الزجاجي العلوي -->
+  <rect x="9" y="9" width="82" height="45" rx="22"
+    fill="url(#sg-lens)"/>
 
-  <!-- حد داخلي مضيء -->
-  <rect x="9" y="9" width="82" height="82" rx="20" fill="none" stroke="#90CAF9" stroke-width="2" opacity="0.7"/>
+  <!-- حد داخلي خفيف -->
+  <rect x="9.5" y="9.5" width="81" height="81" rx="21.5"
+    fill="none" stroke="#90CAF9" stroke-width="1"
+    opacity="0.4"/>
 
-  <!-- الترس مع توهج قوي — منزاح للأعلى قليلاً ليتوسط الحقل بصرياً -->
-  <g filter="url(#sg-glow)" transform="translate(0,-5)">
-    <!-- ظل الترس -->
-    <path d="M50 31c2 0 3.5 1.5 3.5 3.5v3c3 .9 5.6 2.4 7.8 4.5l2.2-1.8c1.5-1.2 3.8-1.1 5.1.4s1.3 3.7 0 5.1l-2 2.2c1.7 2.2 2.9 4.7 3.6 7.5h3.3c2 0 3.5 1.5 3.5 3.5s-1.5 3.5-3.5 3.5h-3.3c-.7 2.8-2 5.3-3.7 7.5l2 2.2c1.3 1.5 1.2 3.8-.3 5.1s-3.8 1.3-5.1-.2l-2.2-1.8c-2.2 2.1-4.8 3.5-7.9 4.5v3c0 2-1.5 3.5-3.5 3.5s-3.5-1.5-3.5-3.5v-3c-3-.9-5.7-2.4-7.9-4.5l-2.2 1.8c-1.3 1.5-3.6 1.5-5.1.2s-1.6-3.6-.3-5.1l2-2.2c-1.7-2.2-3-4.7-3.7-7.5h-3.3c-2 0-3.5-1.5-3.5-3.5s1.5-3.5 3.5-3.5h3.3c.7-2.8 2-5.3 3.6-7.5l-2-2.2c-1.3-1.4-1.3-3.6.1-5.1s3.6-1.6 5.1-.4l2.2 1.8c2.2-2.1 4.8-3.6 7.8-4.5v-3c0-2 1.5-3.5 3.5-3.5Z"
-          fill="#000820" opacity="0.5" transform="translate(1,3)"/>
-    <!-- الترس الأبيض -->
-    <path d="M50 31c2 0 3.5 1.5 3.5 3.5v3c3 .9 5.6 2.4 7.8 4.5l2.2-1.8c1.5-1.2 3.8-1.1 5.1.4s1.3 3.7 0 5.1l-2 2.2c1.7 2.2 2.9 4.7 3.6 7.5h3.3c2 0 3.5 1.5 3.5 3.5s-1.5 3.5-3.5 3.5h-3.3c-.7 2.8-2 5.3-3.7 7.5l2 2.2c1.3 1.5 1.2 3.8-.3 5.1s-3.8 1.3-5.1-.2l-2.2-1.8c-2.2 2.1-4.8 3.5-7.9 4.5v3c0 2-1.5 3.5-3.5 3.5s-3.5-1.5-3.5-3.5v-3c-3-.9-5.7-2.4-7.9-4.5l-2.2 1.8c-1.3 1.5-3.6 1.5-5.1.2s-1.6-3.6-.3-5.1l2-2.2c-1.7-2.2-3-4.7-3.7-7.5h-3.3c-2 0-3.5-1.5-3.5-3.5s1.5-3.5 3.5-3.5h3.3c.7-2.8 2-5.3 3.6-7.5l-2-2.2c-1.3-1.4-1.3-3.6.1-5.1s3.6-1.6 5.1-.4l2.2 1.8c2.2-2.1 4.8-3.6 7.8-4.5v-3c0-2 1.5-3.5 3.5-3.5Z"
-          fill="#E3F2FD"/>
-    <!-- دائرة الترس المركزية - ملونة -->
-    <circle cx="50" cy="50" r="11" fill="#1565C0"/>
-    <circle cx="50" cy="50" r="11" fill="none" stroke="#E3F2FD" stroke-width="2.5"/>
-    <circle cx="50" cy="50" r="6" fill="#0D47A1"/>
-    <!-- نقطة البريق -->
-    <circle cx="45.5" cy="45.5" r="3.5" fill="#fff" opacity="0.5"/>
+
+  <!-- الترس (8 أسنان مستطيلة مسطحة) -->
+  <g filter="url(#sg-gear-shadow)">
+
+    <!-- الترس الأبيض بأسنان مستطيلة -->
+    <path
+      d="
+        M 45.5 22
+        L 54.5 22
+        L 55.8 30.5
+        L 61.3 32.8
+        L 67.7 26.9
+        L 74.1 33.3
+        L 68.2 39.7
+        L 70.5 45.2
+        L 79 46.5
+        L 79 55.5
+        L 70.5 56.8
+        L 68.2 62.3
+        L 74.1 68.7
+        L 67.7 75.1
+        L 61.3 69.2
+        L 55.8 71.5
+        L 54.5 80
+        L 45.5 80
+        L 44.2 71.5
+        L 38.7 69.2
+        L 32.3 75.1
+        L 25.9 68.7
+        L 31.8 62.3
+        L 29.5 56.8
+        L 21 55.5
+        L 21 46.5
+        L 29.5 45.2
+        L 31.8 39.7
+        L 25.9 33.3
+        L 32.3 26.9
+        L 38.7 32.8
+        L 44.2 30.5
+        Z
+      "
+      fill="url(#sg-gear)"
+      stroke="#FFFFFF"
+      stroke-width="0.4"
+      stroke-linejoin="round"/>
+
+    <!-- الفتحة المركزية المفرغة (تُظهر الخلفية الزرقاء) -->
+    <circle cx="50" cy="50" r="10.5"
+      fill="url(#sg-bg)"/>
+
+    <!-- حد داخلي ناعم حول الفتحة -->
+    <circle cx="50" cy="50" r="10.5"
+      fill="none" stroke="#B0BEC5"
+      stroke-width="0.5" opacity="0.6"/>
+
   </g>
 
-  <!-- لمعة زاوية علوية يمين -->
-  <ellipse cx="76" cy="18" rx="8" ry="4" fill="#fff" opacity="0.3" transform="rotate(30 76 18)"/>
-  <!-- لمعة زاوية علوية يسار -->
-  <ellipse cx="24" cy="18" rx="8" ry="4" fill="#fff" opacity="0.25" transform="rotate(-30 24 18)"/>
+  <!-- لمعة خفيفة أعلى الترس -->
+  <path
+    d="
+      M 30 40
+      Q 50 30 70 40
+      L 68 44
+      Q 50 36 32 44
+      Z
+    "
+    fill="#FFFFFF"
+    opacity="0.25"/>
+
+
+  <!-- لمعات الزوايا العلوية -->
+  <ellipse cx="72" cy="20" rx="10" ry="4"
+    fill="#FFFFFF" opacity="0.35"
+    transform="rotate(25 72 20)"/>
+
+  <ellipse cx="28" cy="20" rx="8" ry="3"
+    fill="#FFFFFF" opacity="0.22"
+    transform="rotate(-25 28 20)"/>
+
 </svg>
