@@ -91,7 +91,7 @@ function renderContent(): string {
     <!-- السرعة -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        <span>⚡</span> سرعة التصاعد
+        <img class="ui-vector-icon" src="game/icons/theme.svg" alt=""> سرعة التصاعد
       </h3>
       <div class="flex items-center gap-3">
         <span class="text-xs text-slate-400">تأملي</span>
@@ -107,16 +107,16 @@ function renderContent(): string {
     <!-- الصوت والاهتزاز -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        🔊 الصوت والاهتزاز
+        <img class="ui-vector-icon" src="game/icons/settings.svg" alt=""> الصوت والاهتزاز
       </h3>
       <div class="space-y-2">
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">🔊 أصوات الفقاعات</span>
+          <span class="text-xl text-slate-100">أصوات الفقاعات</span>
           <input id="dash-sound" type="checkbox" ${isSoundEnabled() ? 'checked' : ''} class="peer sr-only" />
           <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
         </label>
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">📳 الاهتزاز عند النقر</span>
+          <span class="text-xl text-slate-100">الاهتزاز عند النقر</span>
           <input id="dash-vibrate" type="checkbox" ${isVibrationEnabled() ? 'checked' : ''} class="peer sr-only" />
           <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
         </label>
@@ -126,21 +126,21 @@ function renderContent(): string {
     <!-- تشغيل/إيقاف اللعبة والمصحف والأيقونات -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        ⚙️ تشغيل وإيقاف العناصر
+        <img class="ui-vector-icon" src="game/icons/settings.svg" alt=""> تشغيل وإيقاف العناصر
       </h3>
       <div class="space-y-2">
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">🎮 اللعبة</span>
+          <span class="text-xl text-slate-100">اللعبة</span>
           <input id="dash-game" type="checkbox" ${isGameEnabled() ? 'checked' : ''} class="peer sr-only" />
           <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
         </label>
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">📖 المصحف الشريف</span>
+          <span class="text-xl text-slate-100">المصحف الشريف</span>
           <input id="dash-quran" type="checkbox" ${isQuranEnabled() ? 'checked' : ''} class="peer sr-only" />
           <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
         </label>
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">🔘 جميع الأيقونات</span>
+          <span class="text-xl text-slate-100">جميع الأيقونات</span>
           <input id="dash-icons" type="checkbox" ${areIconsEnabled() ? 'checked' : ''} class="peer sr-only" />
           <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
         </label>
@@ -150,7 +150,7 @@ function renderContent(): string {
     <!-- إحصائيات اليوم -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        <span>📊</span> أذكار اليوم
+        <img class="ui-vector-icon" src="game/icons/theme.svg" alt=""> أذكار اليوم
       </h3>
       <div class="grid gap-1.5">${statRows}</div>
     </section>

@@ -40,6 +40,7 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   private readonly startX: number
   private phase: number
   private popped = false
+  private readonly localHitRadius: number
   /** هل الجسم ما يزال في مرحلة الاندفاع الأولي السريع بعد الظهور؟ */
   private burst = true
 
@@ -94,11 +95,9 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     // لذلك نقسم على BODY_SCALE للحصول على المقياس المحلي الصحيح المطابق للجسم المرئي.
     // نُضيف هامش 12px مقسوماً على BODY_SCALE أيضاً لزيادة مساحة اللمس الفعلية.
     const localHitR = options.hitRadius / BODY_SCALE + 22
-    this.setInteractive(
-      new Phaser.Geom.Circle(0, 0, localHitR),
-      Phaser.Geom.Circle.Contains,
-      { useHandCursor: true },
-    )
+    this.localHitRadius = localHitR
+    this.setInteractive(new Phaser.Geom.Circle(0, 0, localHitR), Phaser.Geom.Circle.Contains)
+    this.input!.useHandCursor = true
     // تأكيد وجود منطقة لمس أوسع من الرسم الفعلي، خصوصاً قرب أسفل الشاشة.
     this.input!.hitArea = new Phaser.Geom.Circle(0, 0, localHitR)
     this.input!.hitAreaCallback = Phaser.Geom.Circle.Contains
@@ -112,6 +111,16 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     this.once(Phaser.GameObjects.Events.DESTROY, () => {
       if (this.scene) this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.onUpdate, this)
     })
+  }
+
+  /** تعطيل/إعادة تفعيل لمس الفقاعة أثناء الإيقاف المؤقت مع الحفاظ على منطقة اللمس الموسعة. */
+  public setBubbleInteractive(enabled: boolean): void {
+    if (enabled) {
+      this.setInteractive(new Phaser.Geom.Circle(0, 0, this.localHitRadius), Phaser.Geom.Circle.Contains)
+      this.input!.useHandCursor = true
+    } else {
+      this.disableInteractive()
+    }
   }
 
   /** يرسم كل نوع شكله الخاص داخل هذا الأسلوب. */

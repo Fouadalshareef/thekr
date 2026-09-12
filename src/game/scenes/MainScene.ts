@@ -481,6 +481,7 @@ export default class MainScene extends Phaser.Scene {
     this.data.set('paused', true)
     this.physics.pause()
     this.pauseIcon?.setTexture('hud-play')
+    this.alive.forEach((bubble) => bubble.setBubbleInteractive(false))
   }
 
   private resumeFromModal = (): void => {
@@ -494,9 +495,11 @@ export default class MainScene extends Phaser.Scene {
     if (this.paused) {
       this.physics.pause()
       this.pauseIcon?.setTexture('hud-play')
+      this.alive.forEach((bubble) => bubble.setBubbleInteractive(false))
     } else {
       this.physics.resume()
       this.pauseIcon?.setTexture('hud-pause')
+      this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
     }
   }
 
