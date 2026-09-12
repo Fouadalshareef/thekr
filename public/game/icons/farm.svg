@@ -38,11 +38,10 @@
   <!-- إطار ذهبي -->
   <rect x="2" y="2" width="96" height="96" rx="26" fill="url(#fg-frame)"/>
   <rect x="3" y="3" width="94" height="30" rx="25" fill="#fff" opacity="0.25"/>
-  <rect x="2" y="72" width="96" height="26" rx="20" fill="#000" opacity="0.25"/>
   <!-- خلفية خضراء -->
-  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#fg-bg)"/>
-  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#fg-lens)"/>
-  <rect x="9" y="9" width="82" height="82" rx="20" fill="none" stroke="#A5D6A7" stroke-width="2" opacity="0.6"/>
+  <rect x="7" y="7" width="86" height="86" rx="22" fill="url(#fg-bg)"/>
+  <rect x="7" y="7" width="86" height="86" rx="22" fill="url(#fg-lens)"/>
+  <rect x="7.5" y="7.5" width="85" height="85" rx="21.5" fill="none" stroke="#A5D6A7" stroke-width="1.5" opacity="0.6"/>
 
   <g filter="url(#fg-glow)">
     <!-- تربة -->

@@ -67,21 +67,17 @@
   <rect x="4" y="4" width="92" height="40" rx="26"
     fill="url(#sg-frame-shine)" opacity="0.55"/>
 
-  <!-- عمق سفلي للإطار -->
-  <rect x="2" y="70" width="96" height="28" rx="24"
-    fill="#000" opacity="0.22"/>
-
 
   <!-- الخلفية الزرقاء الرئيسية -->
-  <rect x="9" y="9" width="82" height="82" rx="22"
+  <rect x="7" y="7" width="86" height="86" rx="22"
     fill="url(#sg-bg)"/>
 
   <!-- الانعكاس الزجاجي العلوي -->
-  <rect x="9" y="9" width="82" height="45" rx="22"
+  <rect x="7" y="7" width="86" height="45" rx="22"
     fill="url(#sg-lens)"/>
 
   <!-- حد داخلي خفيف -->
-  <rect x="9.5" y="9.5" width="81" height="81" rx="21.5"
+  <rect x="7.5" y="7.5" width="85" height="85" rx="21.5"
     fill="none" stroke="#90CAF9" stroke-width="1"
     opacity="0.4"/>
 
