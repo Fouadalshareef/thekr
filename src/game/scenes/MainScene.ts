@@ -90,6 +90,7 @@ export default class MainScene extends Phaser.Scene {
   private sessionText!: Phaser.GameObjects.Text
   private pauseButton!: Phaser.GameObjects.Container
   private pauseIcon!: Phaser.GameObjects.Image
+  private playIcon!: Phaser.GameObjects.Image
   private updateBadge!: Phaser.GameObjects.Container
   private modePanel!: Phaser.GameObjects.Container
   private focusPanel!: Phaser.GameObjects.Container
@@ -312,6 +313,11 @@ export default class MainScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDisplaySize(66, 66)
     btn.add(svgIcon)
+    if (icon === 'pause') {
+      this.playIcon = this.add.image(0, 0, 'hud-play').setOrigin(0.5).setDisplaySize(66, 66).setVisible(false)
+      btn.add(this.playIcon)
+      this.pauseIcon = svgIcon
+    }
     btn.setSize(66, 66)
     btn.setInteractive({ useHandCursor: true })
     btn.input!.hitArea = new Phaser.Geom.Circle(0, 0, r + 14)
@@ -387,7 +393,6 @@ export default class MainScene extends Phaser.Scene {
     }
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, release)
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, release)
-    if (icon === 'pause') this.pauseIcon = svgIcon
     return btn
   }
 
@@ -495,11 +500,13 @@ export default class MainScene extends Phaser.Scene {
     this.data.set('paused', this.paused)
     if (this.paused) {
       this.physics.pause()
-      this.pauseIcon?.setTexture('hud-play')
+      this.pauseIcon?.setVisible(false)
+      this.playIcon?.setVisible(true)
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(false))
     } else {
       this.physics.resume()
-      this.pauseIcon?.setTexture('hud-pause')
+      this.pauseIcon?.setVisible(true)
+      this.playIcon?.setVisible(false)
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
     }
   }
@@ -527,10 +534,18 @@ export default class MainScene extends Phaser.Scene {
     const panelW = Math.min(width * 0.9, 480)
     const panelH = 400
     const card = this.add.container(width / 2, height / 2)
-    const lift = 8
-    const base = 0x6d28d9 // بنفسجي ملكي
-    const sideCol = this.darker(base, 0.5)
+    const base = 0x172554 // كحلي زجاجي هادئ
     const gfx = this.add.graphics()
+    // بطاقة زجاجية ناعمة بلا حواف سوداء أو ظل ثقيل.
+    gfx.fillStyle(base, 0.88)
+    gfx.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 30)
+    gfx.fillStyle(0x60a5fa, 0.16)
+    gfx.fillRoundedRect(-panelW / 2 + 2, -panelH / 2 + 2, panelW - 4, 92, 28)
+    gfx.lineStyle(1.5, 0xbfdbfe, 0.65)
+    gfx.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 30)
+    gfx.lineStyle(1, 0xffffff, 0.16)
+    gfx.strokeRoundedRect(-panelW / 2 + 8, -panelH / 2 + 8, panelW - 16, panelH - 16, 24)
+    /* legacy card drawing removed
     // ظل أرضي ساقط
     gfx.fillStyle(0x000000, 0.4)
     gfx.fillRoundedRect(-panelW / 2, -panelH / 2 + lift + 2, panelW, panelH, 28)
@@ -549,6 +564,7 @@ export default class MainScene extends Phaser.Scene {
     // حد أبيض ناصع
     gfx.lineStyle(3, 0xffffff, 0.9)
     gfx.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 28)
+    */
     card.add(gfx)
 
     const title = this.add
@@ -582,6 +598,7 @@ export default class MainScene extends Phaser.Scene {
       const drawBg = (hovered: boolean) => {
         bg.clear()
         const btnColor = isActive ? 0x16a34a : hovered ? 0x64748b : 0x475569
+        /* legacy button bevel removed
         const btnSide = this.darker(btnColor, 0.5)
         const liftB = 5
         // ظل سفلي
@@ -604,13 +621,20 @@ export default class MainScene extends Phaser.Scene {
           bg.lineStyle(3, 0xfde047, 1)
           bg.strokeRoundedRect(-btnW / 2 - 2, -btnH / 2 - 2, btnW + 4, btnH + 4, 20)
         }
+        */
+        bg.fillStyle(btnColor, isActive ? 0.94 : 0.82)
+        bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 20)
+        bg.fillStyle(0xffffff, hovered ? 0.14 : 0.08)
+        bg.fillRoundedRect(-btnW / 2 + 5, -btnH / 2 + 4, btnW - 10, btnH / 2, 15)
+        bg.lineStyle(isActive ? 2.5 : 1.5, isActive ? 0xfde68a : 0x94a3b8, isActive ? 1 : 0.65)
+        bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 20)
       }
       drawBg(false)
       if (isActive) label.setColor('#fff7cc')
 
       const btn = this.add.container(0, yy)
       btn.add([bg, label])
-      btn.setInteractive(new Phaser.Geom.Rectangle(-btnW / 2, -btnH / 2, btnW, btnH), Phaser.Geom.Rectangle.Contains)
+      btn.setInteractive(new Phaser.Geom.Rectangle(-btnW / 2 - 10, -btnH / 2 - 8, btnW + 20, btnH + 16), Phaser.Geom.Rectangle.Contains, { useHandCursor: true })
 
       // سلسلة تفاعل ناعمة (Hover / Active)
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => drawBg(true))
