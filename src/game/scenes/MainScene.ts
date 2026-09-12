@@ -401,6 +401,7 @@ export default class MainScene extends Phaser.Scene {
       0xfca5a5,
       () => this.togglePause(),
     )
+    this.pauseButton.setScrollFactor(0)
   }
 
   /** عداد الجلسة الحالية أسفل زر الإيقاف — مُدمج وأنيق مع إطار ذهبي رفيع. */
@@ -477,16 +478,16 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private pauseForModal = (): void => {
-    this.paused = true
-    this.data.set('paused', true)
+    // إيقاف مؤقت للنوافذ فقط؛ لا نغيّر حالة الزر اليدوية حتى لا تبقى اللعبة عالقة.
     this.physics.pause()
-    this.pauseIcon?.setTexture('hud-play')
     this.alive.forEach((bubble) => bubble.setBubbleInteractive(false))
   }
 
   private resumeFromModal = (): void => {
-    this.data.set('paused', this.paused)
-    if (!this.paused) this.physics.resume()
+    if (!this.paused && this.gameEnabled) {
+      this.physics.resume()
+      this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
+    }
   }
 
   private togglePause(): void {

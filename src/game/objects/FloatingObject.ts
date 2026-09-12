@@ -97,7 +97,6 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     const localHitR = options.hitRadius / BODY_SCALE + 22
     this.localHitRadius = localHitR
     this.setInteractive(new Phaser.Geom.Circle(0, 0, localHitR), Phaser.Geom.Circle.Contains)
-    this.input!.useHandCursor = true
     // تأكيد وجود منطقة لمس أوسع من الرسم الفعلي، خصوصاً قرب أسفل الشاشة.
     this.input!.hitArea = new Phaser.Geom.Circle(0, 0, localHitR)
     this.input!.hitAreaCallback = Phaser.Geom.Circle.Contains
@@ -117,7 +116,6 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   public setBubbleInteractive(enabled: boolean): void {
     if (enabled) {
       this.setInteractive(new Phaser.Geom.Circle(0, 0, this.localHitRadius), Phaser.Geom.Circle.Contains)
-      this.input!.useHandCursor = true
     } else {
       this.disableInteractive()
     }
@@ -225,6 +223,7 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   }
 
   private handlePointerDown(): void {
+    if (this.scene.data.get('paused') === true) return
     if (this.popped || !this.active) return
     this.popped = true
     this.setData('collected', true)
