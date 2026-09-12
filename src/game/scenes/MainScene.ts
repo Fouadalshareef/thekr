@@ -89,7 +89,7 @@ export default class MainScene extends Phaser.Scene {
 
   private sessionText!: Phaser.GameObjects.Text
   private pauseButton!: Phaser.GameObjects.Container
-  private pauseIcon!: Phaser.GameObjects.Text
+  private pauseIcon!: Phaser.GameObjects.Image
   private updateBadge!: Phaser.GameObjects.Container
   private modePanel!: Phaser.GameObjects.Container
   private focusPanel!: Phaser.GameObjects.Container
@@ -306,10 +306,14 @@ export default class MainScene extends Phaser.Scene {
   ): Phaser.GameObjects.Container {
     const btn = this.add.container(x, y)
     btn.setDepth(2000)
-    const r = 26 // إطار SVG بحجم موحّد 52×52px
-    const lift = 5 // سُمك الزر / مسافة الغوص عند الضغط
+    const r = 26 // حجم الأيقونة الجديدة 52×52px
+    // الأيقونة SVG هي الطبقة المرئية الوحيدة؛ لا توجد دوائر Phaser خلفها.
+    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-pause', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon]).setDisplaySize(52, 52)
+    btn.add(svgIcon)
+    btn.setSize(52, 52)
+    btn.setInteractive(new Phaser.Geom.Circle(0, 0, r), Phaser.Geom.Circle.Contains)
 
-    // ظل أرضي ساقط
+    /* legacy graphic layers removed
     const ground = this.add.graphics()
     ground.fillStyle(0x000000, 0.32)
     ground.fillCircle(1, lift + 4, r + 5)
@@ -363,31 +367,23 @@ export default class MainScene extends Phaser.Scene {
     emojiIcon.setShadow(0, 3, '#000000', 5, true, true)
 
     */
-    movable.add([face, svgIcon])
-    btn.add([ground, side, movable])
-    btn.setSize(r * 2 + 14, r * 2 + 14)
-    btn.setInteractive(new Phaser.Geom.Circle(0, 0, r + 18), Phaser.Geom.Circle.Contains)
 
     const press = (down: boolean) => {
-      this.tweens.killTweensOf(movable)
-      this.tweens.add({ targets: movable, y: down ? lift : 0, duration: 80, ease: down ? 'Quad.easeIn' : 'Back.easeOut' })
+      this.tweens.killTweensOf(btn)
+      this.tweens.add({ targets: btn, scale: down ? 0.95 : 1, duration: down ? 90 : 110, ease: down ? 'Quad.easeOut' : 'Back.easeOut' })
     }
 
-    // Juicy Press: الوجه يغوص فيغطي الظل، ثم يعود مع ارتداد
+    // ضغط ناعم على الأيقونة نفسها، من دون طبقات رسومية إضافية
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
-      this.tweens.killTweensOf(btn)
-      this.tweens.add({ targets: btn, scale: 0.95, duration: 90, ease: 'Quad.easeOut' })
       press(true)
       onTap()
     })
     const release = () => {
-      this.tweens.killTweensOf(btn)
-      this.tweens.add({ targets: btn, scale: 1, duration: 110, ease: 'Back.easeOut' })
       press(false)
     }
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, release)
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, release)
-    if (icon === 'pause') this.pauseIcon = svgIcon as unknown as Phaser.GameObjects.Text
+    if (icon === 'pause') this.pauseIcon = svgIcon
     return btn
   }
 
@@ -489,7 +485,7 @@ export default class MainScene extends Phaser.Scene {
   private togglePause(): void {
     this.paused = !this.paused
     this.data.set('paused', this.paused)
-    this.pauseIcon?.setText(this.paused ? '▶️' : '⏸️')
+    // رمز pause.svg ثابت؛ حالة الإيقاف تُحفظ في بيانات المشهد دون إعادة إظهار إيموجي قديم.
   }
 
   // ------------------------------------------------------------------
