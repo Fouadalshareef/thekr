@@ -311,8 +311,6 @@ export default class MainScene extends Phaser.Scene {
     const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon])
       .setOrigin(0.5)
       .setDisplaySize(66, 66)
-    // مركز اللوحة الذهبية يقع عند y=5 (اللوحة من -28 الى 38) لذلك نضع الايقونة هناك لتتوسط حقلها تماماً.
-    svgIcon.setY(5)
     btn.add(svgIcon)
     if (icon === 'pause') {
       this.pauseIcon = svgIcon
@@ -358,7 +356,7 @@ export default class MainScene extends Phaser.Scene {
   private refreshPauseIcon(): void {
     if (!this.pauseIcon) return
     this.pauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
-    this.pauseIcon.setDisplaySize(32, 32)
+    this.pauseIcon.setDisplaySize(66, 66)
   }
 
   /** عداد الجلسة الحالية أسفل زر الإيقاف — مُدمج وأنيق مع إطار ذهبي رفيع. */
