@@ -300,7 +300,7 @@ export default class MainScene extends Phaser.Scene {
     x: number,
     y: number,
     icon: 'gear' | 'sliders' | 'pause' | 'play' | 'leaf' | 'quran',
-    color: number,
+    _color: number,
     _colorHi: number,
     onTap: () => void,
   ): Phaser.GameObjects.Container {
@@ -583,7 +583,7 @@ export default class MainScene extends Phaser.Scene {
 
       const btn = this.add.container(0, yy)
       btn.add([bg, label])
-      btn.setInteractive(new Phaser.Geom.Rectangle(-btnW / 2 - 10, -btnH / 2 - 8, btnW + 20, btnH + 16), Phaser.Geom.Rectangle.Contains, { useHandCursor: true })
+      btn.setInteractive(new Phaser.Geom.Rectangle(-btnW / 2 - 10, -btnH / 2 - 8, btnW + 20, btnH + 16), Phaser.Geom.Rectangle.Contains)
 
       // سلسلة تفاعل ناعمة (Hover / Active)
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => drawBg(true))
