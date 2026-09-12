@@ -162,7 +162,7 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildHud(): void {
-    // أقصى اليسار العلوي: الإعدادات، الأنماط، ثم الحديقة
+    // شريط علوي موحّد: 52×52px مع مسافات ثابتة لتفادي التداخل.
     this.btnGear = this.buildRoundButton(56, 62, 'gear', 0x2563eb, 0x93c5fd, () => {
       window.dispatchEvent(new CustomEvent('open-dashboard'))
     })
@@ -174,7 +174,7 @@ export default class MainScene extends Phaser.Scene {
       window.dispatchEvent(new CustomEvent('open-quran'))
     })
 
-    // أقصى اليمين العلوي: إيقاف مؤقت + عداد الجلسة
+    // أقصى اليمين العلوي: الإيقاف أعلى عداد الجلسة بفاصل رأسي 25px على الأقل.
     this.buildPauseButton()
     this.buildSessionCounter()
     this.buildComboCounter()
@@ -306,8 +306,8 @@ export default class MainScene extends Phaser.Scene {
   ): Phaser.GameObjects.Container {
     const btn = this.add.container(x, y)
     btn.setDepth(2000)
-    const r = 30 // قطر الزر
-    const lift = 6 // سُمك الزر / مسافة الغوص عند الضغط
+    const r = 26 // إطار SVG بحجم موحّد 52×52px
+    const lift = 5 // سُمك الزر / مسافة الغوص عند الضغط
 
     // ظل أرضي ساقط
     const ground = this.add.graphics()
@@ -351,7 +351,9 @@ export default class MainScene extends Phaser.Scene {
       leaf: '🌿',
       quran: '🕌',
     }
-    const emojiIcon = this.add
+    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-pause', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon]).setDisplaySize(52, 52)
+    /* legacy emoji removed */
+    /* const emojiIcon = this.add
       .text(0, 0, emojiByIcon[icon], {
         fontFamily: 'system-ui, "Segoe UI Emoji", Tahoma, sans-serif',
         fontSize: `${r * 0.85}px`,
@@ -360,7 +362,8 @@ export default class MainScene extends Phaser.Scene {
       .setOrigin(0.5, 0.5)
     emojiIcon.setShadow(0, 3, '#000000', 5, true, true)
 
-    movable.add([face, emojiIcon])
+    */
+    movable.add([face, svgIcon])
     btn.add([ground, side, movable])
     btn.setSize(r * 2 + 14, r * 2 + 14)
     btn.setInteractive(new Phaser.Geom.Circle(0, 0, r + 18), Phaser.Geom.Circle.Contains)
@@ -373,7 +376,7 @@ export default class MainScene extends Phaser.Scene {
     // Juicy Press: الوجه يغوص فيغطي الظل، ثم يعود مع ارتداد
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
       this.tweens.killTweensOf(btn)
-      this.tweens.add({ targets: btn, scale: 0.96, duration: 70, ease: 'Quad.easeOut' })
+      this.tweens.add({ targets: btn, scale: 0.95, duration: 90, ease: 'Quad.easeOut' })
       press(true)
       onTap()
     })
@@ -384,7 +387,7 @@ export default class MainScene extends Phaser.Scene {
     }
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, release)
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, release)
-    if (icon === 'pause') this.pauseIcon = emojiIcon
+    if (icon === 'pause') this.pauseIcon = svgIcon as unknown as Phaser.GameObjects.Text
     return btn
   }
 
@@ -392,7 +395,7 @@ export default class MainScene extends Phaser.Scene {
   private buildPauseButton(): void {
     this.pauseButton = this.buildRoundButton(
       this.scale.width - 56,
-      62,
+      52,
       'pause',
       0xdc2626,
       0xfca5a5,
@@ -427,7 +430,7 @@ export default class MainScene extends Phaser.Scene {
     const x = this.scale.width - 56
     const w = 92
     const h = 96
-    const topY = 106
+    const topY = 129
     const lift = 5
     const base = 0x0ea5e9 // أزرق كريستالي
     const sideCol = this.darker(base, 0.55)
@@ -462,7 +465,7 @@ export default class MainScene extends Phaser.Scene {
       .setShadow(0, 1, 'rgba(0,0,0,0.5)', 2, true, true)
 
     this.sessionText = this.add
-      .text(x, 170, '0', {
+      .text(x, 193, '0', {
         fontFamily: 'Consolas, monospace',
         fontSize: '42px',
         fontStyle: 'bold',

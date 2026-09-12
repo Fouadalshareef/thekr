@@ -14,6 +14,12 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('game-logo', 'game/logo.jfif')
     this.load.image('bg-mor', 'game/mor.jfif') // نهار الصحراء
     this.load.image('bg-ni', 'game/ni.jfif') // مساء/ليل الصحراء
+    // أصول SVG شفافة عالية الجودة لأزرار HUD (تُحوّل Phaser داخلياً إلى Textures).
+    this.load.svg('hud-settings', 'game/icons/settings.svg', { width: 52, height: 52 })
+    this.load.svg('hud-theme', 'game/icons/theme.svg', { width: 52, height: 52 })
+    this.load.svg('hud-farm', 'game/icons/farm.svg', { width: 52, height: 52 })
+    this.load.svg('hud-quran', 'game/icons/quran.svg', { width: 52, height: 52 })
+    this.load.svg('hud-pause', 'game/icons/pause.svg', { width: 52, height: 52 })
   }
 
   create(): void {
