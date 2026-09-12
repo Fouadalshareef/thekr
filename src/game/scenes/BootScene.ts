@@ -17,7 +17,7 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('bg-mor-static', 'game/mor.png') // خلفية الصحراء الثابتة بسحاب مدمج
     // أصول SVG شفافة عالية الجودة لأزرار HUD (تُحوّل Phaser داخلياً إلى Textures).
     // تحميل الأيقونات بدقة مضاعفة (×2) لضمان حدّة عالية عند التوسيع على شاشات Retina/HD
-    this.load.svg('hud-settings', 'game/icons/settings.svg', { width: 128, height: 128 })
+    this.load.svg('hud-settings', 'game/icons/settings-v2.svg', { width: 128, height: 128 })
     this.load.svg('hud-theme',    'game/icons/theme.svg',    { width: 128, height: 128 })
     this.load.svg('hud-farm',     'game/icons/farm.svg',     { width: 128, height: 128 })
     this.load.svg('hud-quran',    'game/icons/quran.svg',    { width: 128, height: 128 })

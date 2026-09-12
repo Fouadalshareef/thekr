@@ -107,7 +107,7 @@ function renderContent(): string {
     <!-- الصوت والاهتزاز -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        <img class="ui-vector-icon" src="game/icons/settings.svg" alt=""> الصوت والاهتزاز
+        <img class="ui-vector-icon" src="game/icons/settings-v2.svg" alt=""> الصوت والاهتزاز
       </h3>
       <div class="space-y-2">
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
@@ -126,7 +126,7 @@ function renderContent(): string {
     <!-- تشغيل/إيقاف اللعبة والمصحف والأيقونات -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        <img class="ui-vector-icon" src="game/icons/settings.svg" alt=""> تشغيل وإيقاف العناصر
+        <img class="ui-vector-icon" src="game/icons/settings-v2.svg" alt=""> تشغيل وإيقاف العناصر
       </h3>
       <div class="space-y-2">
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
