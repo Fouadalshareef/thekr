@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>معاينة الأيقونات المحسّنة</title>
+<style>
+  body {
+    background: linear-gradient(135deg, #1a3a5c 0%, #0d5c3a 50%, #1a1a2e 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    color: white;
+    padding: 30px;
+  }
+  h1 { color: #FFD600; text-shadow: 0 2px 8px #000; margin-bottom: 8px; }
+  p { color: #a7f3d0; margin-bottom: 30px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+    max-width: 500px;
+  }
+  .icon-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 18px 10px 12px;
+    backdrop-filter: blur(10px);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+  .icon-card:hover {
+    transform: translateY(-6px) scale(1.05);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 20px rgba(255,214,0,0.2);
+  }
+  .icon-card:active { transform: scale(0.95); }
+  .icon-card img { width: 80px; height: 80px; image-rendering: auto; }
+  .icon-label { font-size: 13px; color: #fde68a; font-weight: bold; }
+  .comparison {
+    margin-top: 40px;
+    display: flex;
+    gap: 40px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .col-title { color: #FFD600; font-weight: bold; font-size: 16px; margin-bottom: 4px; }
+</style>
+</head>
+<body>
+  <h1>✨ الأيقونات الجديدة — مستوى ألعاب احترافية</h1>
+  <p>بإطارات ذهبية وتأثيرات توهج وعمق ثلاثي الأبعاد</p>
+
+  <div class="grid">
+    <div class="icon-card">
+      <img src="settings.svg" alt="الإعدادات">
+      <span class="icon-label">الإعدادات</span>
+    </div>
+    <div class="icon-card">
+      <img src="theme.svg" alt="الثيم">
+      <span class="icon-label">الثيم</span>
+    </div>
+    <div class="icon-card">
+      <img src="farm.svg" alt="الحديقة">
+      <span class="icon-label">الحديقة</span>
+    </div>
+    <div class="icon-card">
+      <img src="quran.svg" alt="القرآن">
+      <span class="icon-label">القرآن</span>
+    </div>
+    <div class="icon-card">
+      <img src="pause.svg" alt="إيقاف">
+      <span class="icon-label">إيقاف</span>
+    </div>
+    <div class="icon-card">
+      <img src="play.svg" alt="تشغيل">
+      <span class="icon-label">تشغيل</span>
+    </div>
+  </div>
+
+  <p style="margin-top:30px; color:#6ee7b7; font-size:13px;">
+    جميع الأيقونات SVG قابلة للتوسيع بلا حدود دون فقدان الجودة
+  </p>
+</body>
+</html>

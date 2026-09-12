@@ -1,1 +1,110 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFE082"/><stop offset="1" stop-color="#FF6F00"/></linearGradient><linearGradient id="orange" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFA726"/><stop offset="1" stop-color="#E65100"/></linearGradient></defs><rect x="5" y="5" width="90" height="90" rx="25" fill="url(#gold)"/><rect x="9" y="9" width="82" height="82" rx="21" fill="url(#orange)"/><path d="M25 35c10-3 20 0 25 3 5-3 15-6 25-3v33c-10-3-20 0-25 3-5-3-15-6-25-3Z" fill="#fff"/><path d="M50 38v33" stroke="#E65100" stroke-width="3"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="qg-frame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDE7"/>
+      <stop offset="0.25" stop-color="#FFD600"/>
+      <stop offset="0.6" stop-color="#FF8F00"/>
+      <stop offset="1" stop-color="#E65100"/>
+    </linearGradient>
+    <linearGradient id="qg-bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#FFA726"/>
+      <stop offset="0.5" stop-color="#D84315"/>
+      <stop offset="1" stop-color="#5D1A00"/>
+    </linearGradient>
+    <radialGradient id="qg-lens" cx="0.35" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.5"/>
+      <stop offset="0.4" stop-color="#fff" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <!-- غلاف الكتاب الأمامي ذهبي -->
+    <linearGradient id="qg-cover" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD54F"/>
+      <stop offset="0.5" stop-color="#FF8F00"/>
+      <stop offset="1" stop-color="#BF360C"/>
+    </linearGradient>
+    <!-- صفحات -->
+    <linearGradient id="qg-pages" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFF8E1"/>
+      <stop offset="1" stop-color="#FFF9C4"/>
+    </linearGradient>
+    <filter id="qg-drop">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="qg-glow">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="qg-star-glow">
+      <feGaussianBlur stdDeviation="2" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ظل -->
+  <rect x="6" y="9" width="88" height="88" rx="23" fill="#000" opacity="0.45" filter="url(#qg-drop)"/>
+  <!-- إطار ذهبي -->
+  <rect x="2" y="2" width="96" height="96" rx="26" fill="url(#qg-frame)"/>
+  <rect x="3" y="3" width="94" height="30" rx="25" fill="#fff" opacity="0.25"/>
+  <rect x="2" y="72" width="96" height="26" rx="20" fill="#000" opacity="0.25"/>
+  <!-- خلفية برتقالية -->
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#qg-bg)"/>
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#qg-lens)"/>
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="none" stroke="#FFAB40" stroke-width="2" opacity="0.6"/>
+
+  <g filter="url(#qg-glow)">
+    <!-- ظل الكتاب -->
+    <rect x="18" y="26" width="64" height="50" rx="4" fill="#2D0000" opacity="0.5" transform="translate(2,4)"/>
+
+    <!-- الغلاف الخلفي (ظاهر قليلاً) -->
+    <rect x="18" y="26" width="64" height="50" rx="4" fill="url(#qg-cover)"/>
+
+    <!-- الصفحات الداخلية مكشوفة من الأعلى -->
+    <rect x="22" y="24" width="56" height="4" rx="2" fill="#FFF8E1" opacity="0.9"/>
+
+    <!-- صفحة يسار مفتوحة -->
+    <path d="M22 28 Q22 26 25 26 L49 26 L49 76 L25 76 C22 76 21 74 21 72 Z"
+          fill="url(#qg-pages)"/>
+    <!-- خطوط صفحة يسار -->
+    <line x1="27" y1="35" x2="46" y2="35" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="27" y1="42" x2="46" y2="42" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="27" y1="49" x2="46" y2="49" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="27" y1="56" x2="46" y2="56" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="27" y1="63" x2="40" y2="63" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <!-- بريق صفحة يسار -->
+    <rect x="22" y="28" width="24" height="5" rx="1" fill="#fff" opacity="0.3"/>
+
+    <!-- صفحة يمين مفتوحة -->
+    <path d="M51 26 L75 26 C78 26 79 28 79 30 L79 72 C79 74 78 76 75 76 L51 76 Z"
+          fill="url(#qg-pages)"/>
+    <!-- خطوط صفحة يمين -->
+    <line x1="54" y1="35" x2="73" y2="35" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="54" y1="42" x2="73" y2="42" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="54" y1="49" x2="73" y2="49" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="54" y1="56" x2="73" y2="56" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <line x1="54" y1="63" x2="66" y2="63" stroke="#BCAAA4" stroke-width="1.8" stroke-linecap="round"/>
+    <!-- بريق صفحة يمين -->
+    <rect x="54" y="28" width="24" height="5" rx="1" fill="#fff" opacity="0.3"/>
+
+    <!-- العمود الفقري الذهبي المنتصف -->
+    <rect x="47.5" y="24" width="5" height="54" rx="2" fill="url(#qg-cover)"/>
+    <rect x="48.5" y="24" width="2" height="54" fill="#FFD54F" opacity="0.7"/>
+
+    <!-- حواف الكتاب -->
+    <path d="M22 28 Q22 26 25 26 L49 26 L49 76 L25 76 C22 76 21 74 21 72 Z"
+          fill="none" stroke="#BF360C" stroke-width="1.5" opacity="0.6"/>
+    <path d="M51 26 L75 26 C78 26 79 28 79 30 L79 72 C79 74 78 76 75 76 L51 76 Z"
+          fill="none" stroke="#BF360C" stroke-width="1.5" opacity="0.6"/>
+  </g>
+
+  <!-- نجمة ذهبية متوهجة فوق الكتاب -->
+  <g filter="url(#qg-star-glow)">
+    <path d="M50 13 L52.5 20 L60 20 L54 24.5 L56.5 31.5 L50 27 L43.5 31.5 L46 24.5 L40 20 L47.5 20Z"
+          fill="#FFD600"/>
+    <path d="M50 13 L52.5 20 L60 20 L54 24.5 L56.5 31.5 L50 27 L43.5 31.5 L46 24.5 L40 20 L47.5 20Z"
+          fill="none" stroke="white" stroke-width="1" opacity="0.7"/>
+    <circle cx="50" cy="22" r="3" fill="#fff" opacity="0.5"/>
+  </g>
+
+  <ellipse cx="76" cy="18" rx="8" ry="4" fill="#fff" opacity="0.3" transform="rotate(30 76 18)"/>
+  <ellipse cx="24" cy="18" rx="8" ry="4" fill="#fff" opacity="0.25" transform="rotate(-30 24 18)"/>
+</svg>

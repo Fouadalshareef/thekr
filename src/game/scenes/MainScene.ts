@@ -90,7 +90,6 @@ export default class MainScene extends Phaser.Scene {
   private sessionText!: Phaser.GameObjects.Text
   private pauseButton!: Phaser.GameObjects.Container
   private pauseIcon!: Phaser.GameObjects.Image
-  private playIcon!: Phaser.GameObjects.Image
   private updateBadge!: Phaser.GameObjects.Container
   private modePanel!: Phaser.GameObjects.Container
   private focusPanel!: Phaser.GameObjects.Container
@@ -314,69 +313,12 @@ export default class MainScene extends Phaser.Scene {
       .setDisplaySize(66, 66)
     btn.add(svgIcon)
     if (icon === 'pause') {
-      this.playIcon = this.add.image(0, 0, 'hud-play').setOrigin(0.5).setDisplaySize(66, 66).setVisible(false)
-      btn.add(this.playIcon)
       this.pauseIcon = svgIcon
     }
     btn.setSize(66, 66)
     btn.setInteractive({ useHandCursor: true })
     btn.input!.hitArea = new Phaser.Geom.Circle(0, 0, r + 14)
     btn.input!.hitAreaCallback = Phaser.Geom.Circle.Contains
-
-    /* legacy graphic layers removed
-    const ground = this.add.graphics()
-    ground.fillStyle(0x000000, 0.32)
-    ground.fillCircle(1, lift + 4, r + 5)
-    ground.fillStyle(0x000000, 0.18)
-    ground.fillCircle(1, lift + 2, r + 10)
-
-    // حافة الزر السفلية (الجسم البارز — بلون أغمق للبروز)
-    const side = this.add.graphics()
-    side.fillStyle(this.darker(color, 0.55), 1)
-    side.fillCircle(0, lift, r + 1)
-    side.lineStyle(3, this.darker(color, 0.35), 1)
-    side.strokeCircle(0, lift, r + 1)
-
-    // جزء متحرّك (وجه + أيقونة) — يغوص عند الضغط
-    const movable = this.add.container(0, 0)
-
-    const face = this.add.graphics()
-    // الوجه الزاهي الرئيسي
-    face.fillStyle(color, 1)
-    face.fillCircle(0, 0, r + 1)
-    // تدرّج علوي أنعم (إضافي كتيّار ضوئي)
-    face.fillStyle(this.lighter(color, 1.18), 0.6)
-    face.fillCircle(0, -2, r - 1)
-    // حافة بيضاء ناصعة تحيط بالوجه
-    face.lineStyle(4, 0xffffff, 0.95)
-    face.strokeCircle(0, 0, r + 1)
-    // لمعة علوية كبيرة (Glossy Highlight)
-    face.fillStyle(0xffffff, 0.42)
-    face.fillEllipse(0, -r * 0.42, r * 1.6, r * 0.6)
-    face.fillStyle(0xffffff, 0.18)
-    face.fillCircle(-r * 0.4, -r * 0.45, r * 0.5)
-
-    // الأيقونة الإيموجي
-    const emojiByIcon: Record<'gear' | 'sliders' | 'pause' | 'play' | 'leaf' | 'quran', string> = {
-      gear: '⚙️',
-      sliders: '🎚️',
-      pause: '⏸️',
-      play: '▶️',
-      leaf: '🌿',
-      quran: '🕌',
-    }
-    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon]).setDisplaySize(52, 52)
-    /* legacy emoji removed */
-    /* const emojiIcon = this.add
-      .text(0, 0, emojiByIcon[icon], {
-        fontFamily: 'system-ui, "Segoe UI Emoji", Tahoma, sans-serif',
-        fontSize: `${r * 0.85}px`,
-        color: '#ffffff',
-      })
-      .setOrigin(0.5, 0.5)
-    emojiIcon.setShadow(0, 3, '#000000', 5, true, true)
-
-    */
 
     const press = (down: boolean) => {
       this.tweens.killTweensOf(btn)
@@ -498,15 +440,14 @@ export default class MainScene extends Phaser.Scene {
   private togglePause(): void {
     this.paused = !this.paused
     this.data.set('paused', this.paused)
+    console.log('[DEBUG] togglePause called. Paused:', this.paused)
     if (this.paused) {
       this.physics.pause()
-      this.pauseIcon?.setVisible(false)
-      this.playIcon?.setVisible(true)
+      this.pauseIcon?.setTexture('hud-play')
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(false))
     } else {
       this.physics.resume()
-      this.pauseIcon?.setVisible(true)
-      this.playIcon?.setVisible(false)
+      this.pauseIcon?.setTexture('hud-pause')
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
     }
   }

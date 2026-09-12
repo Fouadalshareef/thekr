@@ -1,1 +1,90 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFE082"/><stop offset="1" stop-color="#FF6F00"/></linearGradient><linearGradient id="green" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#66BB6A"/><stop offset="1" stop-color="#1B5E20"/></linearGradient></defs><rect x="5" y="5" width="90" height="90" rx="25" fill="url(#gold)"/><rect x="9" y="9" width="82" height="82" rx="21" fill="url(#green)"/><path d="M50 72V48M50 56c-10 0-18-10-18-22 12 0 18 8 18 14 0-6 6-14 18-14 0 12-8 22-18 22Z" fill="#fff" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="fg-frame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDE7"/>
+      <stop offset="0.25" stop-color="#FFD600"/>
+      <stop offset="0.6" stop-color="#FF8F00"/>
+      <stop offset="1" stop-color="#E65100"/>
+    </linearGradient>
+    <linearGradient id="fg-bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#A5D6A7"/>
+      <stop offset="0.45" stop-color="#2E7D32"/>
+      <stop offset="1" stop-color="#0A2A0A"/>
+    </linearGradient>
+    <radialGradient id="fg-lens" cx="0.35" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.5"/>
+      <stop offset="0.4" stop-color="#fff" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fg-soil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8D6E63"/>
+      <stop offset="1" stop-color="#4E342E"/>
+    </linearGradient>
+    <linearGradient id="fg-grass-top" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#66BB6A"/>
+      <stop offset="1" stop-color="#388E3C"/>
+    </linearGradient>
+    <filter id="fg-drop">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="fg-glow">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ظل -->
+  <rect x="6" y="9" width="88" height="88" rx="23" fill="#000" opacity="0.45" filter="url(#fg-drop)"/>
+  <!-- إطار ذهبي -->
+  <rect x="2" y="2" width="96" height="96" rx="26" fill="url(#fg-frame)"/>
+  <rect x="3" y="3" width="94" height="30" rx="25" fill="#fff" opacity="0.25"/>
+  <rect x="2" y="72" width="96" height="26" rx="20" fill="#000" opacity="0.25"/>
+  <!-- خلفية خضراء -->
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#fg-bg)"/>
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#fg-lens)"/>
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="none" stroke="#A5D6A7" stroke-width="2" opacity="0.6"/>
+
+  <g filter="url(#fg-glow)">
+    <!-- تربة -->
+    <path d="M20 75 Q50 69 80 75 L80 84 Q50 82 20 84Z" fill="url(#fg-soil)"/>
+    <!-- عشب فوق التربة -->
+    <path d="M19 75 Q50 68 81 75" fill="none" stroke="#81C784" stroke-width="3.5" stroke-linecap="round"/>
+
+    <!-- شجرة رئيسية: ساق -->
+    <rect x="46" y="56" width="8" height="20" rx="3" fill="#6D4C41"/>
+    <rect x="47" y="56" width="3" height="20" rx="2" fill="#8D6E63"/>
+
+    <!-- تاج الشجرة - ثلاث طبقات -->
+    <!-- طبقة خلفية (أكبر وأغمق) -->
+    <ellipse cx="50" cy="48" rx="22" ry="17" fill="#1B5E20" opacity="0.7"/>
+    <!-- طبقة وسطى -->
+    <ellipse cx="50" cy="44" rx="20" ry="16" fill="#2E7D32"/>
+    <!-- طبقة أمامية (أفتح) -->
+    <ellipse cx="50" cy="40" rx="17" ry="14" fill="#43A047"/>
+    <!-- بريق التاج -->
+    <ellipse cx="44" cy="32" rx="8" ry="6" fill="#81C784" opacity="0.5"/>
+
+    <!-- ثمار حمراء مضيئة -->
+    <circle cx="37" cy="38" r="5" fill="#F44336"/>
+    <circle cx="37" cy="38" r="5" fill="none" stroke="#FFCDD2" stroke-width="1"/>
+    <circle cx="35.5" cy="36.5" r="1.8" fill="#FFCDD2" opacity="0.7"/>
+
+    <circle cx="62" cy="35" r="5" fill="#F44336"/>
+    <circle cx="62" cy="35" r="5" fill="none" stroke="#FFCDD2" stroke-width="1"/>
+    <circle cx="60.5" cy="33.5" r="1.8" fill="#FFCDD2" opacity="0.7"/>
+
+    <circle cx="50" cy="30" r="5" fill="#FF8F00"/>
+    <circle cx="50" cy="30" r="5" fill="none" stroke="#FFE0B2" stroke-width="1"/>
+    <circle cx="48.5" cy="28.5" r="1.8" fill="#FFE0B2" opacity="0.7"/>
+
+    <!-- عشب أمامي -->
+    <path d="M23 75 Q21 67 23 63 Q25 67 27 75Z" fill="#66BB6A"/>
+    <path d="M32 74 Q30 66 32 62 Q34 66 36 74Z" fill="#81C784"/>
+    <path d="M64 74 Q66 66 64 62 Q62 66 60 74Z" fill="#66BB6A"/>
+    <path d="M72 75 Q74 67 72 63 Q70 67 68 75Z" fill="#81C784"/>
+    <path d="M50 72 Q48 65 50 61 Q52 65 54 72Z" fill="#A5D6A7"/>
+  </g>
+
+  <ellipse cx="76" cy="18" rx="8" ry="4" fill="#fff" opacity="0.3" transform="rotate(30 76 18)"/>
+  <ellipse cx="24" cy="18" rx="8" ry="4" fill="#fff" opacity="0.25" transform="rotate(-30 24 18)"/>
+</svg>

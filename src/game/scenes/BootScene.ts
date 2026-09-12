@@ -16,14 +16,15 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('bg-ni', 'game/ni.jfif') // احتياط ليلي
     this.load.image('bg-mor-static', 'game/mor.png') // خلفية الصحراء الثابتة بسحاب مدمج
     // أصول SVG شفافة عالية الجودة لأزرار HUD (تُحوّل Phaser داخلياً إلى Textures).
-    this.load.svg('hud-settings', 'game/icons/settings.svg', { width: 52, height: 52 })
-    this.load.svg('hud-theme', 'game/icons/theme.svg', { width: 52, height: 52 })
-    this.load.svg('hud-farm', 'game/icons/farm.svg', { width: 52, height: 52 })
-    this.load.svg('hud-quran', 'game/icons/quran.svg', { width: 52, height: 52 })
-    this.load.svg('hud-pause', 'game/icons/pause.svg', { width: 66, height: 66 })
-    this.load.svg('hud-play', 'game/icons/play.svg', { width: 66, height: 66 })
-    this.load.svg('modal-close', 'game/icons/close.svg', { width: 56, height: 56 })
-    this.load.svg('modal-index', 'game/icons/index.svg', { width: 120, height: 45 })
+    // تحميل الأيقونات بدقة مضاعفة (×2) لضمان حدّة عالية عند التوسيع على شاشات Retina/HD
+    this.load.svg('hud-settings', 'game/icons/settings.svg', { width: 128, height: 128 })
+    this.load.svg('hud-theme',    'game/icons/theme.svg',    { width: 128, height: 128 })
+    this.load.svg('hud-farm',     'game/icons/farm.svg',     { width: 128, height: 128 })
+    this.load.svg('hud-quran',    'game/icons/quran.svg',    { width: 128, height: 128 })
+    this.load.svg('hud-pause',    'game/icons/pause.svg',    { width: 128, height: 128 })
+    this.load.svg('hud-play',     'game/icons/play.svg',     { width: 128, height: 128 })
+    this.load.svg('modal-close',  'game/icons/close.svg',    { width: 112, height: 112 })
+    this.load.svg('modal-index',  'game/icons/index.svg',    { width: 240, height:  90 })
   }
 
   create(): void {

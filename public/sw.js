@@ -5,7 +5,7 @@
  *  - HTML: Network-First (يجلب من الشبكة دائماً ثم يحدّث الكاش).
  *  - Assets: Stale-While-Revalidate (يُرجع من الكاش ويحدّث في الخلفية).
  */
-const CACHE_NAME = 'albaqiyat-v1.0.4'
+const CACHE_NAME = 'albaqiyat-v1.1.1'
 const ASSETS = [
   './',
   './index.html',

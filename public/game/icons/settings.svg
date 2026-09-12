@@ -1,1 +1,69 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE082"/><stop offset=".5" stop-color="#FFB300"/><stop offset="1" stop-color="#FF6F00"/></linearGradient><linearGradient id="blue" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#42A5F5"/><stop offset="1" stop-color="#1565C0"/></linearGradient></defs><rect x="5" y="5" width="90" height="90" rx="25" fill="url(#gold)"/><rect x="9" y="9" width="82" height="82" rx="21" fill="url(#blue)"/><path d="M50 32c1.7 0 3 1.3 3 3v2.2c2.3.7 4.4 1.9 6.3 3.5l1.7-1.4c1.3-1.1 3.2-1 4.4.2s1.3 3.1.2 4.4l-1.4 1.7c1.6 1.9 2.8 4 3.5 6.3h2.2c1.7 0 3 1.3 3 3s-1.3 3-3 3h-2.2c-.7 2.3-1.9 4.4-3.5 6.3l1.4 1.7c1.1 1.3 1 3.2-.2 4.4s-3.1 1.3-4.4.2l-1.7-1.4c-1.9 1.6-4 2.8-6.3 3.5V75c0 1.7-1.3 3-3 3s-3-1.3-3-3v-2.2c-2.3-.7-4.4-1.9-6.3-3.5L39 70.7c-1.3 1.1-3.2 1-4.4-.2s-1.3-3.1-.2-4.4l1.4-1.7c-1.6-1.9-2.8-4-3.5-6.3h-2.2c-1.7 0-3-1.3-3-3s1.3-3 3-3h2.2c.7-2.3 1.9-4.4 3.5-6.3l-1.4-1.7c-1.1-1.3-1-3.2.2-4.4s3.1-1.3 4.4-.2l1.7 1.4c1.9-1.6 4-2.8 6.3-3.5V35c0-1.7 1.3-3 3-3Z" fill="#fff"/><circle cx="50" cy="55" r="8" fill="#1565C0"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="sg-frame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDE7"/>
+      <stop offset="0.25" stop-color="#FFD600"/>
+      <stop offset="0.6" stop-color="#FF8F00"/>
+      <stop offset="1" stop-color="#E65100"/>
+    </linearGradient>
+    <linearGradient id="sg-bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#64B5F6"/>
+      <stop offset="0.5" stop-color="#1565C0"/>
+      <stop offset="1" stop-color="#0A1A5C"/>
+    </linearGradient>
+    <radialGradient id="sg-lens" cx="0.35" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="0.4" stop-color="#fff" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="sg-drop">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="sg-glow">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ظل خارجي -->
+  <rect x="6" y="9" width="88" height="88" rx="23" fill="#000" opacity="0.45" filter="url(#sg-drop)"/>
+
+  <!-- إطار ذهبي سميك -->
+  <rect x="2" y="2" width="96" height="96" rx="26" fill="url(#sg-frame)"/>
+
+  <!-- حافة بيضاء علوية للإطار (لمعة) -->
+  <rect x="3" y="3" width="94" height="30" rx="25" fill="#fff" opacity="0.25"/>
+
+  <!-- حافة داكنة سفلية (عمق) -->
+  <rect x="2" y="72" width="96" height="26" rx="20" fill="#000" opacity="0.25"/>
+
+  <!-- الخلفية الزرقاء الرئيسية -->
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#sg-bg)"/>
+
+  <!-- ضوء زجاجي علوي -->
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#sg-lens)"/>
+
+  <!-- حد داخلي مضيء -->
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="none" stroke="#90CAF9" stroke-width="2" opacity="0.7"/>
+
+  <!-- الترس مع توهج قوي -->
+  <g filter="url(#sg-glow)">
+    <!-- ظل الترس -->
+    <path d="M50 31c2 0 3.5 1.5 3.5 3.5v3c3 .9 5.6 2.4 7.8 4.5l2.2-1.8c1.5-1.2 3.8-1.1 5.1.4s1.3 3.7 0 5.1l-2 2.2c1.7 2.2 2.9 4.7 3.6 7.5h3.3c2 0 3.5 1.5 3.5 3.5s-1.5 3.5-3.5 3.5h-3.3c-.7 2.8-2 5.3-3.7 7.5l2 2.2c1.3 1.5 1.2 3.8-.3 5.1s-3.8 1.3-5.1-.2l-2.2-1.8c-2.2 2.1-4.8 3.5-7.9 4.5v3c0 2-1.5 3.5-3.5 3.5s-3.5-1.5-3.5-3.5v-3c-3-.9-5.7-2.4-7.9-4.5l-2.2 1.8c-1.3 1.5-3.6 1.5-5.1.2s-1.6-3.6-.3-5.1l2-2.2c-1.7-2.2-3-4.7-3.7-7.5h-3.3c-2 0-3.5-1.5-3.5-3.5s1.5-3.5 3.5-3.5h3.3c.7-2.8 2-5.3 3.6-7.5l-2-2.2c-1.3-1.4-1.3-3.6.1-5.1s3.6-1.6 5.1-.4l2.2 1.8c2.2-2.1 4.8-3.6 7.8-4.5v-3c0-2 1.5-3.5 3.5-3.5Z"
+          fill="#000820" opacity="0.5" transform="translate(1,3)"/>
+    <!-- الترس الأبيض -->
+    <path d="M50 31c2 0 3.5 1.5 3.5 3.5v3c3 .9 5.6 2.4 7.8 4.5l2.2-1.8c1.5-1.2 3.8-1.1 5.1.4s1.3 3.7 0 5.1l-2 2.2c1.7 2.2 2.9 4.7 3.6 7.5h3.3c2 0 3.5 1.5 3.5 3.5s-1.5 3.5-3.5 3.5h-3.3c-.7 2.8-2 5.3-3.7 7.5l2 2.2c1.3 1.5 1.2 3.8-.3 5.1s-3.8 1.3-5.1-.2l-2.2-1.8c-2.2 2.1-4.8 3.5-7.9 4.5v3c0 2-1.5 3.5-3.5 3.5s-3.5-1.5-3.5-3.5v-3c-3-.9-5.7-2.4-7.9-4.5l-2.2 1.8c-1.3 1.5-3.6 1.5-5.1.2s-1.6-3.6-.3-5.1l2-2.2c-1.7-2.2-3-4.7-3.7-7.5h-3.3c-2 0-3.5-1.5-3.5-3.5s1.5-3.5 3.5-3.5h3.3c.7-2.8 2-5.3 3.6-7.5l-2-2.2c-1.3-1.4-1.3-3.6.1-5.1s3.6-1.6 5.1-.4l2.2 1.8c2.2-2.1 4.8-3.6 7.8-4.5v-3c0-2 1.5-3.5 3.5-3.5Z"
+          fill="#E3F2FD"/>
+    <!-- دائرة الترس المركزية - ملونة -->
+    <circle cx="50" cy="57" r="11" fill="#1565C0"/>
+    <circle cx="50" cy="57" r="11" fill="none" stroke="#E3F2FD" stroke-width="2.5"/>
+    <circle cx="50" cy="57" r="6" fill="#0D47A1"/>
+    <!-- نقطة البريق -->
+    <circle cx="45.5" cy="52.5" r="3.5" fill="#fff" opacity="0.5"/>
+  </g>
+
+  <!-- لمعة زاوية علوية يمين -->
+  <ellipse cx="76" cy="18" rx="8" ry="4" fill="#fff" opacity="0.3" transform="rotate(30 76 18)"/>
+  <!-- لمعة زاوية علوية يسار -->
+  <ellipse cx="24" cy="18" rx="8" ry="4" fill="#fff" opacity="0.25" transform="rotate(-30 24 18)"/>
+</svg>

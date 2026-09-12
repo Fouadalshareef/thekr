@@ -1,1 +1,58 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFE082"/><stop offset=".5" stop-color="#FFB300"/><stop offset="1" stop-color="#FF6F00"/></linearGradient><linearGradient id="playBg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#66BB6A"/><stop offset="1" stop-color="#2E7D32"/></linearGradient></defs><rect x="5" y="5" width="90" height="90" rx="25" fill="url(#gold)"/><rect x="9" y="9" width="82" height="82" rx="21" fill="url(#playBg)"/><path d="M39 29 72 50 39 71Z" fill="#fff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="plg-frame" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFFDE7"/>
+      <stop offset="0.25" stop-color="#FFD600"/>
+      <stop offset="0.6" stop-color="#FF8F00"/>
+      <stop offset="1" stop-color="#E65100"/>
+    </linearGradient>
+    <linearGradient id="plg-bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0" stop-color="#A5D6A7"/>
+      <stop offset="0.5" stop-color="#388E3C"/>
+      <stop offset="1" stop-color="#0A2A0A"/>
+    </linearGradient>
+    <radialGradient id="plg-lens" cx="0.35" cy="0.2" r="0.7">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.5"/>
+      <stop offset="0.4" stop-color="#fff" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+    <!-- تدرج المثلث -->
+    <linearGradient id="plg-tri" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F1F8E9"/>
+      <stop offset="0.5" stop-color="#C8E6C9"/>
+      <stop offset="1" stop-color="#81C784"/>
+    </linearGradient>
+    <filter id="plg-drop">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity="0.6"/>
+    </filter>
+    <filter id="plg-glow">
+      <feGaussianBlur stdDeviation="3.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- ظل -->
+  <rect x="6" y="9" width="88" height="88" rx="23" fill="#000" opacity="0.45" filter="url(#plg-drop)"/>
+  <!-- إطار ذهبي -->
+  <rect x="2" y="2" width="96" height="96" rx="26" fill="url(#plg-frame)"/>
+  <rect x="3" y="3" width="94" height="30" rx="25" fill="#fff" opacity="0.25"/>
+  <rect x="2" y="72" width="96" height="26" rx="20" fill="#000" opacity="0.25"/>
+  <!-- خلفية خضراء -->
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#plg-bg)"/>
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="url(#plg-lens)"/>
+  <rect x="9" y="9" width="82" height="82" rx="20" fill="none" stroke="#81C784" stroke-width="2" opacity="0.6"/>
+
+  <g filter="url(#plg-glow)">
+    <!-- ظل المثلث -->
+    <path d="M30 24 L78 50 L30 76Z" fill="#0A1F0A" opacity="0.6" transform="translate(2,4)"/>
+    <!-- المثلث الرئيسي -->
+    <path d="M30 24 L78 50 L30 76Z" fill="url(#plg-tri)"/>
+    <!-- حد المثلث -->
+    <path d="M30 24 L78 50 L30 76Z" fill="none" stroke="white" stroke-width="2.5" opacity="0.7"/>
+    <!-- بريق علوي للمثلث -->
+    <path d="M32 27 L60 42 L32 42Z" fill="white" opacity="0.25"/>
+  </g>
+
+  <ellipse cx="76" cy="18" rx="8" ry="4" fill="#fff" opacity="0.3" transform="rotate(30 76 18)"/>
+  <ellipse cx="24" cy="18" rx="8" ry="4" fill="#fff" opacity="0.25" transform="rotate(-30 24 18)"/>
+</svg>
