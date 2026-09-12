@@ -18,11 +18,11 @@ export default class BootScene extends Phaser.Scene {
     // أصول SVG شفافة عالية الجودة لأزرار HUD (تُحوّل Phaser داخلياً إلى Textures).
     // تحميل الأيقونات بدقة مضاعفة (×2) لضمان حدّة عالية عند التوسيع على شاشات Retina/HD
     this.load.svg('hud-settings', 'game/icons/settings-v2.svg', { width: 128, height: 128 })
-    this.load.svg('hud-theme',    'game/icons/theme.svg',    { width: 128, height: 128 })
-    this.load.svg('hud-farm',     'game/icons/farm.svg',     { width: 128, height: 128 })
-    this.load.svg('hud-quran',    'game/icons/quran.svg',    { width: 128, height: 128 })
-    this.load.svg('hud-pause',    'game/icons/pause.svg',    { width: 128, height: 128 })
-    this.load.svg('hud-play',     'game/icons/play.svg',     { width: 128, height: 128 })
+    this.load.svg('hud-theme',    'game/icons/theme-v2.svg',    { width: 128, height: 128 })
+    this.load.svg('hud-farm',     'game/icons/farm-v2.svg',     { width: 128, height: 128 })
+    this.load.svg('hud-quran',    'game/icons/quran-v2.svg',    { width: 128, height: 128 })
+    this.load.svg('hud-pause',    'game/icons/pause-v2.svg',    { width: 128, height: 128 })
+    this.load.svg('hud-play',     'game/icons/play-v2.svg',     { width: 128, height: 128 })
     this.load.svg('modal-close',  'game/icons/close.svg',    { width: 112, height: 112 })
     this.load.svg('modal-index',  'game/icons/index.svg',    { width: 240, height:  90 })
   }

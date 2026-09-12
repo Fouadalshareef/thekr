@@ -91,7 +91,7 @@ function renderContent(): string {
     <!-- السرعة -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        <img class="ui-vector-icon" src="game/icons/theme.svg" alt=""> سرعة التصاعد
+        <img class="ui-vector-icon" src="game/icons/theme-v2.svg" alt=""> سرعة التصاعد
       </h3>
       <div class="flex items-center gap-3">
         <span class="text-xs text-slate-400">تأملي</span>
@@ -150,7 +150,7 @@ function renderContent(): string {
     <!-- إحصائيات اليوم -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        <img class="ui-vector-icon" src="game/icons/theme.svg" alt=""> أذكار اليوم
+        <img class="ui-vector-icon" src="game/icons/theme-v2.svg" alt=""> أذكار اليوم
       </h3>
       <div class="grid gap-1.5">${statRows}</div>
     </section>
