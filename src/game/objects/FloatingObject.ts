@@ -11,7 +11,7 @@ import { Events } from '../events'
 import { getSpeed } from '../../services/SettingsService'
 
 /** معامل تكبير الأجسام العائمة — 2.0 يعطي حجماً مريحاً للمس دون طغيان على الشاشة. */
-const BODY_SCALE = 2.0
+const BODY_SCALE = 2.25
 
 export interface FloatingObjectOptions {
   /** معرف الذكر (مثال: "subhanallah"). */
@@ -93,11 +93,15 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     // الإحداثيات المحلية للدائرة تُضرب في scale (2.6) عند تحويل Phaser لها لإحداثيات دولية،
     // لذلك نقسم على BODY_SCALE للحصول على المقياس المحلي الصحيح المطابق للجسم المرئي.
     // نُضيف هامش 12px مقسوماً على BODY_SCALE أيضاً لزيادة مساحة اللمس الفعلية.
-    const localHitR = options.hitRadius / BODY_SCALE + 12
+    const localHitR = options.hitRadius / BODY_SCALE + 22
     this.setInteractive(
       new Phaser.Geom.Circle(0, 0, localHitR),
       Phaser.Geom.Circle.Contains,
+      { useHandCursor: true },
     )
+    // تأكيد وجود منطقة لمس أوسع من الرسم الفعلي، خصوصاً قرب أسفل الشاشة.
+    this.input!.hitArea = new Phaser.Geom.Circle(0, 0, localHitR)
+    this.input!.hitAreaCallback = Phaser.Geom.Circle.Contains
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.handlePointerDown, this)
 
     // اندفاع أولي سريع: الوصول إلى ربع ارتفاع الشاشة خلال 175ms ثم الانتقال للسرعة العادية

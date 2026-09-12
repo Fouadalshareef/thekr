@@ -15,6 +15,9 @@ body {
 #game-container {
   width: 100%;
   height: 100%;
+  position: relative;
+  z-index: 0;
+  pointer-events: auto;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -22,6 +25,9 @@ body {
 
 #game-container canvas {
   display: block;
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
   max-width: 100%;
   max-height: 100%;
   /* إزالة تأخير اللمس الافتراضي في المتصفح وتفعيل الاستجابة الفورية */
@@ -45,7 +51,11 @@ body {
 }
 
 /* ضمان أن modal الـ Dashboard لا يحجب canvas عند إخفائه */
-#dashboard-modal.hidden {
+#dashboard-modal.hidden,
+#garden-modal.hidden,
+#advice-modal.hidden,
+#quran-modal.hidden,
+#pwa-install-banner.hidden {
   pointer-events: none !important;
 }
 
@@ -68,8 +78,12 @@ body {
    لإعادة تفعيل touch-action العمودي وتجاوز أي قيمة موروثة من الـ game canvas */
 body.modal-open {
   touch-action: pan-y !important;
-body.modal-open {
-  touch-action: pan-y !important;
+}
+
+/* اللعبة تستقبل اللمس دائماً؛ النوافذ المخفية أدناه معطلة صراحةً. */
+#game-container,
+#game-container canvas {
+  pointer-events: auto;
 }
 
 /* ============================================================

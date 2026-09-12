@@ -306,12 +306,16 @@ export default class MainScene extends Phaser.Scene {
   ): Phaser.GameObjects.Container {
     const btn = this.add.container(x, y)
     btn.setDepth(2000)
-    const r = 26 // حجم الأيقونة الجديدة 52×52px
-    // الأيقونة SVG هي الطبقة المرئية الوحيدة؛ لا توجد دوائر Phaser خلفها.
-    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-pause', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon]).setDisplaySize(52, 52)
+    const r = 33 // تكبير الزر 27% تقريباً من 52 إلى 66px
+    // الأيقونة SVG تُكبّر مع الزر، مع منطقة لمس إضافية 14px حولها.
+    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-pause', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon])
+      .setOrigin(0.5)
+      .setDisplaySize(66, 66)
     btn.add(svgIcon)
-    btn.setSize(52, 52)
-    btn.setInteractive(new Phaser.Geom.Circle(0, 0, r), Phaser.Geom.Circle.Contains)
+    btn.setSize(66, 66)
+    btn.setInteractive({ useHandCursor: true })
+    btn.input!.hitArea = new Phaser.Geom.Circle(0, 0, r + 14)
+    btn.input!.hitAreaCallback = Phaser.Geom.Circle.Contains
 
     /* legacy graphic layers removed
     const ground = this.add.graphics()
