@@ -42,12 +42,20 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
     })
   }
 
-  /** هل يُعدّ هذا الجسم "مجموعاً" في تتبع alive؟ — دائماً false لأنه يتحكم بنفسه. */
-  getData(key: string): unknown {
-    if (key === 'collected') return this._collected
-    return super.getData(key)
+  /**
+   * تعطيل/تفعيل التفاعل مع البطاقة (يُستخدم عند فتح النوافذ المنبثقة).
+   * ضرورية لأن MainScene تستدعيها على كل الأجسام الحية أثناء الإيقاف المؤقت.
+   */
+  public setBubbleInteractive(enabled: boolean): void {
+    if (enabled) {
+      this.setInteractive(
+        new Phaser.Geom.Rectangle(-this.cardW / 2 - 10, -this.cardH / 2 - 10, this.cardW + 20, this.cardH + 20),
+        Phaser.Geom.Rectangle.Contains,
+      )
+    } else {
+      this.disableInteractive()
+    }
   }
-  private _collected = false
 
   private buildCard(): void {
     const { cardW, cardH } = this
@@ -140,7 +148,7 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
     emitGoldBurst(this.scene, this.x, this.y)
 
     // إشعار الجمع
-    this._collected = true
+    this.setData('collected', true)
     this.scene.events.emit(Events.DHIKR_COLLECTED, {
       id: this.item.id,
       name: this.item.text,
@@ -158,7 +166,7 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
         duration: 180,
         ease: 'Back.easeOut',
       })
-      this._collected = false
+      this.setData('collected', false)
     } else {
       // اكتمل هذا الذكر — تلاشٍ ثم تدمير
       this.popped = true

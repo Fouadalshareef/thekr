@@ -18,6 +18,17 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
     type: Phaser.AUTO,
     parent: config.parent ?? 'game-container',
     backgroundColor: '#0f172a',
+    // نظام الفيزياء (Arcade): مطلوب لتوفّر this.physics داخل المشاهد.
+    // بدون هذا الإعداد يكون this.physics === undefined، وأي نداء مثل
+    // this.physics.pause() يرمي استثناءً (TypeError). وإذا وقع الاستثناء داخل
+    // MainScene.create() — كما يحدث عند تعطيل اللعبة من الإعدادات — يبقى المشهد
+    // في حالة CREATING ولا يُرسم إطلاقاً، فتظهر شاشة فارغة تماماً.
+    // لا تُنشأ هنا أي أجسام فيزيائية: الحركة تتم عبر tweens/update، والاستخدام
+    // الوحيد للفيزياء هو الإيقاف/الاستئناف عند فتح النوافذ أو الإيقاف اليدوي.
+    physics: {
+      default: 'arcade',
+      arcade: { debug: false, gravity: { x: 0, y: 0 } },
+    },
     // عزل أحداث الإدخال عن نافذة المتصفح لمنع أي انزياح أو تداخل في إحداثيات اللمس
     input: {
       windowEvents: false,

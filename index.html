@@ -71,6 +71,9 @@
       // لذلك يعمل التسجيل بشكل صحيح ويُطلق حدث beforeinstallprompt (نافذة التثبيت).
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
+          // هل كانت الصفحة مُتحكَّم بها بـ Service Worker قبل هذه الزيارة؟
+          // (false في أول زيارة/أول تثبيت — ولا حاجة لإعادة تحميل حينها)
+          const hadController = !!navigator.serviceWorker.controller
           navigator.serviceWorker.register('./sw.js').then((reg) => {
             // فحص فوري للتحديث عند الفتح
             reg.update()
@@ -92,7 +95,12 @@
           }).catch(() => {})
 
           // عند استبدال الـ SW (بعد skipWaiting) أعد تحميل الصفحة تلقائياً
+          // ملاحظة: في أول تثبيت يسيطر الـ SW الجديد على الصفحة (clients.claim)
+          // بدون وجود متحكّم سابق، وإعادة التحميل حينها لا لزوم لها وتُظهر
+          // شاشة فارغة (بيضاء) لحظياً عند بدء التشغيل — لذلك لا نعيد التحميل
+          // إلا عند تبديل نسخة SW قائمة بنسخة أحدث (تحديث حقيقي).
           navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!hadController) return
             if (!window.__swReloading) {
               window.__swReloading = true
               window.location.reload()
