@@ -15,7 +15,6 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
   private backgroundImage?: Phaser.GameObjects.Image
   private stars: Phaser.GameObjects.Arc[] = []
   private glow?: Phaser.GameObjects.Graphics
-  private clouds: Phaser.GameObjects.Container[] = []
 
   constructor(scene: Phaser.Scene, forced?: TimeTheme) {
     super(scene, 0, 0)
@@ -37,7 +36,6 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
   private build(): void {
     this.removeAll(true)
     this.stars = []
-    this.clouds = []
 
     const { width, height } = this.scene.scale
     const hour = new Date().getHours()
@@ -97,105 +95,6 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
     }
 
     // السحاب مدمج داخل mor.png ويظل ثابتاً؛ لا نبني أي طبقات سحاب متحركة.
-  }
-
-  /**
-   * غيوم ناعمة لطيفة كخلفية هادئة:
-   *  - ثلاث طبقات Parallax صغيرة وبطيئة وغير متراكمة.
-   *  - تُرسَم بتغطية معتمة (Alpha 1 داخل الرسم) وتُضبط الشفافية على الحاوية كلها
-   *    حتى لا تظهر دوائر متداخلة شفافة مشوّهة خلفها.
-   */
-  private buildCloud(width: number, height: number): void {
-    // الطبقة البعيدة: صغيرة جداً وبطيئة
-    this.spawnCloudLayer(width, {
-      sizeScale: 0.45,
-      alphaBase: 0.3,
-      speedMin: 60000,
-      speedMax: 95000,
-      yMin: height * 0.04,
-      yMax: height * 0.2,
-    })
-    // الطبقة الوسطى
-    this.spawnCloudLayer(width, {
-      sizeScale: 0.65,
-      alphaBase: 0.42,
-      speedMin: 42000,
-      speedMax: 68000,
-      yMin: height * 0.07,
-      yMax: height * 0.28,
-    })
-    // الطبقة الأمامية: الأكبر نسبياً لكن هادئة
-    this.spawnCloudLayer(width, {
-      sizeScale: 0.9,
-      alphaBase: 0.55,
-      speedMin: 28000,
-      speedMax: 48000,
-      yMin: height * 0.05,
-      yMax: height * 0.3,
-    })
-  }
-
-  /** رسم غيمة ناعمة واحدة (شكل مسطّح نظيف بدون دوائر شفافة متداخلة). */
-  private spawnCloudLayer(
-    width: number,
-    opts: {
-      sizeScale: number
-      alphaBase: number
-      speedMin: number
-      speedMax: number
-      yMin: number
-      yMax: number
-    },
-  ): void {
-    const s = opts.sizeScale
-    const y = Phaser.Math.Between(Math.round(opts.yMin), Math.round(opts.yMax))
-    const speed = Phaser.Math.Between(opts.speedMin, opts.speedMax)
-    const dir = Math.random() > 0.5 ? 1 : -1
-    const startX = dir === 1 ? -160 * s : width + 160 * s
-    const endX = dir === 1 ? width + 160 * s : -160 * s
-
-    const cloud = this.scene.add.container(startX, y)
-
-    const isDay = this.theme.period === 'day'
-    const baseColor = isDay ? 0xffffff : 0xc9d6e8
-    const shadeColor = isDay ? 0xd7e3f4 : 0xa8bad2
-
-    // طبقة الظل السفلي (معتمة داخلياً — تشوف فوقها الجسم المعتم فلا تظهر التداخلات)
-    const shade = this.scene.add.graphics()
-    shade.fillStyle(shadeColor, 1)
-    shade.fillCircle(2 * s, 8 * s, 22 * s)
-    shade.fillCircle(26 * s, 10 * s, 17 * s)
-    shade.fillRoundedRect(-22 * s, 0 * s, 74 * s, 14 * s, 7 * s)
-
-    // جسم الغيمة: قبة ناعمة + قاعدة مستديرة، كلها بلون واحد معتم
-    const body = this.scene.add.graphics()
-    body.fillStyle(baseColor, 1)
-    body.fillCircle(0, 0, 22 * s)
-    body.fillCircle(24 * s, -4 * s, 16 * s)
-    body.fillCircle(44 * s, 2 * s, 12 * s)
-    body.fillRoundedRect(-20 * s, -4 * s, 80 * s, 18 * s, 9 * s)
-    // لمعة علوية صغيرة
-    body.fillStyle(0xffffff, 1)
-    body.fillEllipse(12 * s, -12 * s, 34 * s, 8 * s)
-
-    cloud.add([shade, body])
-    // الشفافية النهائية تُطبَّق على الحاوية كاملة (بلا تداخل بين الأشكال)
-    cloud.setAlpha(opts.alphaBase)
-
-    this.scene.tweens.add({
-      targets: cloud,
-      x: endX,
-      duration: speed,
-      repeat: -1,
-      delay: Phaser.Math.Between(0, 12000),
-      ease: 'Linear',
-      onRepeat: () => {
-        cloud.y = Phaser.Math.Between(Math.round(opts.yMin), Math.round(opts.yMax))
-        cloud.x = dir === 1 ? -160 * s : width + 160 * s
-      },
-    })
-    this.clouds.push(cloud)
-    this.add(cloud)
   }
 }
 

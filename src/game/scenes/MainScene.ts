@@ -98,6 +98,15 @@ export default class MainScene extends Phaser.Scene {
   private pauseIcon!: Phaser.GameObjects.Image
   private updateBadge!: Phaser.GameObjects.Container
   private modePanel!: Phaser.GameObjects.Container
+  private modeList!: Phaser.GameObjects.Container
+  private modeScrollY = 0
+  private modeScrollMax = 0
+  private modeScrollThumb?: Phaser.GameObjects.Graphics
+  private modeScrollTrackH = 0
+  private modeListCenterY = 0
+  private modeDragY: number | null = null
+  private modeDragStart = 0
+  private modeWasDragging = false
   private focusPanel!: Phaser.GameObjects.Container
   private focusButtons: {
     bg: Phaser.GameObjects.Graphics
@@ -523,8 +532,14 @@ export default class MainScene extends Phaser.Scene {
 
     // نافذة عريضة مريحة (~90% من عرض الشاشة) — بطاقة كرتونية بارزة
     const panelW = Math.min(width * 0.9, 480)
-    const panelH = 400
+    // الارتفاع محدود بنسبة من الشاشة حتى لا تخرج الأزرار عن النافذة (60vh كحد أقصى)
+    const panelH = Math.min(460, Math.max(360, height * 0.6))
     const card = this.add.container(width / 2, height / 2)
+    // إعادة ضبط حالة التمرير عند كل بناء (تُبنى اللوحة مرة واحدة عند create)
+    this.modeScrollY = 0
+    this.modeScrollMax = 0
+    this.modeScrollThumb = undefined
+    this.modeListCenterY = 0
     const base = 0x172554 // كحلي زجاجي هادئ
     const gfx = this.add.graphics()
     // بطاقة زجاجية ناعمة بلا حواف سوداء أو ظل ثقيل.
@@ -571,67 +586,88 @@ export default class MainScene extends Phaser.Scene {
     const activeMode = gameMode.getMode()
     const btnW = panelW - 56
     const btnH = 60
-    const startY = -panelH / 2 + 126
+    const GAP = 12 // مسافة نسبية ثابتة بين الأزرار — لا تتغير عند التفاعل
+    const STEP = btnH + GAP
 
-    MODE_OPTIONS.forEach((opt, i) => {
-      const yy = startY + i * 76
+    // ── حاوية قائمة الأزرار القابلة للتمرير (داخل البطاقة، أسفل العنوان) ──
+    const listTop = -panelH / 2 + 96
+    const listBottom = panelH / 2 - 20
+    const listH = Math.max(120, listBottom - listTop)
+    this.modeListCenterY = (listTop + listBottom) / 2
+    this.modeScrollTrackH = listH
+    this.modeList = this.add.container(0, this.modeListCenterY)
+
+    // قناع قصّ: الأزرار الزائدة تُخفى بدل أن تخرج خارج البطاقة
+    const maskShape = this.add.graphics()
+    maskShape.fillStyle(0xffffff, 1)
+    maskShape.fillRect(-btnW / 2 - 12, this.modeListCenterY - listH / 2, btnW + 24, listH)
+    const mask = new Phaser.Display.Masks.GeometryMask(this, maskShape)
+    maskShape.setVisible(false)
+    this.modeList.setMask(mask)
+
+    // شريط تمرير شفاف بسيط (Minimalist) على حافة القائمة
+    const trackX = btnW / 2 + 6
+    const scrollbar = this.add.graphics()
+    scrollbar.fillStyle(0xffffff, 0.12)
+    scrollbar.fillRoundedRect(trackX - 3, this.modeListCenterY - listH / 2, 6, listH, 3)
+    this.modeScrollThumb = this.add.graphics()
+
+    type ModeBtn = { root: Phaser.GameObjects.Container; baseY: number }
+    const modeButtons: ModeBtn[] = []
+
+    MODE_OPTIONS.forEach((opt, idx) => {
       const isActive = opt.mode === activeMode
+      // الإحداثي الأساسي ثابت: gap ثابت 12px — لا يتغير أبداً عند التفاعل
+      const baseY = -((MODE_OPTIONS.length - 1) * STEP) / 2 + idx * STEP
       const bg = this.add.graphics()
+      const glow = this.add.graphics()
       const label = this.add
-        .text(0, 0, opt.label, {
+        .text(0, 0, isActive ? `❀ ${opt.label}` : opt.label, {
           fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Tahoma, sans-serif',
           fontSize: '26px',
           fontStyle: 'bold',
-          color: '#e2e8f0',
+          color: '#ffffff',
         })
         .setOrigin(0.5)
 
-      const drawBg = (hovered: boolean) => {
+      const drawBg = (hovered: boolean): void => {
         bg.clear()
-        const btnColor = isActive ? 0x16a34a : hovered ? 0x64748b : 0x475569
-        /* legacy button bevel removed
-        const btnSide = this.darker(btnColor, 0.5)
-        const liftB = 5
-        // ظل سفلي
-        bg.fillStyle(0x000000, 0.3)
-        bg.fillRoundedRect(-btnW / 2, -btnH / 2 + liftB + 2, btnW, btnH, 18)
-        // جسم الحافة
-        bg.fillStyle(btnSide, 1)
-        bg.fillRoundedRect(-btnW / 2, -btnH / 2 + liftB - 1, btnW, btnH, 18)
-        // وجه
-        bg.fillStyle(btnColor, 1)
-        bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 18)
-        // لمعة علوية
-        bg.fillStyle(0xffffff, 0.25)
-        bg.fillRoundedRect(-btnW / 2 + 6, -btnH / 2 + 5, btnW - 12, btnH / 2, 14)
-        // حد أبيض ناصع
-        bg.lineStyle(2.5, 0xffffff, 0.85)
-        bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 18)
-        // إطار ذهبي للزر النشط
+        glow.clear()
         if (isActive) {
-          bg.lineStyle(3, 0xfde047, 1)
-          bg.strokeRoundedRect(-btnW / 2 - 2, -btnH / 2 - 2, btnW + 4, btnH + 4, 20)
+          glow.fillStyle(0x2ecc71, 0.35)
+          glow.fillRoundedRect(-btnW / 2 - 4, -btnH / 2 - 4, btnW + 8, btnH + 8, 20)
+          bg.fillStyle(0x1e8e4f, 1)
+          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 16)
+          bg.fillStyle(hovered ? 0x35d37f : 0x2ecc71, 1)
+          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH - 10, 12)
+          bg.fillStyle(0xffffff, 0.16)
+          bg.fillRoundedRect(-btnW / 2 + 6, -btnH / 2 + 5, btnW - 12, btnH / 2 - 4, 10)
+          bg.lineStyle(1.5, 0xffd700, 0.6)
+          bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 16)
+        } else {
+          const idle = hovered ? 0x64748b : 0x475569
+          bg.fillStyle(idle, 0.82)
+          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 20)
+          bg.fillStyle(0xffffff, hovered ? 0.14 : 0.08)
+          bg.fillRoundedRect(-btnW / 2 + 5, -btnH / 2 + 4, btnW - 10, btnH / 2, 14)
+          bg.lineStyle(1.5, 0x94a3b8, 0.65)
+          bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 20)
         }
-        */
-        bg.fillStyle(btnColor, isActive ? 0.94 : 0.82)
-        bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 20)
-        bg.fillStyle(0xffffff, hovered ? 0.14 : 0.08)
-        bg.fillRoundedRect(-btnW / 2 + 5, -btnH / 2 + 4, btnW - 10, btnH / 2, 15)
-        bg.lineStyle(isActive ? 2.5 : 1.5, isActive ? 0xfde68a : 0x94a3b8, isActive ? 1 : 0.65)
-        bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 20)
       }
       drawBg(false)
-      if (isActive) label.setColor('#fff7cc')
 
-      const btn = this.add.container(0, yy)
-      btn.add([bg, label])
+      const btn = this.add.container(0, baseY)
+      btn.add([glow, bg, label])
+      btn.setData('baseY', baseY)
       btn.setInteractive(new Phaser.Geom.Rectangle(-btnW / 2 - 10, -btnH / 2 - 8, btnW + 20, btnH + 16), Phaser.Geom.Rectangle.Contains)
 
-      // سلسلة تفاعل ناعمة (Hover / Active)
+      // سلسلة تفاعل ناعمة (Hover / Active) — scale فقط، المواضع baseY ثابتة
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => drawBg(true))
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => drawBg(false))
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
-        this.tweens.add({ targets: btn, scale: 0.95, y: 2, duration: 70, ease: 'Quad.easeOut' })
+        if (this.modeWasDragging) return
+        this.tweens.killTweensOf(btn)
+        this.tweens.add({ targets: btn, scale: 0.95, duration: 70, ease: 'Quad.easeOut' })
         if (opt.mode === 'zen') {
           this.scene.start('ZenScene')
           return
@@ -639,11 +675,102 @@ export default class MainScene extends Phaser.Scene {
         this.setMode(opt.mode)
       })
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, () => {
-        this.tweens.add({ targets: btn, scale: 1, y: 0, duration: 100, ease: 'Back.easeOut' })
+        this.tweens.killTweensOf(btn)
+        this.tweens.add({ targets: btn, scale: 1, duration: 100, ease: 'Back.easeOut' })
       })
-      card.add(btn)
+      this.modeList.add(btn)
+      modeButtons.push({ root: btn, baseY })
     })
+
+    // ── منطق التمرير: max-height داخلي + قناع قص + مؤشر شفاف ──
+    const contentH = MODE_OPTIONS.length * btnH + (MODE_OPTIONS.length - 1) * GAP
+    this.modeScrollMax = Math.max(0, contentH - listH)
+
+    card.add([this.modeList, scrollbar])
+    if (this.modeScrollThumb) card.add(this.modeScrollThumb)
+    this.applyModeScroll()
+    card.add(maskShape)
+
+    // عجلة الفأرة للتمرير (سطح المكتب)
+    this.input.off('wheel', this.handleModeWheel, this)
+    this.input.on('wheel', this.handleModeWheel, this)
+
+    // السحب العمودي للتمرير (لمس/فأرة): مستمعات على مستوى المشهد —
+    // تعمل مع الأزرار لأنها لا تحجب أحداثها، وتُثبّت المواضع baseY.
+    this.modeWasDragging = false
+    this.input.off('pointerdown', this.handleModeDragDown, this)
+    this.input.off('pointermove', this.handleModeDragMove, this)
+    this.input.off('pointerup', this.handleModeDragUp, this)
+    this.input.on('pointerdown', this.handleModeDragDown, this)
+    this.input.on('pointermove', this.handleModeDragMove, this)
+    this.input.on('pointerup', this.handleModeDragUp, this)
     this.modePanel.add(card)
+  }
+
+  /** هل بدأ السحب داخل منطقة قائمة الأنماط؟ */
+  private isPointerInModeList(p: Phaser.Input.Pointer): boolean {
+    if (!this.modeUIOpen || !this.modePanel.visible || this.modeScrollMax <= 0) return false
+    const cx = this.scale.width / 2
+    const cy = this.scale.height / 2
+    const lx = p.x - cx
+    const ly = p.y - cy
+    const listTop = this.modeListCenterY - this.modeScrollTrackH / 2
+    const listBottom = this.modeListCenterY + this.modeScrollTrackH / 2
+    return Math.abs(lx) < 220 && ly > listTop - 10 && ly < listBottom + 10
+  }
+
+  private handleModeDragDown = (p: Phaser.Input.Pointer): void => {
+    if (!this.isPointerInModeList(p)) {
+      this.modeDragY = null
+      return
+    }
+    this.modeDragY = p.y
+    this.modeDragStart = this.modeScrollY
+    this.modeWasDragging = false
+  }
+
+  private handleModeDragMove = (p: Phaser.Input.Pointer): void => {
+    if (this.modeDragY === null || !p.isDown) return
+    const dy = p.y - this.modeDragY
+    if (!this.modeWasDragging && Math.abs(dy) > 8) this.modeWasDragging = true
+    if (this.modeWasDragging) this.setModeScroll(this.modeDragStart - dy)
+  }
+
+  private handleModeDragUp = (): void => {
+    this.modeDragY = null
+    // تُصفَّر عند الإغلاق/الفتح التالي عبر closeModePanel/openModePanel
+    this.time.delayedCall(50, () => {
+      this.modeWasDragging = false
+    })
+  }
+
+  private handleModeWheel = (_p: Phaser.Input.Pointer, _objs: unknown[], _dx: number, dy: number): void => {
+    if (!this.modeUIOpen || !this.modePanel.visible || this.modeScrollMax <= 0) return
+    this.setModeScroll(this.modeScrollY + dy * 0.6)
+  }
+
+  private setModeScroll(v: number): void {
+    this.modeScrollY = Phaser.Math.Clamp(v, 0, this.modeScrollMax)
+    this.applyModeScroll()
+  }
+
+  private applyModeScroll(): void {
+    if (!this.modeList) return
+    this.modeList.each((child: Phaser.GameObjects.GameObject) => {
+      const c = child as Phaser.GameObjects.Container
+      const baseY = (c.getData('baseY') as number | undefined) ?? 0
+      c.y = baseY - this.modeScrollY
+    })
+    const thumb = this.modeScrollThumb
+    if (!thumb) return
+    thumb.clear()
+    if (this.modeScrollMax <= 0) return
+    const trackH = this.modeScrollTrackH
+    const minH = 28
+    const h = Math.max(minH, (trackH / (trackH + this.modeScrollMax)) * trackH)
+    const y0 = this.modeListCenterY - trackH / 2 + (this.modeScrollY / this.modeScrollMax) * (trackH - h)
+    thumb.fillStyle(0xffffff, 0.35)
+    thumb.fillRoundedRect(186, y0, 6, h, 3)
   }
 
   private openModePanel(): void {
@@ -916,7 +1043,7 @@ export default class MainScene extends Phaser.Scene {
     
     // إذا كان النمط صباح/مساء نعالجه بشكل منفصل:
     if (mode === 'morning' || mode === 'evening') {
-      const { stepDone, allDone } = gameMode.onAzkarTapped()
+      const { allDone } = gameMode.onAzkarTapped()
       this.updateAzkarCounter()
       
       // المؤثرات

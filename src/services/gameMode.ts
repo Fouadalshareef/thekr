@@ -129,8 +129,7 @@ class GameModeManager {
 
   /**
    * تسجيل نقرة على ذكر الصباح/المساء.
-   * @returns stepDone=true إذا اكتملت مرات الذكر الحالي وجب الانتقال للتالي.
-   *          allDone=true إذا اكتملت جميع الأذكار.
+   * @returns allDone=true إذا اكتملت جميع الأذكار.
    */
   onAzkarTapped(): { stepDone: boolean; allDone: boolean } {
     const item = this.getCurrentAzkar()
