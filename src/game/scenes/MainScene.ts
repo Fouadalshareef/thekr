@@ -13,6 +13,7 @@ import Lantern from '../objects/Lantern'
 import SalawatBubble from '../objects/SalawatBubble'
 import LaHawlaBubble from '../objects/LaHawlaBubble'
 import SubhanallahWaBihamdihBubble from '../objects/SubhanallahWaBihamdihBubble'
+import AzkarBubble from '../objects/AzkarBubble'
 import { emitGoldBurst, ensurePixelTexture } from '../objects/ParticleBurst'
 import GardenLayer from '../objects/GardenLayer'
 import SkyLayer from '../objects/SkyLayer'
@@ -57,6 +58,8 @@ const MODE_OPTIONS: { mode: GameMode | 'zen'; label: string }[] = [
   { mode: 'sequence', label: 'مترابط' },
   { mode: 'random', label: 'شامل' },
   { mode: 'focus', label: 'تخصيص' },
+  { mode: 'morning', label: 'أذكار الصباح' },
+  { mode: 'evening', label: 'أذكار المساء' },
   { mode: 'zen', label: 'استغفار' },
 ]
 
@@ -72,6 +75,9 @@ export default class MainScene extends Phaser.Scene {
   /** عدد الفقاعات الملتقطة تباعاً دون تفويت. */
   private comboCount = 0
   private comboText!: Phaser.GameObjects.Text
+
+  private azkarCounterText!: Phaser.GameObjects.Text
+  private azkarCounterBg!: Phaser.GameObjects.Graphics
 
   private paused = false
   private modeUIOpen = false
@@ -178,6 +184,42 @@ export default class MainScene extends Phaser.Scene {
     this.buildPauseButton()
     this.buildSessionCounter()
     this.buildComboCounter()
+    this.buildAzkarCounter()
+  }
+
+  private buildAzkarCounter(): void {
+    const { width } = this.scale
+    this.azkarCounterBg = this.add.graphics().setDepth(2000).setAlpha(0)
+    // خلفية بسيطة معتمة في أعلى المنتصف
+    this.azkarCounterBg.fillStyle(0x000000, 0.4)
+    this.azkarCounterBg.fillRoundedRect(width / 2 - 90, 15, 180, 40, 20)
+    this.azkarCounterBg.lineStyle(2, 0xfcd34d, 0.8)
+    this.azkarCounterBg.strokeRoundedRect(width / 2 - 90, 15, 180, 40, 20)
+
+    this.azkarCounterText = this.add
+      .text(width / 2, 35, '', {
+        fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+        fontSize: '18px',
+        fontStyle: 'bold',
+        color: '#fef3c7',
+      })
+      .setOrigin(0.5)
+      .setDepth(2001)
+      .setAlpha(0)
+  }
+
+  private updateAzkarCounter(): void {
+    const mode = gameMode.getMode()
+    if (mode === 'morning' || mode === 'evening') {
+      const current = gameMode.getCurrentAzkarNumber()
+      const total = gameMode.getTotalAzkar()
+      this.azkarCounterText.setText(`المتبقي: ${total - current + 1} / ${total}`)
+      this.azkarCounterBg.setAlpha(1)
+      this.azkarCounterText.setAlpha(1)
+    } else {
+      this.azkarCounterBg.setAlpha(0)
+      this.azkarCounterText.setAlpha(0)
+    }
   }
 
   /** تطبيق إعدادات إظهار/إخفاء الأيقونات فوراً (اللعبة/المصحف/جميع الأيقونات). */
@@ -713,8 +755,10 @@ export default class MainScene extends Phaser.Scene {
       btn.setInteractive(new Phaser.Geom.Rectangle(-150, -18, 300, 36), Phaser.Geom.Rectangle.Contains)
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
         this.tweens.add({ targets: btn, scale: 0.96, duration: 60, ease: 'Quad.easeOut' })
-        this.setMode('focus', i)
+        gameMode.setMode('focus', i)
+        this.closeModePanel()
         this.toggleFocusPanel(false)
+        this.updateAzkarCounter()
       })
       card.add(btn)
       this.focusButtons.push({ bg, label, draw: drawItem })
@@ -736,7 +780,7 @@ export default class MainScene extends Phaser.Scene {
     closeBg.lineStyle(2.5, 0xffffff, 0.9)
     closeBg.strokeRoundedRect(-70, -18, 140, 36, 18)
     const closeText = this.add
-      .text(0, 0, 'إغلاق', {
+      .text(0, 0, 'رجوع', {
         fontFamily: '"Segoe UI", Tahoma, sans-serif',
         fontSize: '17px',
         color: '#fee2e2',
@@ -744,16 +788,20 @@ export default class MainScene extends Phaser.Scene {
       .setOrigin(0.5)
     close.add([closeBg, closeText])
     close.setInteractive(new Phaser.Geom.Rectangle(-70, -18, 140, 36), Phaser.Geom.Rectangle.Contains)
-    close.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => this.toggleFocusPanel(false))
+    close.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
+      this.toggleFocusPanel(false)
+      this.openModePanel()
+    })
     card.add(close)
   }
 
   private toggleFocusPanel(show: boolean): void {
-    if (show) this.pauseForModal()
-    this.modeUIOpen = show
     this.focusPanel.setVisible(show)
-    if (show) this.refreshFocusSelection()
-    else this.spawnIfEmpty()
+    if (show) {
+        this.refreshFocusSelection()
+    } else if (!this.modeUIOpen) {
+        this.spawnIfEmpty()
+    }
   }
 
   private refreshFocusSelection(): void {
@@ -765,12 +813,19 @@ export default class MainScene extends Phaser.Scene {
     })
   }
 
-  /** تبديل النمط الحالي مع إغلاق القوائم توليد فوري. */
+  /** تبديل النمط الحالي. */
   private setMode(mode: GameMode, focusIndex?: number): void {
-    gameMode.setMode(mode, focusIndex)
-    this.closeModePanel()
-    this.toggleFocusPanel(false)
-    if (mode === 'focus') this.toggleFocusPanel(true)
+    if (mode === 'focus') {
+      // إخفاء اللوحة الرئيسية للأنماط بدون استئناف اللعبة
+      this.modePanel.setVisible(false)
+      // إظهار لوحة التخصيص
+      this.toggleFocusPanel(true)
+    } else {
+      gameMode.setMode(mode, focusIndex)
+      this.closeModePanel()
+      this.toggleFocusPanel(false)
+      this.updateAzkarCounter()
+    }
   }
 
   // ------------------------------------------------------------------
@@ -789,6 +844,26 @@ export default class MainScene extends Phaser.Scene {
     const { width, height } = this.scale
     const mode = gameMode.getMode()
     const margin = 70
+
+    if (mode === 'morning' || mode === 'evening') {
+      const azkarItem = gameMode.getCurrentAzkar()
+      if (!azkarItem) return
+
+      const cx = width / 2
+      const cy = height / 2 - 40 // التمركز في منتصف الشاشة مع إزاحة خفيفة لأعلى
+
+      const bubble = new AzkarBubble(this, cx, cy, azkarItem)
+      this.add.existing(bubble)
+      
+      // نتتبعه مثل باقي الكائنات لكي نعرف متى ينتهي
+      this.alive.push(bubble as unknown as FloatingObject)
+      bubble.once(Phaser.GameObjects.Events.DESTROY, () => {
+        const i = this.alive.indexOf(bubble as unknown as FloatingObject)
+        if (i >= 0) this.alive.splice(i, 1)
+        this.scheduleNext()
+      })
+      return
+    }
 
     let id: string | undefined
     if (mode === 'random') {
@@ -837,6 +912,24 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private onDhikrCollected(payload: CollectPayload): void {
+    const mode = gameMode.getMode()
+    
+    // إذا كان النمط صباح/مساء نعالجه بشكل منفصل:
+    if (mode === 'morning' || mode === 'evening') {
+      const { stepDone, allDone } = gameMode.onAzkarTapped()
+      this.updateAzkarCounter()
+      
+      // المؤثرات
+      this.sessionCount += 1
+      this.sessionText.setText(`${this.sessionCount}`)
+      
+      if (allDone) {
+        // اكتملت جميع الأذكار — إظهار رسالة التهنئة
+        this.time.delayedCall(500, () => this.showAzkarCompleteMessage(mode))
+      }
+      return
+    }
+
     const current = gameMode.getCurrentDhikr()
     const id = payload.id || current?.id
     if (!id) return
@@ -869,6 +962,51 @@ export default class MainScene extends Phaser.Scene {
 
     // توليد التالية بعد فرقعة الحالية
     this.scheduleNext()
+  }
+
+  private showAzkarCompleteMessage(mode: string): void {
+    const { width, height } = this.scale
+    const title = mode === 'morning' ? 'أذكار الصباح' : 'أذكار المساء'
+    const msg = this.add.container(width / 2, height / 2).setDepth(4000).setAlpha(0)
+    
+    const bg = this.add.graphics()
+    bg.fillStyle(0x0f172a, 0.95)
+    bg.fillRoundedRect(-160, -100, 320, 200, 24)
+    bg.lineStyle(3, 0xfcd34d, 1)
+    bg.strokeRoundedRect(-160, -100, 320, 200, 24)
+    
+    const txt1 = this.add.text(0, -30, `اكتملت ${title}`, {
+      fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+      fontSize: '28px',
+      fontStyle: 'bold',
+      color: '#34d399'
+    }).setOrigin(0.5)
+    
+    const txt2 = this.add.text(0, 20, 'تقبل الله طاعتكم', {
+      fontFamily: '"Segoe UI", Tahoma, sans-serif',
+      fontSize: '22px',
+      color: '#fef3c7'
+    }).setOrigin(0.5)
+    
+    const hint = this.add.text(0, 70, '« اضغط للعودة »', {
+      fontFamily: '"Segoe UI", Tahoma, sans-serif',
+      fontSize: '15px',
+      color: '#94a3b8'
+    }).setOrigin(0.5)
+    
+    msg.add([bg, txt1, txt2, hint])
+    
+    confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } })
+    
+    this.tweens.add({ targets: msg, alpha: 1, scale: { from: 0.8, to: 1 }, duration: 400, ease: 'Back.easeOut' })
+    
+    const blocker = this.add.rectangle(0, 0, width, height, 0x000000, 0.6).setOrigin(0).setDepth(3999).setInteractive()
+    blocker.once('pointerdown', () => {
+      msg.destroy()
+      blocker.destroy()
+      // العودة لنمط التسلسل بعد الانتهاء
+      this.setMode('sequence')
+    })
   }
 
   private cleanup(): void {
