@@ -187,7 +187,7 @@ export function setQuranEnabled(enabled: boolean): void {
   }
 }
 
-/** هل جميع أيقونات شريط الأدوات (الإعدادات/الأنماط/الحديقة/المصحف/الإيقاف) مفعّلة؟ (الافتراضي: مفعّلة) */
+/** هل جميع أيقونات شريط الأدوات مفعّلة؟ (الافتراضي: مفعّلة — محفوظ للتوافق) */
 export function areIconsEnabled(): boolean {
   try {
     return localStorage.getItem(ICONS_KEY) !== 'false'
@@ -196,11 +196,49 @@ export function areIconsEnabled(): boolean {
   }
 }
 
-/** تفعيل/إيقاف جميع أيقونات شريط الأدوات. */
+/** تفعيل/إيقاف جميع أيقونات شريط الأدوات (محفوظ للتوافق). */
 export function setIconsEnabled(enabled: boolean): void {
   try {
     localStorage.setItem(ICONS_KEY, enabled ? 'true' : 'false')
   } catch {
     /* تجاهل */
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* إنجاز أذكار الصباح/المساء اليومية (علامة ✔ في لوحة التحكم)          */
+/* ------------------------------------------------------------------ */
+
+const MORNING_DONE_KEY = 'azkar_completed_morning'
+const EVENING_DONE_KEY = 'azkar_completed_evening'
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+/** تعليم أذكار الصباح أو المساء كمنجزة اليوم (تُستدعى عند اكتمالها في اللعب). */
+export function markAzkarDone(kind: 'morning' | 'evening'): void {
+  try {
+    localStorage.setItem(kind === 'morning' ? MORNING_DONE_KEY : EVENING_DONE_KEY, todayStr())
+  } catch {
+    /* تجاهل */
+  }
+}
+
+/** هل أُنجزت أذكار الصباح اليوم؟ */
+export function isMorningDoneToday(): boolean {
+  try {
+    return localStorage.getItem(MORNING_DONE_KEY) === todayStr()
+  } catch {
+    return false
+  }
+}
+
+/** هل أُنجزت أذكار المساء اليوم؟ */
+export function isEveningDoneToday(): boolean {
+  try {
+    return localStorage.getItem(EVENING_DONE_KEY) === todayStr()
+  } catch {
+    return false
   }
 }

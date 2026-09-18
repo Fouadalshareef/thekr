@@ -141,9 +141,12 @@ function showInstallBanner(deferred: BeforeInstallPromptEvent): void {
 }
 
 // التقاط حدث التثبيت وعرض النافذة عند الزيارة الأولى (وليس في وضع standalone)
+// + حفظ الحدث عالمياً لزر "تثبيت / تنزيل التطبيق للأوفلاين" في لوحة التحكم
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault()
   const evt = e as BeforeInstallPromptEvent
+  // إتاحة التثبيت الفوري من زر لوحة التحكم (#dash-install-offline)
+  ;(window as unknown as { __pwaDeferredPrompt?: BeforeInstallPromptEvent }).__pwaDeferredPrompt = evt
   if (!isStandalone() && !localStorage.getItem(DISMISS_KEY)) {
     // تأخير بسيط حتى تستقر واجهة اللعبة أولاً
     setTimeout(() => showInstallBanner(evt), 1500)

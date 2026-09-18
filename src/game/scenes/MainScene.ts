@@ -20,7 +20,7 @@ import SkyLayer from '../objects/SkyLayer'
 import { Events } from '../events'
 import { incrementDhikr } from '../../services/DhikrStorage'
 import { SEQUENCE_DHIKRS, gameMode, type GameMode } from '../../services/gameMode'
-import { recordTodayDhikr, isGameEnabled, isQuranEnabled, areIconsEnabled } from '../../services/SettingsService'
+import { recordTodayDhikr, isGameEnabled, isQuranEnabled, areIconsEnabled, markAzkarDone } from '../../services/SettingsService'
 import { hasPendingUpdate } from '../../services/AppVersion'
 import { getNextQuote } from '../../services/QuotesDB'
 
@@ -1051,7 +1051,8 @@ export default class MainScene extends Phaser.Scene {
       this.sessionText.setText(`${this.sessionCount}`)
       
       if (allDone) {
-        // اكتملت جميع الأذكار — إظهار رسالة التهنئة
+        // اكتملت جميع الأذكار — حفظ الإنجاز اليومي (علامة ✔ في لوحة التحكم) + رسالة التهنئة
+        markAzkarDone(mode)
         this.time.delayedCall(500, () => this.showAzkarCompleteMessage(mode))
       }
       return

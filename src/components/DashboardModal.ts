@@ -17,12 +17,10 @@ import {
   setSoundEnabled,
   isVibrationEnabled,
   setVibrationEnabled,
-  isGameEnabled,
-  setGameEnabled,
   isQuranEnabled,
   setQuranEnabled,
-  areIconsEnabled,
-  setIconsEnabled,
+  isMorningDoneToday,
+  isEveningDoneToday,
 } from '../services/SettingsService'
 import { getGardenState } from '../services/GardenService'
 import { loadDhikrData } from '../services/DhikrStorage'
@@ -74,14 +72,35 @@ function renderContent(): string {
   const garden = getGardenState()
   const data = loadDhikrData()
   const speed = getSpeed()
+  const morningDone = isMorningDoneToday()
+  const eveningDone = isEveningDoneToday()
 
-  const statRows = DHIKR_LABELS.map(
-    ({ id, label }) => `
+  const doneBadge = (done: boolean) =>
+    done
+      ? `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-white text-sm font-bold shadow-[0_0_10px_rgba(16,185,129,0.7)]">✔</span>`
+      : `<span class="inline-flex items-center justify-center w-6 h-6 rounded-full border border-slate-500 text-transparent text-sm">✔</span>`
+
+  const morningRow = `
+      <div class="juicy-card flex items-center justify-between px-4 py-3 border-emerald-400/40">
+        <span class="text-xl text-slate-100">🌅 أذكار الصباح</span>
+        ${doneBadge(morningDone)}
+      </div>`
+  const eveningRow = `
+      <div class="juicy-card flex items-center justify-between px-4 py-3 border-amber-400/40">
+        <span class="text-xl text-slate-100">🌙 أذكار المساء</span>
+        ${doneBadge(eveningDone)}
+      </div>`
+
+  const statRows =
+    morningRow +
+    DHIKR_LABELS.map(
+      ({ id, label }) => `
       <div class="juicy-card flex items-center justify-between px-4 py-3">
         <span class="text-xl text-slate-100">${label}</span>
         <span class="font-mono text-xl font-bold text-emerald-300">${stats[id] ?? 0}</span>
       </div>`,
-  ).join('')
+    ).join('') +
+    eveningRow
 
   const nextLine = garden.next
     ? `العنصر القادم: <b class="text-amber-300">${garden.next.name}</b> عند ${garden.next.threshold} ذكراً (${Math.round(garden.progress * 100)}%)`
@@ -123,25 +142,15 @@ function renderContent(): string {
       </div>
     </section>
 
-    <!-- تشغيل/إيقاف اللعبة والمصحف والأيقونات -->
+    <!-- تشغيل/إيقاف العناصر (المصحف الشريف فقط) -->
     <section class="space-y-2">
       <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
         <img class="ui-vector-icon" src="game/icons/settings-v2.svg" alt=""> تشغيل وإيقاف العناصر
       </h3>
       <div class="space-y-2">
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">اللعبة</span>
-          <input id="dash-game" type="checkbox" ${isGameEnabled() ? 'checked' : ''} class="peer sr-only" />
-          <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
-        </label>
-        <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
           <span class="text-xl text-slate-100">المصحف الشريف</span>
           <input id="dash-quran" type="checkbox" ${isQuranEnabled() ? 'checked' : ''} class="peer sr-only" />
-          <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
-        </label>
-        <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">جميع الأيقونات</span>
-          <input id="dash-icons" type="checkbox" ${areIconsEnabled() ? 'checked' : ''} class="peer sr-only" />
           <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
         </label>
       </div>
@@ -200,6 +209,21 @@ function renderContent(): string {
         <p id="dash-update-available" class="hidden text-xs text-center text-emerald-300 font-bold">✅ تحديث جاهز! اضغط الزر للتطبيق.</p>
       </div>
     </section>
+
+    <!-- تثبيت التطبيق للأوفلاين (PWA) -->
+    <section class="space-y-2">
+      <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
+        📲 العمل بدون إنترنت
+      </h3>
+      <div class="rounded-lg bg-slate-800/70 px-3 py-2 text-sm text-slate-200 space-y-2">
+        <p class="text-xs text-slate-400 leading-relaxed">ثبّت التطبيق على جهازك ليعمل كاملاً وبسرعة حتى بدون إنترنت.</p>
+        <button id="dash-install-offline" type="button"
+          class="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-l from-amber-500 to-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.5)] hover:from-amber-400 hover:to-orange-400 active:scale-95 transition-all px-3 py-2.5 text-sm font-bold text-white cursor-pointer">
+          📥 تثبيت / تنزيل التطبيق للأوفلاين
+        </button>
+        <p id="dash-install-status" class="hidden text-xs text-center text-emerald-300 font-bold"></p>
+      </div>
+    </section>
   `
 }
 
@@ -231,18 +255,40 @@ function bindEvents(): void {
     setVibrationEnabled((e.target as HTMLInputElement).checked)
   })
 
-  // مفاتيح تشغيل/إيقاف اللعبة والمصحف والأيقونات (تُطبق فوراً عبر حدث settings-changed)
-  modal?.querySelector<HTMLInputElement>('#dash-game')?.addEventListener('change', (e) => {
-    setGameEnabled((e.target as HTMLInputElement).checked)
-    window.dispatchEvent(new CustomEvent('settings-changed'))
-  })
+  // مفتاح المصحف الشريف (يُطبق فوراً عبر حدث settings-changed)
   modal?.querySelector<HTMLInputElement>('#dash-quran')?.addEventListener('change', (e) => {
     setQuranEnabled((e.target as HTMLInputElement).checked)
     window.dispatchEvent(new CustomEvent('settings-changed'))
   })
-  modal?.querySelector<HTMLInputElement>('#dash-icons')?.addEventListener('change', (e) => {
-    setIconsEnabled((e.target as HTMLInputElement).checked)
-    window.dispatchEvent(new CustomEvent('settings-changed'))
+
+  // زر تثبيت التطبيق للأوفلاين — يستخدم حدث beforeinstallprompt الملتقط عالمياً
+  modal?.querySelector<HTMLButtonElement>('#dash-install-offline')?.addEventListener('click', async () => {
+    const statusEl = modal?.querySelector<HTMLElement>('#dash-install-status')
+    const showStatus = (msg: string) => {
+      if (statusEl) {
+        statusEl.textContent = msg
+        statusEl.classList.remove('hidden')
+      }
+    }
+    try {
+      const deferred = (window as unknown as { __pwaDeferredPrompt?: { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> } }).__pwaDeferredPrompt
+      if (deferred) {
+        await deferred.prompt()
+        const choice = await deferred.userChoice
+        if (choice?.outcome === 'accepted') {
+          showStatus('✅ تم بدء التثبيت! ستجد التطبيق على شاشتك الرئيسية.')
+          ;(window as unknown as { __pwaDeferredPrompt?: unknown }).__pwaDeferredPrompt = undefined
+        } else {
+          showStatus('تم إلغاء التثبيت — يمكنك المحاولة لاحقاً.')
+        }
+      } else if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as unknown as { standalone?: boolean }).standalone === true) {
+        showStatus('✅ التطبيق مثبّت ويعمل أوفلاين.')
+      } else {
+        showStatus('ℹ️ من قائمة المتصفح ⋮ اختر "تثبيت التطبيق / إضافة إلى الشاشة الرئيسية" للعمل أوفلاين.')
+      }
+    } catch {
+      showStatus('ℹ️ من قائمة المتصفح ⋮ اختر "تثبيت التطبيق" للعمل أوفلاين.')
+    }
   })
 
   modal?.querySelector<HTMLButtonElement>('#dash-close')?.addEventListener('click', hide)
