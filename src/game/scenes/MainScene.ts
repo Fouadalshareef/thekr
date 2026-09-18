@@ -788,7 +788,14 @@ export default class MainScene extends Phaser.Scene {
   private closeModePanel(): void {
     this.modeUIOpen = false
     this.modePanel.setVisible(false)
-    if (!this.focusPanel.visible) this.resumeFromModal()
+    if (this.focusPanel.visible) return
+    if (!this.paused) {
+      this.resumeFromModal()
+    } else {
+      // حتى مع الإيقاف اليدوي: جدول محاولة توليد ستُنفَّذ تلقائياً عند الاستئناف
+      // (حلقة إعادة المحاولة في scheduleNext تضمن عدم فقدان الفقاعة).
+      this.scheduleNext()
+    }
   }
 
   // ------------------------------------------------------------------

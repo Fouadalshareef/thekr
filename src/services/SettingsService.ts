@@ -151,13 +151,18 @@ const GAME_KEY = 'game_enabled'
 const QURAN_KEY = 'quran_enabled'
 const ICONS_KEY = 'icons_enabled'
 
-/** هل اللعبة (توليد الفقاعات بالحركة) مفعّلة؟ (الافتراضي: مفعّلة) */
+/**
+ * هل اللعبة (توليد الفقاعات بالحركة) مفعّلة؟
+ * الخيار أُزيل من الواجهة نهائياً — تُعاد true دائماً ويُمسح أي مفتاح قديم
+ * في localStorage (game_enabled=false) كان يمنع ظهور الأذكار إلى الأبد.
+ */
 export function isGameEnabled(): boolean {
   try {
-    return localStorage.getItem(GAME_KEY) !== 'false'
+    if (localStorage.getItem(GAME_KEY) === 'false') localStorage.removeItem(GAME_KEY)
   } catch {
-    return true
+    /* تجاهل */
   }
+  return true
 }
 
 /** تفعيل/إيقاف اللعبة (توليد الأجسام والحركة). */
