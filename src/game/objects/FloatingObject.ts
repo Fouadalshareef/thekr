@@ -4,7 +4,7 @@
  * والتفاعل عند الضغط (فرقعة: جزيئات + صوت + اهتزاز + حدث زيادة الرصيد).
  */
 import Phaser from 'phaser'
-import { playPop } from '../../services/audio'
+import { playDhikrSound } from '../../services/audio'
 import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
@@ -232,8 +232,8 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     // 1) جزيئات ذهبية متطايرة
     emitGoldBurst(this.scene, this.x, this.y)
 
-    // 2) صوت الفرقعة الناعم
-    playPop({ pitch: this.opts.popPitch, volume: 0.9 })
+    // 2) صوت الذكر الحقيقي (.mpeg) إن وُجد، وإلا المؤثر الناعم
+    playDhikrSound(this.opts.dhikrId, { pitch: this.opts.popPitch, volume: 0.9 })
 
     // 3) اهتزاز خفيف
     vibrate(15)

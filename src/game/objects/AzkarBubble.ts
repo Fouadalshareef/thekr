@@ -5,7 +5,7 @@
  * عند النقر تُحصى مرة واحدة وتُشعِل حدث DHIKR_COLLECTED.
  */
 import Phaser from 'phaser'
-import { playPop } from '../../services/audio'
+import { playDhikrSound } from '../../services/audio'
 import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
@@ -140,8 +140,8 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
     if (this.scene.data.get('paused') === true) return
     if (this.popped || !this.active) return
 
-    // اهتزاز وصوت
-    playPop({ pitch: 0.3, volume: 0.8 })
+    // اهتزاز وصوت (صوت الذكر الحقيقي إن وُجد ملف له، وإلا المؤثر الناعم)
+    playDhikrSound(`${this.item.id}\n${this.item.text}`, { pitch: 0.3, volume: 0.8 })
     vibrate(12)
 
     // جزيئات
