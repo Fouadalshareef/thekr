@@ -536,8 +536,8 @@ export default class MainScene extends Phaser.Scene {
 
     // نافذة عريضة مريحة (~90% من عرض الشاشة) — بطاقة كرتونية بارزة
     const panelW = Math.min(width * 0.9, 480)
-    // الارتفاع محدود بنسبة من الشاشة حتى لا تخرج الأزرار عن النافذة (60vh كحد أقصى)
-    const panelH = Math.min(460, Math.max(360, height * 0.6))
+    // الارتفاع محدود بنسبة من الشاشة — كافٍ لعرض الأزرار كلها بلا تمرير
+    const panelH = Math.min(520, Math.max(400, height * 0.62))
     const card = this.add.container(width / 2, height / 2)
     // إعادة ضبط حالة التمرير عند كل بناء (تُبنى اللوحة مرة واحدة عند create)
     this.modeScrollY = 0
@@ -589,8 +589,8 @@ export default class MainScene extends Phaser.Scene {
 
     const activeMode = gameMode.getMode()
     const btnW = panelW - 56
-    const btnH = 60
-    const GAP = 12 // مسافة نسبية ثابتة بين الأزرار — لا تتغير عند التفاعل
+    const btnH = 50
+    const GAP = 8 // مسافة نسبية ثابتة بين الأزرار — لا تتغير عند التفاعل
     const STEP = btnH + GAP
 
     // ── حاوية قائمة الأزرار القابلة للتمرير (داخل البطاقة، أسفل العنوان) ──
@@ -601,13 +601,25 @@ export default class MainScene extends Phaser.Scene {
     this.modeScrollTrackH = listH
     this.modeList = this.add.container(0, this.modeListCenterY)
 
-    // قناع قصّ: الأزرار الزائدة تُخفى بدل أن تخرج خارج البطاقة
-    const maskShape = this.add.graphics()
-    maskShape.fillStyle(0xffffff, 1)
-    maskShape.fillRect(-btnW / 2 - 12, this.modeListCenterY - listH / 2, btnW + 24, listH)
-    const mask = new Phaser.Display.Masks.GeometryMask(this, maskShape)
-    maskShape.setVisible(false)
-    this.modeList.setMask(mask)
+    // حجم المحتوى: نحسبه الآن لنعرف إن كنا نحتاج تمريراً أصلاً
+    const contentH = MODE_OPTIONS.length * btnH + (MODE_OPTIONS.length - 1) * GAP
+    this.modeScrollMax = Math.max(0, contentH - listH)
+
+    // قناع قصّ: يُطبَّق فقط عند وجود تمرير فعلي، وبإحداثيات عالمية على جذر
+    // المشهد (وليس داخل الحاوية) لتجنّب خلل الأقنعة داخل الحاويات في Phaser.
+    if (this.modeScrollMax > 0) {
+      const maskShape = this.add.graphics()
+      maskShape.fillStyle(0xffffff, 1)
+      maskShape.fillRect(
+        width / 2 - btnW / 2 - 12,
+        height / 2 + this.modeListCenterY - listH / 2,
+        btnW + 24,
+        listH,
+      )
+      const mask = new Phaser.Display.Masks.GeometryMask(this, maskShape)
+      maskShape.setVisible(false)
+      this.modeList.setMask(mask)
+    }
 
     // شريط تمرير شفاف بسيط (Minimalist) على حافة القائمة
     const trackX = btnW / 2 + 6
@@ -686,14 +698,11 @@ export default class MainScene extends Phaser.Scene {
       modeButtons.push({ root: btn, baseY })
     })
 
-    // ── منطق التمرير: max-height داخلي + قناع قص + مؤشر شفاف ──
-    const contentH = MODE_OPTIONS.length * btnH + (MODE_OPTIONS.length - 1) * GAP
-    this.modeScrollMax = Math.max(0, contentH - listH)
+    // (حجم المحتوى وmodeScrollMax حُسبا سابقاً قبل القناع)
 
     card.add([this.modeList, scrollbar])
     if (this.modeScrollThumb) card.add(this.modeScrollThumb)
     this.applyModeScroll()
-    card.add(maskShape)
 
     // عجلة الفأرة للتمرير (سطح المكتب)
     this.input.off('wheel', this.handleModeWheel, this)
