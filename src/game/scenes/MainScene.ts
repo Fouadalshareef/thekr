@@ -493,13 +493,14 @@ export default class MainScene extends Phaser.Scene {
     if (!this.paused && this.gameEnabled) {
       this.physics.resume()
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
+      // إن خرجت الفقاعة أعلى الشاشة أثناء فتح النافذة (مجدولة ولم تُولّد)، ولّد التالية الآن
+      this.spawnIfEmpty()
     }
   }
 
   private togglePause(): void {
     this.paused = !this.paused
     this.data.set('paused', this.paused)
-    console.log('[DEBUG] togglePause called. Paused:', this.paused)
     if (this.paused) {
       this.physics.pause()
       this.refreshPauseIcon()
@@ -508,6 +509,9 @@ export default class MainScene extends Phaser.Scene {
       this.physics.resume()
       this.refreshPauseIcon()
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
+      // إصلاح: إن خرجت الفقاعة أعلى الشاشة وتمت جدولتها أثناء الإيقاف،
+      // فإن spawnIfEmpty رُفض بسبب paused وبقيت الشاشة فارغة — ولّدها الآن عند الاستئناف
+      this.spawnIfEmpty()
     }
   }
 
@@ -1031,7 +1035,14 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private scheduleNext(): void {
-    this.time.delayedCall(NEXT_DELAY, () => this.spawnIfEmpty(), [], this)
+    this.time.delayedCall(NEXT_DELAY, () => {
+      // إن كان التوليد محظوراً مؤقتاً (إيقاف/نافذة مفتوحة) أعد المحاولة بدل فقدان الفقاعة
+      if (this.paused || this.modeUIOpen) {
+        this.scheduleNext()
+        return
+      }
+      this.spawnIfEmpty()
+    }, [], this)
   }
 
   // ------------------------------------------------------------------
