@@ -6,12 +6,9 @@ import { initAdviceModal } from './components/AdviceModal'
 import { initQuranModal } from './components/QuranModal'
 import { APP_VERSION, hasPendingUpdate } from './services/AppVersion'
 
-// مسح تلقائي للذاكرة المؤقتة لضمان جلب أحدث الملفات
-if ('caches' in window) {
-  caches.keys().then((names) => {
-    names.forEach((name) => caches.delete(name))
-  })
-}
+// ملاحظة مهمة: لا نحذف الكاشات هنا مطلقاً — كانت سابقاً تحذف التخزين المسبق
+// للـ Service Worker في كل تشغيل فيتعطل التطبيق كلياً في وضع الأوفلاين.
+// إدارة الكاش تتم داخل sw.js (حذف الكاشات القديمة عند التفعيل فقط).
 
 // معالجة المستخدم الجديد (لم يسبق له تشغيل التطبيق)
 if (!localStorage.getItem('last_seen_version')) {
