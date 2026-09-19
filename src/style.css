@@ -133,6 +133,45 @@ body.modal-open {
     inset 0 -3px 0 rgba(0, 0, 0, 0.18);
 }
 
+/* زر "ابدأ الأذكار" في نافذة النصائح — تصميم حديث راقٍ (تدرج زمردي + توهج) */
+.advice-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 90%;
+  margin: 1.5rem auto 0;
+  padding: 14px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  color: #ffffff;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  font-weight: bold;
+  font-size: 1.1rem;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.15s ease;
+}
+.advice-start-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+.advice-start-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.55);
+}
+.advice-start-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+}
+
+
 /* أزرار النوافذ الحديثة: تعتمد على SVG ولا تستخدم الحدود السوداء أو الظلال الثقيلة. */
 .modal-close-button,
 .modal-index-button {

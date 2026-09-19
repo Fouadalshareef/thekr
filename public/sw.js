@@ -5,7 +5,7 @@
  *  - HTML: Network-First (آخر نسخة عند توفر الشبكة، وFallback للكاش أوفلاين).
  *  - Assets: Cache-First مع تحديث في الخلفية (يعمل كاملاً و بسرعة أوفلاين).
  */
-const CACHE_NAME = 'albaqiyat-v1.4.1'
+const CACHE_NAME = 'albaqiyat-v1.5.0'
 
 // قائمة أصول البناء المُجزَّأة (JS/CSS hashed) — تُحقن تلقائياً عند كل build
 // بواسطة إضافة vite-plugin-precache في vite.config.ts.
@@ -80,7 +80,8 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-// جلب الطلبات: Network-First لـ HTML، وCache-First للباقي (أوفلاين كامل)
+// جلب الطلبات: Cache-First لكل شيء (HTML, JS, CSS, صور, أصوات) — أوفلاين 100%،
+// مع تحديث في الخلفية عند توفر الشبكة (Stale-While-Revalidate).
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
 
@@ -93,50 +94,72 @@ self.addEventListener('fetch', (event) => {
   }
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return
 
-  const isHTML =
-    event.request.headers.get('accept')?.includes('text/html') ||
-    url.pathname === '/' ||
-    url.pathname.endsWith('.html')
-
-  if (isHTML) {
-    // HTML: اجلب دائماً من الشبكة أولاً (لضمان آخر نسخة)
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone()
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
-          }
-          return response
-        })
-        .catch(() => caches.match('./index.html')),
-    )
-  } else {
-    // Assets (JS/CSS/Images/Audio/Fonts): من الكاش أولاً — يعمل أوفلاين وفورياً،
-    // مع تحديث في الخلفية عند توفر الشبكة (Cache-First + Background Revalidate)
-    event.respondWith(
-      caches.open(CACHE_NAME).then((cache) =>
-        cache.match(event.request).then((cached) => {
-          const networkFetch = fetch(event.request)
+  event.respondWith(
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        // الكاش أولاً: أعد الاستجابة فوراً إن وُجدت (تعمل أوفلاين وفورياً)
+        if (cached) {
+          // تحديث خلفي صامت للتأكد من آخر نسخة عند توفر الشبكة
+          fetch(event.request)
             .then((response) => {
               if (response && response.status === 200) {
                 cache.put(event.request, response.clone())
               }
-              return response
             })
-            .catch(() => cached)
-          // أوفلاين: أعد الكاش فوراً. أونلاين: الكاش فوراً + تحديث خلفي.
-          return cached || networkFetch
-        }),
-      ),
-    )
-  }
+            .catch(() => {})
+          return cached
+        }
+        // لا يوجد في الكاش: اجلب من الشبكة وخزّنه للمرة القادمة
+        return fetch(event.request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              cache.put(event.request, response.clone())
+            }
+            return response
+          })
+          .catch(() =>
+            // صفحة HTML طُلبت ولم تُخزَّن بعد — حاول صفحة التطبيق المخزنة
+            caches.match('./index.html').then((fallback) => fallback || Response.error()),
+          )
+      }),
+    ),
+  )
 })
 
-// استقبال رسالة SKIP_WAITING من الصفحة (للتحديث اليدوي من الواجهة)
+// إعادة تنزيل كل الأصول اليدوياً (يُستدعى من زر "تثبيت للأوفلاين" في الإعدادات)
+async function runManualPrecache() {
+  const cache = await caches.open(CACHE_NAME)
+  let ok = 0
+  await Promise.all(
+    ASSETS.map((asset) =>
+      fetch(asset)
+        .then((response) => {
+          if (response && response.status === 200) {
+            cache.put(new Request(asset), response.clone())
+            ok += 1
+          }
+        })
+        .catch(() => {}),
+    ),
+  )
+  return ok
+}
+
+// استقبال رسائل من الصفحة: SKIP_WAITING (تحديث) وPRECACHE (تنزيل كامل للأوفلاين)
 self.addEventListener('message', (event) => {
   if (event.data?.type === 'SKIP_WAITING') {
     self.skipWaiting()
+  } else if (event.data?.type === 'PRECACHE') {
+    const reply = (payload) => {
+      event.source?.postMessage(payload)
+      self.clients.matchAll({ includeUncontrolled: true }).then((clients) => {
+        clients.forEach((client) => client.postMessage(payload))
+      })
+    }
+    reply({ type: 'PRECACHE_PROGRESS', done: 0, total: ASSETS.length })
+    runManualPrecache().then((ok) =>
+      reply({ type: 'PRECACHE_DONE', cached: ok, total: ASSETS.length }),
+    )
   }
 })
 

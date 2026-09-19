@@ -59,8 +59,9 @@ export function initAdviceModal(): void {
       </div>
 
       <button id="advice-close" type="button"
-        class="juicy-btn juicy-green w-full py-4 mt-4 text-lg cursor-pointer">
-        ابدأ الأذكار 🌿
+        class="advice-start-btn cursor-pointer">
+        <span class="advice-start-icon">🌿</span>
+        <span>ابدأ الأذكار</span>
       </button>
 
     </div>

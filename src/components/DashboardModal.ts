@@ -262,6 +262,7 @@ function bindEvents(): void {
   })
 
   // زر تثبيت التطبيق للأوفلاين — يستخدم حدث beforeinstallprompt الملتقط عالمياً
+  // + يطلق تنزيل كافة الأصول إلى الكاش (PRECACHE) لضمان عمل الصفحة 100% أوفلاين
   modal?.querySelector<HTMLButtonElement>('#dash-install-offline')?.addEventListener('click', async () => {
     const statusEl = modal?.querySelector<HTMLElement>('#dash-install-status')
     const showStatus = (msg: string) => {
@@ -270,6 +271,29 @@ function bindEvents(): void {
         statusEl.classList.remove('hidden')
       }
     }
+    const swReg = await navigator.serviceWorker?.getRegistration()
+    const activeWorker = swReg?.active ?? navigator.serviceWorker?.controller
+    // مستمع مؤقت لرسائل تقدم التنزيل اليدوي من الـ Service Worker
+    const onPrecacheMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'PRECACHE_PROGRESS') showStatus(`⏬ تنزيل ملفات الأوفلاين... (0/${e.data.total})`)
+      if (e.data?.type === 'PRECACHE_DONE') {
+        showStatus(`✅ تم تنزيل كل الملفات (${e.data.cached}/${e.data.total}) — يعمل الآن بدون إنترنت!`)
+        navigator.serviceWorker.removeEventListener('message', onPrecacheMessage)
+      }
+    }
+    navigator.serviceWorker.addEventListener('message', onPrecacheMessage)
+
+    // دالة إطلاق التنزيل اليدوي للأصول (تمهيد الكاش لضمان أوفلاين كامل)
+    const triggerPrecache = () => {
+      if (activeWorker) {
+        activeWorker.postMessage({ type: 'PRECACHE' })
+        showStatus('⏬ جاري تنزيل ملفات الأوفلاين...')
+      } else {
+        navigator.serviceWorker.removeEventListener('message', onPrecacheMessage)
+        showStatus('ℹ️ افتح التطبيق مرة مع إنترنت لتجهيز الأوفلاين ثم أعد المحاولة.')
+      }
+    }
+
     try {
       const deferred = (window as unknown as { __pwaDeferredPrompt?: { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> } }).__pwaDeferredPrompt
       if (deferred) {
@@ -279,15 +303,19 @@ function bindEvents(): void {
           showStatus('✅ تم بدء التثبيت! ستجد التطبيق على شاشتك الرئيسية.')
           ;(window as unknown as { __pwaDeferredPrompt?: unknown }).__pwaDeferredPrompt = undefined
         } else {
-          showStatus('تم إلغاء التثبيت — يمكنك المحاولة لاحقاً.')
+          showStatus('تم إلغاء التثبيت — جاري تنزيل ملفات الأوفلاين رغم ذلك.')
         }
-      } else if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as unknown as { standalone?: boolean }).standalone === true) {
-        showStatus('✅ التطبيق مثبّت ويعمل أوفلاين.')
+        // في كل الأحوال: ننزّل الأصول للكاش لضمان أوفلاين 100%
+        triggerPrecache()
       } else {
-        showStatus('ℹ️ من قائمة المتصفح ⋮ اختر "تثبيت التطبيق / إضافة إلى الشاشة الرئيسية" للعمل أوفلاين.')
+        // لا يوجد حدث تثبيت (المتصفح) أو التطبيق مثبت أصلاً — ننزّل الأصول مباشرة
+        triggerPrecache()
+        if (!activeWorker) {
+          showStatus('ℹ️ من قائمة المتصفح ⋮ اختر "تثبيت التطبيق / إضافة إلى الشاشة الرئيسية" للعمل أوفلاين.')
+        }
       }
     } catch {
-      showStatus('ℹ️ من قائمة المتصفح ⋮ اختر "تثبيت التطبيق" للعمل أوفلاين.')
+      triggerPrecache()
     }
   })
 
