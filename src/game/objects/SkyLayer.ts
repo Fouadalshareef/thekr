@@ -8,6 +8,7 @@
  */
 import Phaser from 'phaser'
 import { getTimeTheme, type TimeTheme } from '../../services/TimeThemeService'
+import { getGardenState } from '../../services/GardenService'
 
 export default class SkyLayer extends Phaser.GameObjects.Container {
   private theme: TimeTheme
@@ -41,10 +42,18 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
     const hour = new Date().getHours()
     const period: 'dawn' | 'day' | 'sunset' | 'night' = hour >= 5 && hour <= 8 ? 'dawn' : hour >= 9 && hour <= 16 ? 'day' : hour >= 17 && hour <= 19 ? 'sunset' : 'night'
 
-    // 1) خلفية mor.png ثابتة بالكامل؛ السحاب جزء من الصورة ولا توجد طبقة Parallax فوقها.
-    //    — الفجر/النهار/الغروب تستخدم صورة النهار، والليل يستخدم صورة المساء.
-    //    في حال عدم توفر الصورة يبقى التدرج اللوني كاحتياط.
-    const bgKey = 'bg-mor-static'
+    // 1) خلفية المرحلة الأولى (صحراء) حركية بحسب التوقيت المحلي للجهاز:
+    //    - النهار (6:00 → 17:59): mor.jfif (خلفية النهار).
+    //    - الليل (18:00 → 5:59): ni.jfif (خلفية الليل).
+    //    من المرحلة الثانية (عشب أخضر) وما بعدها تُستخدم خلفية mor.png الثابتة دائماً.
+    const stage1 = getGardenState().level <= 1 // المرحلة الأولى (صحراء) حصراً
+    const isDaytime = hour >= 6 && hour < 18
+    const bgKey =
+      stage1 && this.scene.textures.exists(isDaytime ? 'bg-mor' : 'bg-ni')
+        ? isDaytime
+          ? 'bg-mor'
+          : 'bg-ni'
+        : 'bg-mor-static'
     if (this.scene.textures.exists(bgKey)) {
       const img = this.scene.textures.get(bgKey).getSourceImage()
       const cover = Math.max(width / img.width, height / img.height)
@@ -52,7 +61,9 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
       this.add(this.backgroundImage)
 
       const tint = this.scene.add.graphics()
-      if (period === 'night') tint.fillStyle(0x1a237e, 0.48)
+      // الخلفية الصحراوية الليلية ni.jfif داكنة أصلاً — نُخفف التظليل عليها،
+      // بينما mor.jfif (النهار/الغروب) نُظللها كالمعتاد
+      if (period === 'night') tint.fillStyle(0x1a237e, bgKey === 'bg-ni' ? 0.18 : 0.48)
       else if (period === 'sunset') tint.fillStyle(0xff7043, 0.22)
       else if (period === 'dawn') tint.fillStyle(0xffb74d, 0.18)
       else tint.fillStyle(0xffffff, 0)

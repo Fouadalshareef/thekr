@@ -5,7 +5,7 @@
  *  - HTML: Network-First (آخر نسخة عند توفر الشبكة، وFallback للكاش أوفلاين).
  *  - Assets: Cache-First مع تحديث في الخلفية (يعمل كاملاً و بسرعة أوفلاين).
  */
-const CACHE_NAME = 'albaqiyat-v1.5.1'
+const CACHE_NAME = 'albaqiyat-v1.6.0'
 
 // قائمة أصول البناء المُجزَّأة (JS/CSS hashed) — تُحقن تلقائياً عند كل build
 // بواسطة إضافة vite-plugin-precache في vite.config.ts.

@@ -17,15 +17,16 @@ export interface GardenElementDef {
 }
 
 export const GARDEN_ELEMENTS: readonly GardenElementDef[] = [
-  { id: 'grass', name: 'عشب أخضر', threshold: 0 },
-  { id: 'flower-red', name: 'زهرة حمراء', threshold: 500 },
-  { id: 'flower-yellow', name: 'زهرة ذهبية', threshold: 1000 },
-  { id: 'bush', name: 'شجيرة مزهرية', threshold: 1500 },
-  { id: 'tree', name: 'شجرة مثمرة', threshold: 2000 },
-  { id: 'bird', name: 'عصفوران', threshold: 2500 },
-  { id: 'fountain', name: 'نافورة نورانية', threshold: 3000 },
-  { id: 'butterflies', name: 'فراشات ملونة', threshold: 3500 },
-  { id: 'rainbow', name: 'قوس قزح', threshold: 4000 },
+  { id: 'desert', name: 'صحراء', threshold: 0 },
+  { id: 'grass', name: 'عشب أخضر', threshold: 500 },
+  { id: 'flower-red', name: 'زهرة حمراء', threshold: 1000 },
+  { id: 'flower-yellow', name: 'زهرة ذهبية', threshold: 1500 },
+  { id: 'bush', name: 'شجيرة مزهرية', threshold: 2000 },
+  { id: 'tree', name: 'شجرة مثمرة', threshold: 2500 },
+  { id: 'bird', name: 'عصفوران', threshold: 3000 },
+  { id: 'fountain', name: 'نافورة نورانية', threshold: 3500 },
+  { id: 'butterflies', name: 'فراشات ملونة', threshold: 4000 },
+  { id: 'rainbow', name: 'قوس قزح', threshold: 4500 },
 ]
 
 export interface GardenState {

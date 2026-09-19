@@ -9,11 +9,24 @@ function renderContent(): string {
     : 'اكتملت الحديقة بالكامل! 🌈'
 
   // Generate grid items
+  const STAGE_ICONS: Record<string, string> = {
+    desert: '🏜️',
+    grass: '🌿',
+    'flower-red': '🌹',
+    'flower-yellow': '🌼',
+    bush: '🌳',
+    tree: '🌴',
+    bird: '🐦',
+    fountain: '⛲',
+    butterflies: '🦋',
+    rainbow: '🌈',
+  }
   const gridItems = GARDEN_ELEMENTS.map((el) => {
     const isUnlocked = garden.total >= el.threshold
+    const icon = STAGE_ICONS[el.id] ?? '✨'
     return `
       <div class="flex flex-col items-center p-3 rounded-xl border ${isUnlocked ? 'border-emerald-500/50 bg-emerald-900/30' : 'border-slate-700/50 bg-slate-800/30 opacity-60'} transition-all">
-        <div class="text-2xl mb-1">${isUnlocked ? '✨' : '🔒'}</div>
+        <div class="text-2xl mb-1">${isUnlocked ? icon : '🔒'}</div>
         <div class="text-sm font-bold ${isUnlocked ? 'text-emerald-200' : 'text-slate-400'} text-center whitespace-nowrap overflow-hidden text-ellipsis w-full">${el.name}</div>
         <div class="text-xs ${isUnlocked ? 'text-emerald-400/80' : 'text-slate-500'} font-mono mt-1">${el.threshold}</div>
       </div>

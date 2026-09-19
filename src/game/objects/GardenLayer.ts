@@ -26,6 +26,7 @@ export default class GardenLayer extends Phaser.GameObjects.Container {
     const { width, height } = this.scene.scale
     const groundY = height - 40
 
+    if (unlocked.includes('grass')) this.buildGrass(width, height)
     if (unlocked.includes('rainbow')) this.buildRainbow(width, groundY)
     if (unlocked.includes('fountain')) this.buildFountain(width / 2, groundY - 6)
     if (unlocked.includes('tree')) this.buildTree(width - 110, groundY - 4)
@@ -34,6 +35,26 @@ export default class GardenLayer extends Phaser.GameObjects.Container {
     if (unlocked.includes('flower-yellow')) this.buildFlowers(width, groundY, 'flower-yellow')
     if (unlocked.includes('bird')) this.buildBirds(width, height)
     if (unlocked.includes('butterflies')) this.buildButterflies(width, groundY)
+  }
+
+  /** شريط العشب الأخضر — يُفتح في المرحلة الثانية (عشب أخضر) فوق الصحراء. */
+  private buildGrass(width: number, height: number): void {
+    const g = this.scene.add.graphics()
+    const baseY = height - 44
+    // شريط العشب السفلي
+    g.fillStyle(0x2f9e44, 1)
+    g.fillRect(0, baseY, width, height - baseY + 4)
+    // تدرج داكن خفيف أعلى الحافة
+    g.fillStyle(0x27803a, 0.9)
+    g.fillRect(0, baseY, width, 10)
+    // شفرات عشب خفيفة على الحافة
+    g.lineStyle(2, 0x51cf66, 0.85)
+    for (let x = 6; x < width; x += 14) {
+      g.lineBetween(x, baseY, x + Phaser.Math.Between(-3, 3), baseY - Phaser.Math.Between(6, 14))
+    }
+    this.add(g)
+    // تنفس خفيف للعشب
+    this.scene.tweens.add({ targets: g, alpha: { from: 0.95, to: 1 }, yoyo: true, repeat: -1, duration: 2400, ease: 'Sine.easeInOut' })
   }
 
   /** زهور ملونة موزعة على العشب. */
