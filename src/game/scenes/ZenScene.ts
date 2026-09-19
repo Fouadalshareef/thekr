@@ -4,7 +4,7 @@
  * عدّاد استغفار مستقل، وزر "رجوع" للعودة للمشهد الرئيسي.
  */
 import Phaser from 'phaser'
-import { playZenTone } from '../../services/audio'
+import { playDhikrVoice, playZenTone } from '../../services/audio'
 import { vibrate } from '../../services/haptics'
 import { getIstighfarCount, incrementIstighfar } from '../../services/DhikrStorage'
 import { recordTodayDhikr } from '../../services/SettingsService'
@@ -104,7 +104,8 @@ export default class ZenScene extends Phaser.Scene {
     incrementIstighfar()
     recordTodayDhikr('istighfar')
     this.refreshCounter()
-    void playZenTone()
+    // صوت الاستغفار الحقيقي (astaghfirullah.mpeg) — وإلا نغمة الزن الهادئة كبديل
+    if (!playDhikrVoice('istighfar')) void playZenTone()
     void vibrate(20)
 
     // ومضة عند نقطة اللمس (الموضع محلي داخل الهالة)

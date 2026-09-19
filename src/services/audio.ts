@@ -80,6 +80,10 @@ const DHIKR_AUDIO: Record<string, string> = {
   'allahu-akbar': 'game/sounds/allahu_akbar.mpeg',
   hawqala: 'game/sounds/hawqala.mpeg',
   'la-hawla': 'game/sounds/hawqala.mpeg',
+  'subhanallah-wa-bihamdih': 'game/sounds/subhanallah_wa_bihamdihi.mpeg',
+  salawat: 'game/sounds/salawat.mpeg',
+  astaghfirullah: 'game/sounds/astaghfirullah.mpeg',
+  istighfar: 'game/sounds/astaghfirullah.mpeg',
 }
 
 /** كلمات مفتاحية في نص الذكر (لأذكار الصباح/المساء حيث id ليس اسم الذكر). */
@@ -89,6 +93,9 @@ const DHIKR_TEXT_HINTS: Array<[RegExp, string]> = [
   [/لا إله إلا الله|لَا إِلَٰهَ إِلَّا الله/, 'la-ilaha-illa-allah'],
   [/الله أكبر|اللهُ أَكْبَر/, 'allahu_akbar'],
   [/لا حول ولا قوة|لَا حَوْلَ وَلَا قُوَّةَ/, 'la-hawla'],
+  [/سبحان الله وبحمده|سُبْحَانَ اللَّهِ وَبِحَمْدِهِ/, 'subhanallah-wa-bihamdih'],
+  [/اللهم صل|اللَّهُمَّ صَلِّ|صلِّ على محمد|صَلِّ عَلَى مُحَمَّد/, 'salawat'],
+  [/أستغفر الله|أَسْتَغْفِرُ الله|استغفر الله|اَسْتَغْفِرُ اللهَ/, 'astaghfirullah'],
 ]
 
 let currentVoice: HTMLAudioElement | null = null
