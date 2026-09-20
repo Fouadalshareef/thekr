@@ -5,7 +5,7 @@
  *  - HTML: Network-First (آخر نسخة عند توفر الشبكة، وFallback للكاش أوفلاين).
  *  - Assets: Cache-First مع تحديث في الخلفية (يعمل كاملاً و بسرعة أوفلاين).
  */
-const CACHE_NAME = 'albaqiyat-v1.6.0'
+const CACHE_NAME = 'albaqiyat-v1.6.1'
 
 // قائمة أصول البناء المُجزَّأة (JS/CSS hashed) — تُحقن تلقائياً عند كل build
 // بواسطة إضافة vite-plugin-precache في vite.config.ts.
@@ -23,6 +23,9 @@ const ASSETS = [
   './game/mor.jfif',
   './game/ni.jfif',
   './game/mor.png',
+  // خلفيات المرحلة الثانية (عشب أخضر) - ليلي ونهاري
+  './game/green_grass_mor.jfif',
+  './game/green_grass_ni.jfif',
   // أصوات الأذكار الحقيقية (.mpeg)
   './game/sounds/subhanallah.mpeg',
   './game/sounds/alhamdulillah.mpeg',

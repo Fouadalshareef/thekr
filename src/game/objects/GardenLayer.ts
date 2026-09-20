@@ -37,8 +37,10 @@ export default class GardenLayer extends Phaser.GameObjects.Container {
     if (unlocked.includes('butterflies')) this.buildButterflies(width, groundY)
   }
 
-  /** شريط العشب الأخضر — يُفتح في المرحلة الثانية (عشب أخضر) فوق الصحراء. */
+  /** شريط عشب خفيف — يظهر فقط عندما لا تكون خلفية عشب أخضر بحجم كامل تغطي الشاشة (أي مالم تُحمَّل خلفية green_grass_mor/ni). */
   private buildGrass(width: number, height: number): void {
+    // إذا كانت الصور المخزنة (التي سيُحمَّلها BootScene) تجعل هذا المسار بلا معنى.
+    if (this.scene.textures.exists('green-grass-mor') || this.scene.textures.exists('green-grass-ni')) return
     const g = this.scene.add.graphics()
     const baseY = height - 44
     // شريط العشب السفلي

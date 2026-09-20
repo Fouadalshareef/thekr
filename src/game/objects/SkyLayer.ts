@@ -42,18 +42,22 @@ export default class SkyLayer extends Phaser.GameObjects.Container {
     const hour = new Date().getHours()
     const period: 'dawn' | 'day' | 'sunset' | 'night' = hour >= 5 && hour <= 8 ? 'dawn' : hour >= 9 && hour <= 16 ? 'day' : hour >= 17 && hour <= 19 ? 'sunset' : 'night'
 
-    // 1) خلفية المرحلة الأولى (صحراء) حركية بحسب التوقيت المحلي للجهاز:
-    //    - النهار (6:00 → 17:59): mor.jfif (خلفية النهار).
-    //    - الليل (18:00 → 5:59): ni.jfif (خلفية الليل).
-    //    من المرحلة الثانية (عشب أخضر) وما بعدها تُستخدم خلفية mor.png الثابتة دائماً.
+    // 1) خلفية المرحلة الأولى (صحراء) وثانية (عشب أخضر) بحركية بحسب التوقيت المحلي للجهاز:
+    //    المرحلة 1 (صحراء): النهار (6:00→17:59): mor.jfif | الليل (18:00→5:59): ni.jfif.
+    //    المرحلة 2 (عشب أخضر): النهار (6:00→17:59): green_grass_mor.jfif | الليل (18:00→5:59): green_grass_ni.jfif.
+    //    المرحلة الثالثة وما بعدها: خلفية mor.png الثابتة دائماً.
     const stage1 = getGardenState().level <= 1 // المرحلة الأولى (صحراء) حصراً
+    const stage2 = getGardenState().level === 2 // المرحلة الثانية (عشب أخضر) حصراً
     const isDaytime = hour >= 6 && hour < 18
-    const bgKey =
-      stage1 && this.scene.textures.exists(isDaytime ? 'bg-mor' : 'bg-ni')
-        ? isDaytime
-          ? 'bg-mor'
-          : 'bg-ni'
-        : 'bg-mor-static'
+    let bgKey: string
+    if (stage2) {
+      // ملء الشاشة بكامل الأبعاد باستخدام خلفيات عشب أخضر (المرحلة الثانية)
+      bgKey = isDaytime ? 'green-grass-mor' : 'green-grass-ni'
+    } else if (stage1 && this.scene.textures.exists(isDaytime ? 'bg-mor' : 'bg-ni')) {
+      bgKey = isDaytime ? 'bg-mor' : 'bg-ni'
+    } else {
+      bgKey = 'bg-mor-static'
+    }
     if (this.scene.textures.exists(bgKey)) {
       const img = this.scene.textures.get(bgKey).getSourceImage()
       const cover = Math.max(width / img.width, height / img.height)

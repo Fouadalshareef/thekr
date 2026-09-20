@@ -10,13 +10,15 @@ export default class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    // تحميل صور اللعبة: الأيقونة وخلفيتي النهار/الليل للمرحلة الصحراوية
+    // تحميل صور اللعبة: الأيقونة وخلفيتي النهار/الليل للمرحلة الصحراوية وخلفية عشب أخضر المرحلة الثانية
     this.load.image('game-logo', 'game/logo.jfif')
-    this.load.image('bg-mor', 'game/mor.jfif') // احتياط نهاري
-    this.load.image('bg-ni', 'game/ni.jfif') // احتياط ليلي
+    this.load.image('bg-mor', 'game/mor.jfif') // احتياط نهاري (المرحلة 1)
+    this.load.image('bg-ni', 'game/ni.jfif') // احتياط ليلي (المرحلة 1)
     this.load.image('bg-mor-static', 'game/mor.png') // خلفية الصحراء الثابتة بسحاب مدمج
-    // أصول SVG شفافة عالية الجودة لأزرار HUD (تُحوّل Phaser داخلياً إلى Textures).
-    // تحميل الأيقونات بدقة مضاعفة (×2) لضمان حدّة عالية عند التوسيع على شاشات Retina/HD
+    // خلفيات المرحلة الثانية (عشب أخضر) - تمييز برمجي واضح
+    this.load.image('green-grass-mor', 'game/green_grass_mor.jfif') // خلفية نهار عشب أخضر
+    this.load.image('green-grass-ni', 'game/green_grass_ni.jfif') // خلفية ليل عشب أخضر
+    // أصول SVG...
     this.load.svg('hud-settings', 'game/icons/settings-v2.svg', { width: 128, height: 128 })
     this.load.svg('hud-theme',    'game/icons/theme-v2.svg',    { width: 128, height: 128 })
     this.load.svg('hud-farm',     'game/icons/farm-v2.svg',     { width: 128, height: 128 })
