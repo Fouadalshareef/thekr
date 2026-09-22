@@ -58,8 +58,10 @@ export interface ButtonTheme {
   glow: [number, number, number]
 }
 
-/** الأنماط الخمسة كما وردت في الحزمة: steel / sunset / leaf / gold / coral. */
-export const BUTTON_THEMES = {
+export type ButtonThemeKey = 'steel' | 'sunset' | 'leaf' | 'gold' | 'coral' | 'violet'
+
+/** الأنماط كما وردت في الحزمة. */
+export const BUTTON_THEMES: Record<ButtonThemeKey, ButtonTheme> = {
   steel: {
     rimHi: '#9fb2ce', rim: '#61748f', rimLo: '#3d4c62', rimShadow: '#1d2735',
     faceHi: '#3a4a63', face: '#222d41', faceLo: '#131b2a',
@@ -90,9 +92,8 @@ export const BUTTON_THEMES = {
     faceHi: '#3b2f57', face: '#241c3b', faceLo: '#130f22',
     glow: [170, 140, 255],
   },
-} satisfies Record<string, ButtonTheme>
+} // Record<ButtonThemeKey, ButtonTheme>
 
-export type ButtonThemeKey = keyof typeof BUTTON_THEMES
 
 /** أيقونات شريط الأدوات الجانبي. */
 export type HudIcon = 'gear' | 'sliders' | 'leaf' | 'quran' | 'pause' | 'play' | 'arrow'
