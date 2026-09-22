@@ -16,14 +16,19 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
   private item: AzkarItem
   private countRemaining: number
   private counterLabel!: Phaser.GameObjects.Text
-  private readonly cardW = 300
-  private readonly cardH = 220
+  private cardW!: number
+  private cardH!: number
 
   constructor(scene: Phaser.Scene, x: number, y: number, item: AzkarItem) {
     super(scene, x, y)
     this.item = item
     this.countRemaining = item.count
-    this.setDepth(1500)
+    // في المقدمة فوق الأزرار الجانبية (HUD depth ≈ 2000) — مكافئ z-index: 1000+
+    this.setDepth(2500)
+    // بطاقة أكبر: 90% من عرض الشاشة بحد أقصى 420px (لافتة الأذكار مكبّرة وواضحة)
+    const { width, height } = scene.scale
+    this.cardW = Math.min(420, width * 0.9)
+    this.cardH = Math.min(280, height * 0.36)
     this.buildCard()
     this.setInteractive(
       new Phaser.Geom.Rectangle(-this.cardW / 2 - 10, -this.cardH / 2 - 10, this.cardW + 20, this.cardH + 20),
@@ -83,16 +88,16 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
 
     this.add(g)
 
-    // نص الذكر
+    // نص الذكر (خط مكبّر: 1.35rem ≈ 22px، غامق، بتباعد أسطر مريح 1.8)
     const label = this.scene.add
-      .text(0, -22, this.item.text, {
+      .text(0, -18, this.item.text, {
         fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Tahoma, sans-serif',
-        fontSize: '18px',
+        fontSize: '22px',
         fontStyle: 'bold',
         color: '#f0f9ff',
         align: 'center',
-        wordWrap: { width: cardW - 28, useAdvancedWrap: true },
-        lineSpacing: 6,
+        wordWrap: { width: cardW - 36, useAdvancedWrap: true },
+        lineSpacing: 14,
       })
       .setOrigin(0.5, 0.5)
     label.setShadow(0, 1, 'rgba(0,0,0,0.8)', 3, true, true)
@@ -100,9 +105,9 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
 
     // عداد المرات المتبقية
     this.counterLabel = this.scene.add
-      .text(0, cardH / 2 - 28, this.getCounterText(), {
+      .text(0, cardH / 2 - 34, this.getCounterText(), {
         fontFamily: 'Consolas, "Segoe UI", monospace',
-        fontSize: '16px',
+        fontSize: '17px',
         fontStyle: 'bold',
         color: '#fbbf24',
         align: 'center',
@@ -112,10 +117,11 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
 
     // مؤشر "اضغط"
     const hint = this.scene.add
-      .text(0, cardH / 2 + 14, '« اضغط لإتمام الذكر »', {
+      .text(0, cardH / 2 + 16, '« اضغط لإتمام الذكر »', {
         fontFamily: '"Segoe UI", Tahoma, sans-serif',
-        fontSize: '13px',
+        fontSize: '14px',
         color: '#94a3b8',
+        align: 'center',
       })
       .setOrigin(0.5)
     this.add(hint)

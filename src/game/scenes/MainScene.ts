@@ -1382,52 +1382,69 @@ export default class MainScene extends Phaser.Scene {
   private buildRestBanner(): void {
     const { width, height } = this.scale
     this.restBanner = this.add.container(width / 2, height + 300)
-    this.restBanner.setDepth(4000)
+    this.restBanner.setDepth(4000) // في المقدمة فوق كل العناصر (z-index: 1000+)
 
-    // خيوط التعليق
+    // بطاقة الاستراحة: عرض 90% من الشاشة بحد أقصى 420px وارتفاع مريح
+    const cardW = Math.min(420, width * 0.9)
+    const cardH = Math.min(320, height * 0.42)
+    const pinY = -cardH / 2 + 24 // دبابيس التثبيت أعلى البطاقة
+    const pinX = cardW / 2 - 40
+
+    // خيوط التعليق: تمتد من أعلى الشاشة تماماً (top: 0) حتى الدبابيس
+    // بلا أي فراغ علوي — الحاوية في وسط الشاشة، فأعلى نقطة = -(height / 2)
+    // نرسم أعلى من ذلك قليلاً (هامش 40px) لتغطية مرحلة حركة الدخول المرتدة.
+    const ropeTop = -(height / 2 + 40)
     const graphics = this.add.graphics()
     graphics.lineStyle(2, 0xd1d5db, 0.8)
-    graphics.lineBetween(-120, -120, -120, -400) // يسار
-    graphics.lineBetween(120, -120, 120, -400)  // يمين
+    graphics.lineBetween(-pinX, pinY, -pinX, ropeTop) // يسار
+    graphics.lineBetween(pinX, pinY, pinX, ropeTop)  // يمين
 
-    // لوحة زجاجية/خشبية لطيفة
+    // حلقتان ذهبيتان أعلى البطاقة تتصل بهما الحبال
+    graphics.lineStyle(3, 0xfcd34d, 0.95)
+    graphics.strokeCircle(-pinX, pinY, 9)
+    graphics.strokeCircle(pinX, pinY, 9)
+
+    // لوحة زجاجية/خشبية لطيفة (بطاقة أكبر وأوضح)
     graphics.fillStyle(0x0f172a, 0.95)
-    graphics.fillRoundedRect(-160, -140, 320, 260, 20)
+    graphics.fillRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 20)
     graphics.lineStyle(2, 0x10b981, 0.7)
-    graphics.strokeRoundedRect(-160, -140, 320, 260, 20)
+    graphics.strokeRoundedRect(-cardW / 2, -cardH / 2, cardW, cardH, 20)
 
     // دبابيس التثبيت
     graphics.fillStyle(0xfcd34d, 1)
-    graphics.fillCircle(-120, -120, 6)
-    graphics.fillCircle(120, -120, 6)
+    graphics.fillCircle(-pinX, pinY, 6)
+    graphics.fillCircle(pinX, pinY, 6)
 
     this.restBanner.add(graphics)
 
-    // عنوان اللوحة
-    const title = this.add.text(0, -90, '🌿 استراحة 🌿', {
+    // عنوان اللوحة (خط كبير واضح)
+    const title = this.add.text(0, -cardH / 2 + 48, '🌿 استراحة 🌿', {
       fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
-      fontSize: '26px',
+      fontSize: '28px',
       fontStyle: 'bold',
       color: '#34d399',
+      align: 'center',
     }).setOrigin(0.5)
     this.restBanner.add(title)
 
-    // نص الآية أو الحديث
-    this.restText = this.add.text(0, 10, '', {
+    // نص الآية أو الحديث (خط مكبّر: 1.35rem ≈ 22px مع تباعد أسطر مريح)
+    this.restText = this.add.text(0, 0, '', {
       fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
-      fontSize: '21px',
+      fontSize: '22px',
+      fontStyle: 'bold',
       color: '#e2e8f0',
       align: 'center',
-      wordWrap: { width: 280, useAdvancedWrap: true },
-      lineSpacing: 8
+      wordWrap: { width: cardW - 48, useAdvancedWrap: true },
+      lineSpacing: 12,
     }).setOrigin(0.5)
     this.restBanner.add(this.restText)
 
     // نص توجيهي بالأسفل
-    const hint = this.add.text(0, 100, '« اضغط للمتابعة »', {
+    const hint = this.add.text(0, cardH / 2 - 34, '« اضغط للمتابعة »', {
       fontFamily: '"Segoe UI", Tahoma, sans-serif',
-      fontSize: '15px',
+      fontSize: '16px',
       color: '#94a3b8',
+      align: 'center',
     }).setOrigin(0.5)
     this.restBanner.add(hint)
   }
