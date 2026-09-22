@@ -3,92 +3,141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>معاينة الأيقونات المحسّنة</title>
+<title>أزرار اللعبة الجديدة — معاينة تفاعلية</title>
+<!-- مكوّن الأزرار المُستخرج من حزمة الأزرار (css/style.css) -->
+<link rel="stylesheet" href="./gbtn.css">
 <style>
+  /* صفحة المعاينة فقط — مكوّن الزر نفسه في gbtn.css */
   body {
-    background: linear-gradient(135deg, #1a3a5c 0%, #0d5c3a 50%, #1a1a2e 100%);
+    margin: 0;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 26px;
+    padding: 34px 16px 46px;
     font-family: 'Segoe UI', Tahoma, sans-serif;
-    color: white;
-    padding: 30px;
+    color: #eaf1ff;
+    background:
+      radial-gradient(900px 500px at 50% -10%, rgba(74, 122, 255, .25), transparent 60%),
+      linear-gradient(180deg, #131c33 0%, #0a1120 60%, #070b15 100%);
   }
-  h1 { color: #FFD600; text-shadow: 0 2px 8px #000; margin-bottom: 8px; }
-  p { color: #a7f3d0; margin-bottom: 30px; }
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 28px;
-    max-width: 500px;
-  }
-  .icon-card {
+  h1 { margin: 0; font-size: 1.2rem; color: #ffd98a; text-align: center; }
+  .hint { margin: 0; max-width: 640px; text-align: center; color: #a3b3d0; font-size: .8rem; line-height: 1.9; }
+  .hint code { color: #9fd0ff; }
+  .showcase {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 20px;
-    padding: 18px 10px 12px;
-    backdrop-filter: blur(10px);
-    transition: transform 0.2s, box-shadow 0.2s;
-    cursor: pointer;
-  }
-  .icon-card:hover {
-    transform: translateY(-6px) scale(1.05);
-    box-shadow: 0 16px 40px rgba(0,0,0,0.5), 0 0 20px rgba(255,214,0,0.2);
-  }
-  .icon-card:active { transform: scale(0.95); }
-  .icon-card img { width: 80px; height: 80px; image-rendering: auto; }
-  .icon-label { font-size: 13px; color: #fde68a; font-weight: bold; }
-  .comparison {
-    margin-top: 40px;
-    display: flex;
-    gap: 40px;
-    align-items: flex-start;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
+    gap: 24px 28px;
+    padding: 30px 22px 40px;
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.015));
+    border: 1px solid rgba(255,255,255,.1);
   }
-  .col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  .col-title { color: #FFD600; font-weight: bold; font-size: 16px; margin-bottom: 4px; }
+  .panel {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 14px 20px;
+    padding: 16px 20px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.05);
+    border: 1px solid rgba(255,255,255,.1);
+    font-size: .86rem;
+  }
+  .toast { display: flex; align-items: center; gap: 10px; font-weight: 700; color: #dbe7ff; }
+  .toast i {
+    width: 11px; height: 11px; border-radius: 50%; background: #6fe3a1; flex: none;
+    box-shadow: 0 0 0 4px rgba(111,227,161,.18), 0 0 14px rgba(111,227,161,.8);
+  }
+  .switchline { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .chip {
+    font: inherit; font-weight: 700; color: #d9e5ff; cursor: pointer;
+    background: rgba(120,160,255,.14); border: 1px solid rgba(150,185,255,.32);
+    border-radius: 999px; padding: 8px 16px;
+  }
+  .chip:active { transform: scale(.95); }
+  ol.log { margin: 0; padding: 0 18px 0 0; font-size: .78rem; color: #9fd0ff; min-height: 20px; }
 </style>
 </head>
 <body>
-  <h1>✨ الأيقونات الجديدة — مستوى ألعاب احترافية</h1>
-  <p>بإطارات ذهبية وتأثيرات توهج وعمق ثلاثي الأبعاد</p>
+  <h1>أزرار اللعبة الجديدة (Game UI Buttons) — معاينة تفاعلية</h1>
+  <p class="hint">
+    نفس أزرار اللعبة المعروضة هنا بنسختها الأصلية من الحزمة
+    (<code>.gbtn / .ring / .ico</code>)، وهي مُنفَّذة داخل محرك Phaser
+    بالملف <code>src/game/ui/GameButtonSkin.ts</code> بنفس الألوان والطبقات.
+    كل زر يُطلق حدثه البرمجي السابق:
+    <code>open-dashboard</code> · <code>open-mode-panel</code> · <code>open-garden</code> ·
+    <code>open-quran</code> · <code>toggle-pause</code>.
+  </p>
 
-  <div class="grid">
-    <div class="icon-card">
-      <img src="settings-v2.svg" alt="الإعدادات">
-      <span class="icon-label">الإعدادات</span>
-    </div>
-    <div class="icon-card">
-      <img src="theme-v2.svg" alt="الثيم">
-      <span class="icon-label">الثيم</span>
-    </div>
-    <div class="icon-card">
-      <img src="farm-v2.svg" alt="الحديقة">
-      <span class="icon-label">الحديقة</span>
-    </div>
-    <div class="icon-card">
-      <img src="quran-v2.svg" alt="القرآن">
-      <span class="icon-label">القرآن</span>
-    </div>
-    <div class="icon-card">
-      <img src="pause-v2.svg" alt="إيقاف">
-      <span class="icon-label">إيقاف</span>
-    </div>
-    <div class="icon-card">
-      <img src="play-v2.svg" alt="تشغيل">
-      <span class="icon-label">تشغيل</span>
-    </div>
+  <div class="showcase">
+    <!-- 1) الإعدادات (steel) -->
+    <button class="gbtn" data-theme="steel" data-name="الإعدادات"
+            data-action="open-dashboard" aria-label="الإعدادات" title="الإعدادات">
+      <span class="gbtn__size"></span>
+      <span class="ring"><img class="ico" src="./settings-gbtn.svg" alt=""></span>
+    </button>
+
+    <!-- 2) الألوان والتخصيص (sunset) -->
+    <button class="gbtn" data-theme="sunset" data-name="الألوان والتخصيص"
+            data-action="open-mode-panel" aria-label="الألوان والتخصيص" title="الألوان والتخصيص">
+      <span class="gbtn__size"></span>
+      <span class="ring"><img class="ico" src="./theme-gbtn.svg" alt=""></span>
+    </button>
+
+    <!-- 3) مزرعة الحسنات (leaf) -->
+    <button class="gbtn" data-theme="leaf" data-name="مزرعة الحسنات"
+            data-action="open-garden" aria-label="مزرعة الحسنات" title="مزرعة الحسنات">
+      <span class="gbtn__size"></span>
+      <span class="ring"><img class="ico" src="./farm-gbtn.svg" alt=""></span>
+    </button>
+
+    <!-- 4) المصحف والأذكار (gold) -->
+    <button class="gbtn" data-theme="gold" data-name="المصحف والأذكار"
+            data-action="open-quran" aria-label="المصحف والأذكار" title="المصحف والأذكار">
+      <span class="gbtn__size"></span>
+      <span class="ring"><img class="ico" src="./quran-gbtn.svg" alt=""></span>
+    </button>
+
+    <!-- 5) الإيقاف المؤقت (coral) -->
+    <button class="gbtn" data-theme="coral" data-name="إيقاف مؤقت"
+            data-action="toggle-pause" aria-label="إيقاف مؤقت" title="إيقاف مؤقت">
+      <span class="gbtn__size"></span>
+      <span class="ring"><img class="ico" src="./pause-gbtn.svg" alt=""></span>
+    </button>
+
+    <!-- 6) الاستئناف (coral) — نفس الزر عند استئناف اللعب -->
+    <button class="gbtn gbtn--sm" data-theme="coral" data-name="استئناف"
+            data-action="toggle-pause" aria-label="استئناف" title="استئناف">
+      <span class="gbtn__size"></span>
+      <span class="ring"><img class="ico" src="./play-gbtn.svg" alt=""></span>
+    </button>
   </div>
 
-  <p style="margin-top:30px; color:#6ee7b7; font-size:13px;">
-    جميع الأيقونات SVG قابلة للتوسيع بلا حدود دون فقدان الجودة
-  </p>
+  <div class="panel">
+    <div class="toast"><i id="toast-dot"></i><span id="toast-text">اضغط أي زر لتجربة التأثير…</span></div>
+    <label class="switchline"><input type="checkbox" id="sound-toggle"> نقرة صوتية (Web Audio)</label>
+    <button class="chip" id="depth-toggle" type="button">عمق الإطار: مرتفع</button>
+  </div>
+
+  <ol class="log" id="action-log"></ol>
+
+  <script src="./gbtn.js"></script>
+  <script>
+    // إثبات ربط الأزرار بوظائفها البرمجية السابقة (تسجيل الأحداث المُطلقة عند النقر)
+    var log = document.getElementById('action-log')
+    ;['open-dashboard', 'open-mode-panel', 'open-garden', 'open-quran', 'toggle-pause'].forEach(function (name) {
+      document.addEventListener(name, function () {
+        var li = document.createElement('li')
+        li.textContent = 'الحدث المُطلق: ' + name
+        log.prepend(li)
+        while (log.children.length > 5) log.lastElementChild.remove()
+      })
+    })
+  </script>
 </body>
 </html>

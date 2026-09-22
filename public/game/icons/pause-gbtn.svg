@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <!-- أيقونة الإيقاف المؤقت (Pause) — من حزمة الأزرار (تُستخدم داخل .gbtn[data-theme="coral"]) -->
+  <rect x="6.4" y="4.2" width="4.1" height="15.6" rx="1.9" fill="#ffffff"/>
+  <rect x="13.5" y="4.2" width="4.1" height="15.6" rx="1.9" fill="#ffffff"/>
+</svg>

@@ -23,6 +23,19 @@ import { SEQUENCE_DHIKRS, gameMode, type GameMode } from '../../services/gameMod
 import { recordTodayDhikr, isGameEnabled, isQuranEnabled, areIconsEnabled, markAzkarDone } from '../../services/SettingsService'
 import { hasPendingUpdate } from '../../services/AppVersion'
 import { getNextQuote } from '../../services/QuotesDB'
+import {
+  BTN_ICON_SIZE,
+  BTN_RADIUS,
+  BTN_SIZE,
+  BTN_SKIN_OFFSET_Y,
+  BTN_SKIN_SIZE,
+  ICON_THEME,
+  getButtonSkinTexture,
+  getGlowTexture,
+  getShadowTexture,
+  themeGlowColor,
+  type HudIcon,
+} from '../ui/GameButtonSkin'
 
 /** المدة التأخيرية قبل ظهور الجسم التالي بعد تفجير الحالي (بالمللي). */
 const NEXT_DELAY = 150
@@ -177,15 +190,16 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildHud(): void {
-    // شريط علوي موحّد: 52×52px مع مسافات ثابتة لتفادي التداخل.
-    this.btnGear = this.buildRoundButton(56, 62, 'gear', 0x2563eb, 0x93c5fd, () => {
+    // شريط جانبي موحّد: أزرار d=74px على مسافات ثابتة (80px) لتفادي التداخل.
+    // أزرار الشريط الجانبي الجديدة (نفس المواضع ونفس وظائف النقر السابقة)
+    this.btnGear = this.buildRoundButton(56, 62, 'gear', () => {
       window.dispatchEvent(new CustomEvent('open-dashboard'))
     })
-    this.btnSliders = this.buildRoundButton(56, 142, 'sliders', 0x7c3aed, 0xc4b5fd, () => this.openModePanel())
-    this.btnLeaf = this.buildRoundButton(56, 222, 'leaf', 0x059669, 0x6ee7b7, () => {
+    this.btnSliders = this.buildRoundButton(56, 142, 'sliders', () => this.openModePanel())
+    this.btnLeaf = this.buildRoundButton(56, 222, 'leaf', () => {
       window.dispatchEvent(new CustomEvent('open-garden'))
     })
-    this.btnQuran = this.buildRoundButton(56, 302, 'quran', 0xb45309, 0xfcd34d, () => {
+    this.btnQuran = this.buildRoundButton(56, 302, 'quran', () => {
       window.dispatchEvent(new CustomEvent('open-quran'))
     })
 
@@ -346,57 +360,119 @@ export default class MainScene extends Phaser.Scene {
     return (r << 16) | (g << 8) | b
   }
 
-  /** زر دائري كرتوني ثلاثي الأبعاد (Juicy Bevel) بإيموجي بارز وضغط يغوص. */
+  /**
+   * زر دائري مجسّم بأسلوب حزمة الأزرار الجديدة (Game UI Buttons):
+   * إطار معدني متدرّج + حافة سفلية داكنة (سماكة 3D) + وجه كحلي + لمعة علوية،
+   * مع أيقونة SVG بيضاء ناصعة في الحلقة الداخلية، وظل أرضي ناعم وهالة ملوّنة.
+   * (كل القيم البصرية مستخرجة من css/style.css في الحزمة — انظر GameButtonSkin.ts)
+   */
   private buildRoundButton(
     x: number,
     y: number,
-    icon: 'gear' | 'sliders' | 'pause' | 'play' | 'leaf' | 'quran',
-    _color: number,
-    _colorHi: number,
+    icon: HudIcon,
     onTap: () => void,
   ): Phaser.GameObjects.Container {
     const btn = this.add.container(x, y)
     btn.setDepth(2000)
-    const r = 33 // تكبير الزر 27% تقريباً من 52 إلى 66px
-    // الأيقونة SVG تُكبّر مع الزر، مع منطقة لمس إضافية 14px حولها.
-    const svgIcon = this.add.image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon])
+    const theme = ICON_THEME[icon]
+
+    // ظل أرضي ناعم أسفل الزر (box-shadow: 0 20px 28px -8px rgba(4,9,22,.75))
+    const shadow = this.add
+      .image(0, BTN_SIZE * 0.42, getShadowTexture(this))
+      .setDisplaySize(BTN_SIZE * 1.45, BTN_SIZE * 0.85)
+      .setAlpha(0.85)
+    btn.add(shadow)
+
+    // هالة توهّج ملوّنة خلف الزر تظهر عند المرور/الضغط (--glow في الحزمة)
+    const glow = this.add
+      .image(0, 0, getGlowTexture(this, theme))
+      .setDisplaySize(BTN_SIZE * 1.75, BTN_SIZE * 1.75)
+      .setAlpha(0)
+      .setBlendMode(Phaser.BlendModes.ADD)
+    btn.add(glow)
+
+    // جسم الزر: نسيج مرسوم بالـ Canvas بنفس طبقات .gbtn::before و ::after و .ring
+    const skin = this.add
+      .image(0, BTN_SKIN_OFFSET_Y, getButtonSkinTexture(this, theme))
+      .setDisplaySize(BTN_SKIN_SIZE, BTN_SKIN_SIZE)
+    btn.add(skin)
+
+    // حلقة الموجة النقرية (@keyframes gbtn-pulse) — تنطلق من الزر عند كل ضغطة
+    const pulse = this.add.graphics()
+    pulse.lineStyle(2.5, themeGlowColor(theme), 1)
+    pulse.strokeCircle(0, 0, BTN_RADIUS)
+    pulse.setAlpha(0)
+    btn.add(pulse)
+
+    // الأيقونة SVG البيضاء (46% من قطر الزر) — مع منطقة لمس إضافية حول الزر
+    const svgIcon = this.add
+      .image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon])
       .setOrigin(0.5)
-      .setDisplaySize(66, 66)
+      .setDisplaySize(BTN_ICON_SIZE, BTN_ICON_SIZE)
     btn.add(svgIcon)
     if (icon === 'pause') {
       this.pauseIcon = svgIcon
     }
-    btn.setSize(66, 66)
+    btn.setSize(BTN_SIZE, BTN_SIZE)
     btn.setInteractive({ useHandCursor: true })
-    btn.input!.hitArea = new Phaser.Geom.Circle(0, 0, r + 14)
+    btn.input!.hitArea = new Phaser.Geom.Circle(0, 0, BTN_RADIUS + 12)
     btn.input!.hitAreaCallback = Phaser.Geom.Circle.Contains
 
-    const press = (down: boolean) => {
+    const baseY = y
+    let hovering = false
+
+    // الضغط: نزول فعلي للزر + تقلّص بسيط (.gbtn:active) + موجة نقرية دائرية
+    const press = () => {
       this.tweens.killTweensOf(btn)
-      this.tweens.add({ targets: btn, scale: down ? 0.95 : 1, duration: down ? 90 : 110, ease: down ? 'Quad.easeOut' : 'Back.easeOut' })
+      this.tweens.add({ targets: btn, y: baseY + 3, scale: 0.955, duration: 90, ease: 'Quad.easeOut' })
+      this.tweens.add({ targets: glow, alpha: 1, duration: 140 })
+      this.tweens.killTweensOf(pulse)
+      pulse.setAlpha(0.65).setScale(0.85)
+      this.tweens.add({ targets: pulse, alpha: 0, scale: 1.55, duration: 550, ease: 'Sine.easeOut' })
     }
 
-    // ضغط ناعم على الأيقونة نفسها، من دون طبقات رسومية إضافية
+    // الإفلات: قفزة مرنة ممتعة (.gbtn.is-clicked / @keyframes gbtn-pop)
+    const release = () => {
+      this.tweens.killTweensOf(btn)
+      this.tweens.add({
+        targets: btn,
+        y: baseY - 5,
+        scale: 1.06,
+        duration: 180,
+        ease: 'Quad.easeOut',
+        onComplete: () => {
+          this.tweens.add({ targets: btn, y: baseY, scale: 1, duration: 160, ease: 'Back.easeOut' })
+        },
+      })
+      this.tweens.killTweensOf(glow)
+      this.tweens.add({ targets: glow, alpha: hovering ? 1 : 0, duration: 220 })
+    }
+
+    // النقر يُنفّذ نفس الوظيفة البرمجية السابقة لكل زر، من دون طبقات رسومية إضافية
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
-      press(true)
+      press()
       onTap()
     })
-    const release = () => {
-      press(false)
-    }
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, release)
-    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, release)
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => {
+      hovering = false
+      release()
+    })
+    // المرور (Hover): رفع الزر + هالة ملوّنة — `.gbtn:hover` في الحزمة
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => {
+      hovering = true
+      this.tweens.killTweensOf(glow)
+      this.tweens.add({ targets: glow, alpha: 1, duration: 220 })
+    })
     return btn
   }
 
-  /** زر إيقاف/استئناف مؤقت أعلى اليمين. */
+  /** زر إيقاف/استئناف مؤقت أعلى اليمين (بنفس نمط الأزرار الجديدة). */
   private buildPauseButton(): void {
     this.pauseButton = this.buildRoundButton(
       this.scale.width - 56,
       52,
       'pause',
-      0xdc2626,
-      0xfca5a5,
       () => this.togglePause(),
     )
     this.pauseButton.setScrollFactor(0)
@@ -407,7 +483,7 @@ export default class MainScene extends Phaser.Scene {
   private refreshPauseIcon(): void {
     if (!this.pauseIcon) return
     this.pauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
-    this.pauseIcon.setDisplaySize(66, 66)
+    this.pauseIcon.setDisplaySize(BTN_ICON_SIZE, BTN_ICON_SIZE)
   }
 
   /** عداد الجلسة الحالية أسفل زر الإيقاف — مُدمج وأنيق مع إطار ذهبي رفيع. */

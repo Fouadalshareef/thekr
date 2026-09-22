@@ -5,7 +5,7 @@
  *  - HTML: Network-First (آخر نسخة عند توفر الشبكة، وFallback للكاش أوفلاين).
  *  - Assets: Cache-First مع تحديث في الخلفية (يعمل كاملاً و بسرعة أوفلاين).
  */
-const CACHE_NAME = 'albaqiyat-v1.6.1'
+const CACHE_NAME = 'albaqiyat-v1.7.0'
 
 // قائمة أصول البناء المُجزَّأة (JS/CSS hashed) — تُحقن تلقائياً عند كل build
 // بواسطة إضافة vite-plugin-precache في vite.config.ts.
@@ -36,6 +36,18 @@ const ASSETS = [
   './game/sounds/salawat.mpeg',
   './game/sounds/astaghfirullah.mpeg',
   // أيقونات HUD/MODAL (كل الـ SVG)
+  // أزرار اللعبة الجديدة (Game UI Buttons) — أيقونات بيضاء تُرسم فوق أزرار Phaser المجسّمة
+  './game/icons/settings-gbtn.svg',
+  './game/icons/theme-gbtn.svg',
+  './game/icons/farm-gbtn.svg',
+  './game/icons/quran-gbtn.svg',
+  './game/icons/pause-gbtn.svg',
+  './game/icons/play-gbtn.svg',
+  // مكوّن الأزرار الأصلية + صفحة المعاينة التفاعلية
+  './game/icons/gbtn.css',
+  './game/icons/gbtn.js',
+  './game/icons/preview.html',
+  // الأيقونات السابقة (مستخدمة في رؤوس النوافذ)
   './game/icons/close.svg',
   './game/icons/farm-v2.svg',
   './game/icons/index.svg',

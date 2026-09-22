@@ -18,13 +18,15 @@ export default class BootScene extends Phaser.Scene {
     // خلفيات المرحلة الثانية (عشب أخضر) - تمييز برمجي واضح
     this.load.image('green-grass-mor', 'game/green_grass_mor.jfif') // خلفية نهار عشب أخضر
     this.load.image('green-grass-ni', 'game/green_grass_ni.jfif') // خلفية ليل عشب أخضر
-    // أصول SVG...
-    this.load.svg('hud-settings', 'game/icons/settings-v2.svg', { width: 128, height: 128 })
-    this.load.svg('hud-theme',    'game/icons/theme-v2.svg',    { width: 128, height: 128 })
-    this.load.svg('hud-farm',     'game/icons/farm-v2.svg',     { width: 128, height: 128 })
-    this.load.svg('hud-quran',    'game/icons/quran-v2.svg',    { width: 128, height: 128 })
-    this.load.svg('hud-pause',    'game/icons/pause-v2.svg',    { width: 128, height: 128 })
-    this.load.svg('hud-play',     'game/icons/play-v2.svg',     { width: 128, height: 128 })
+    // أيقونات أزرار اللعبة الجديدة (SVG أبيض ناصع — حزمة Game UI Buttons)
+    // تُرسم فوق أزرار Phaser المجسّمة (انظر GameButtonSkin.ts) — بلا خلفية ولا إطار
+    this.load.svg('hud-settings', 'game/icons/settings-gbtn.svg', { width: 256, height: 256 })
+    this.load.svg('hud-theme',    'game/icons/theme-gbtn.svg',    { width: 256, height: 256 })
+    this.load.svg('hud-farm',     'game/icons/farm-gbtn.svg',     { width: 256, height: 256 })
+    this.load.svg('hud-quran',    'game/icons/quran-gbtn.svg',    { width: 256, height: 256 })
+    this.load.svg('hud-pause',    'game/icons/pause-gbtn.svg',    { width: 256, height: 256 })
+    this.load.svg('hud-play',     'game/icons/play-gbtn.svg',     { width: 256, height: 256 })
+    // أيقونات النوافذ (تبقى بتصميمها الذهبي السابق)
     this.load.svg('modal-close',  'game/icons/close.svg',    { width: 112, height: 112 })
     this.load.svg('modal-index',  'game/icons/index.svg',    { width: 240, height:  90 })
   }
