@@ -20,7 +20,7 @@ import SkyLayer from '../objects/SkyLayer'
 import { Events } from '../events'
 import { incrementDhikr } from '../../services/DhikrStorage'
 import { SEQUENCE_DHIKRS, gameMode, type GameMode } from '../../services/gameMode'
-import { recordTodayDhikr, isGameEnabled, isQuranEnabled, areIconsEnabled, markAzkarDone } from '../../services/SettingsService'
+import { recordTodayDhikr, isGameEnabled, areIconsEnabled, markAzkarDone } from '../../services/SettingsService'
 import { hasPendingUpdate } from '../../services/AppVersion'
 import { getNextQuote } from '../../services/QuotesDB'
 import {
@@ -346,10 +346,9 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
-  /** تطبيق إعدادات إظهار/إخفاء الأيقونات فوراً (اللعبة/المصحف/جميع الأيقونات). */
+  /** تطبيق إعدادات إظهار/إخفاء الأيقونات فوراً (أيقونة المصحف ثابتة دائماً كعنصر رئيسي). */
   private applyUiSettings(): void {
     const icons = areIconsEnabled()
-    const quran = isQuranEnabled()
     // زر السهم يبقى ظاهراً دائماً (هو بوابة القائمة) ما دامت الأيقونات مفعّلة.
     this.btnArrow?.setVisible(icons)
     // عناصر القائمة تُعرض فقط إذا كانت الأيقونات مفعّلة والقائمة مفتوحة.
@@ -357,8 +356,8 @@ export default class MainScene extends Phaser.Scene {
     for (const b of [this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran]) {
       b?.setVisible(showMenu)
     }
-    // زر المصحف يظهر فقط إذا كانت الأيقونات والمصحف مفعّلين معاً والقائمة مفتوحة.
-    this.btnQuran?.setVisible(icons && quran && this.sideMenuOpen)
+    // أيقونة المصحف الشريف ثابتة في الواجهة كعنصر رئيسي (بلا خيار إخفاء).
+    this.btnQuran?.setVisible(icons && this.sideMenuOpen)
     // يمين الشاشة
     this.pauseButton?.setVisible(icons)
     this.sessionPill?.setVisible(icons)

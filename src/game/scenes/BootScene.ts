@@ -51,11 +51,8 @@ export default class BootScene extends Phaser.Scene {
       decor.strokeCircle(cx, height * 0.42, 120 + i * 55)
     }
 
-    // 3) vignette داكن على الأطراف لتركيز النظر في المنتصف
-    const vignette = this.add.graphics()
-    vignette.fillStyle(0x000000, 0.22)
-    vignette.fillRect(0, 0, width, height * 0.08)
-    vignette.fillRect(0, height * 0.92, width, height * 0.08)
+    // 3) توهج علوي خفيف جداً (بدون أشرطة داكنة علوية/سفلية — تغطية كاملة 100%)
+    void 0
 
     // 4) هالة ضوئية ذهبية ناعمة خلف البطاقة
     const glow = this.add.graphics()

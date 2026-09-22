@@ -17,8 +17,6 @@ import {
   setSoundEnabled,
   isVibrationEnabled,
   setVibrationEnabled,
-  isQuranEnabled,
-  setQuranEnabled,
   isMorningDoneToday,
   isEveningDoneToday,
 } from '../services/SettingsService'
@@ -130,7 +128,7 @@ function renderContent(): string {
       </h3>
       <div class="space-y-2">
         <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">أصوات الفقاعات</span>
+          <span id="dash-sound-label" class="text-xl text-slate-100">${isSoundEnabled() ? 'إيقاف الصوت' : 'تشغيل الصوت'}</span>
           <input id="dash-sound" type="checkbox" ${isSoundEnabled() ? 'checked' : ''} class="peer sr-only" />
           <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
         </label>
@@ -143,18 +141,7 @@ function renderContent(): string {
     </section>
 
     <!-- تشغيل/إيقاف العناصر (المصحف الشريف فقط) -->
-    <section class="space-y-2">
-      <h3 class="flex items-center gap-2 text-sm font-bold text-emerald-200">
-        <img class="ui-vector-icon" src="game/icons/settings-v2.svg" alt=""> تشغيل وإيقاف العناصر
-      </h3>
-      <div class="space-y-2">
-        <label class="flex items-center justify-between rounded-lg bg-slate-800/70 px-4 py-3 cursor-pointer">
-          <span class="text-xl text-slate-100">المصحف الشريف</span>
-          <input id="dash-quran" type="checkbox" ${isQuranEnabled() ? 'checked' : ''} class="peer sr-only" />
-          <span class="relative inline-flex w-12 h-7 shrink-0 items-center rounded-full bg-slate-600 transition-colors peer-checked:bg-emerald-500 after:absolute after:right-1 after:top-1 after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-transform peer-checked:after:-translate-x-5"></span>
-        </label>
-      </div>
-    </section>
+    
 
     <!-- إحصائيات اليوم -->
     <section class="space-y-2">
@@ -249,17 +236,16 @@ function bindEvents(): void {
 
   // مفاتيح الصوت والاهتزاز (تُحفظ في localStorage: sound_enabled / vibrate_enabled)
   modal?.querySelector<HTMLInputElement>('#dash-sound')?.addEventListener('change', (e) => {
-    setSoundEnabled((e.target as HTMLInputElement).checked)
+    const on = (e.target as HTMLInputElement).checked
+    setSoundEnabled(on)
+    const lbl = modal?.querySelector<HTMLElement>('#dash-sound-label')
+    if (lbl) lbl.textContent = on ? 'إيقاف الصوت' : 'تشغيل الصوت'
   })
   modal?.querySelector<HTMLInputElement>('#dash-vibrate')?.addEventListener('change', (e) => {
     setVibrationEnabled((e.target as HTMLInputElement).checked)
   })
 
-  // مفتاح المصحف الشريف (يُطبق فوراً عبر حدث settings-changed)
-  modal?.querySelector<HTMLInputElement>('#dash-quran')?.addEventListener('change', (e) => {
-    setQuranEnabled((e.target as HTMLInputElement).checked)
-    window.dispatchEvent(new CustomEvent('settings-changed'))
-  })
+  
 
   // زر تثبيت التطبيق للأوفلاين — يستخدم حدث beforeinstallprompt الملتقط عالمياً
   // + يطلق تنزيل كافة الأصول إلى الكاش (PRECACHE) لضمان عمل الصفحة 100% أوفلاين

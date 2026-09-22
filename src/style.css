@@ -4,13 +4,16 @@ html,
 body {
   margin: 0;
   padding: 0;
-  height: 100%;
-  /* ملء الشاشة الكامل (PWA fullscreen): يغطي شريطي النظام على أندرويد
-     مع احترام مناطق الأمان عبر viewport-fit=cover و env(safe-area-inset-*) */
+  height: 100vh;
   min-height: 100vh;
-  height: 100dvh;
+  min-height: 100dvh;
   width: 100vw;
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overscroll-behavior: none;
   background: #0f172a;
   background-size: cover;
@@ -25,22 +28,88 @@ body {
 }
 
 #app {
-  height: 100%;
+  height: 100vh;
   min-height: 100vh;
-  height: 100dvh;
+  min-height: 100dvh;
   width: 100vw;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: transparent;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
 }
 
+/* شاشة الترحيب والحاوية: تغطية كاملة 100% بلا حواف أو أشرطة */
+.welcome-screen,
+.game-container,
 #game-container {
   width: 100%;
+  width: 100vw;
   height: 100%;
-  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* شاشة الترحيب الخضراء: خلفية ممتدة 100% بلا ظلال غامقة أو حواف تراكب */
+.welcome-screen {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  box-shadow: none;
+}
+.welcome-screen::before,
+.welcome-screen::after {
+  display: none;
+  content: none;
+}
+
+/* خلفيات اللعبة والـ Canvas: بلا إطار أو خلفية سوداء/زرقاء محيطة */
+#game-container,
+#game-container canvas {
+  background-color: transparent;
+}
+
+#game-container {
+  width: 100%;
+  width: 100vw;
+  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: transparent;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   z-index: 0;
   pointer-events: auto;
   display: flex;
@@ -53,8 +122,16 @@ body {
   position: relative;
   z-index: 1;
   pointer-events: auto;
-  max-width: 100%;
-  max-height: 100%;
+  width: 100%;
+  width: 100vw;
+  height: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 100vw;
+  max-height: 100vh;
+  max-height: 100dvh;
+  object-fit: cover;
+  background-color: transparent;
   /* إزالة تأخير اللمس الافتراضي في المتصفح وتفعيل الاستجابة الفورية */
   touch-action: none;
   /* منع ظهور قائمة السياق عند الضغط المطوّل على الهاتف */
@@ -115,6 +192,47 @@ body.modal-open {
    Juicy Cartoon UI — نظام الواجهة الكرتونية المبهجة
    ألواح بحدود سميكة وظل صلب + أزرار ثلاثية الأبعاد بحركة ضغط
    ============================================================ */
+
+/* شاشة الترحيب (النصائح) بملء الشاشة: خلفية خضراء ممتدة 100% بلا ظلال غامقة أو حواف تراكب */
+#advice-modal {
+  position: fixed;
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+#advice-modal #advice-scroll {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
+  background-size: cover;
+  background-position: center;
+}
+/* إزالة الظلال الغامقة وحواف التراكب الداكنة من شاشة الترحيب الخضراء */
+#advice-modal #advice-backdrop {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
 
 /* لوح كرتوني صلب (بديل الزجاج الباهت Glassmorphism) */
 .juicy-panel {
