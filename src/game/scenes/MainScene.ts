@@ -264,15 +264,18 @@ export default class MainScene extends Phaser.Scene {
       const homeY: number = btn.getData('homeY')
       this.tweens.killTweensOf(btn)
       if (open) {
-        // الظهور: انزلاق من موضع السهم + تلاشي تدريجي متتابع (Stagger).
+        // الظهور: زر السهم مستقل في أعلى الحاوية (SIDEBAR_TOP) وباقي الأزرار
+        // تظهر أسفله مباشرة في حاوية منسدلة (flex column, gap:12px) — أي كل زر
+        // ينزلق من موضعه النهائي (homeY) بلا مرور فوق زر السهم إطلاقاً،
+        // فيستحيل أي تداخل في الإحداثيات أثناء الحركة.
         btn.setVisible(true)
-        btn.setAlpha(0).setX(SIDEBAR_X - 26).setY(SIDEBAR_TOP)
+        btn.setAlpha(0).setX(SIDEBAR_X - 26).setY(homeY)
         btn.setScale(0.7)
         this.tweens.add({ targets: btn, x: SIDEBAR_X, y: homeY, alpha: 1, scale: 1, duration: 300, delay: i * 55, ease: 'Back.easeOut' })
       } else {
-        // الإخفاء: انزلاق عكسي سريع نحو السهم ثم إخفاء.
+        // الإخفاء: تلاشي وانزلاق جانبي في نفس الصف ثم إخفاء (دون العودة فوق السهم).
         this.tweens.add({
-          targets: btn, x: SIDEBAR_X - 26, y: SIDEBAR_TOP, alpha: 0, scale: 0.7,
+          targets: btn, x: SIDEBAR_X - 26, y: homeY, alpha: 0, scale: 0.7,
           duration: 220, delay: (menu.length - 1 - i) * 35, ease: 'Quad.easeIn',
           onComplete: () => btn.setVisible(false),
         })

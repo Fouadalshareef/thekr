@@ -74,13 +74,17 @@
     <code>open-quran</code> · <code>toggle-pause</code> · <code>toggle-side-menu</code>.
   </p>
 
-  <div class="showcase gbtn-menu" style="flex-direction:row;">
-    <!-- 0) زر السهم — طي/فتح القائمة الجانبية (violet) -->
+  <div class="showcase gbtn-menu" style="flex-direction:column;">
+    <!-- 0) زر السهم — مستقل في أعلى الحاوية خارج حاوية الأزرار المنسدلة -->
+    <div class="gbtn-menu__toggle">
     <button class="gbtn gbtn--sm" data-theme="violet" data-name="طي/فتح القائمة"
             data-action="toggle-side-menu" aria-label="طي/فتح القائمة" title="طي/فتح القائمة">
       <span class="gbtn__size"></span>
       <span class="ring"><img class="ico" src="./arrow-gbtn.svg" alt=""></span>
     </button>
+    </div>
+    <!-- حاوية الأزرار المنسدلة أسفل زر السهم (flex column, gap 12px — بلا تداخل) -->
+    <div class="gbtn-menu__items">
     <!-- 1) الإعدادات (steel) -->
     <button class="gbtn" data-theme="steel" data-name="الإعدادات"
             data-action="open-dashboard" aria-label="الإعدادات" title="الإعدادات">
@@ -122,6 +126,7 @@
       <span class="gbtn__size"></span>
       <span class="ring"><img class="ico" src="./play-gbtn.svg" alt=""></span>
     </button>
+    </div><!-- /.gbtn-menu__items -->
   </div>
 
   <div class="panel">

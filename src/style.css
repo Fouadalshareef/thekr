@@ -3,13 +3,38 @@
 html,
 body {
   margin: 0;
+  padding: 0;
   height: 100%;
+  /* ملء الشاشة الكامل (PWA fullscreen): يغطي شريطي النظام على أندرويد
+     مع احترام مناطق الأمان عبر viewport-fit=cover و env(safe-area-inset-*) */
+  min-height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  overscroll-behavior: none;
   background: #0f172a;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  /* مسافات أمان فوق خلفية الموبايل الكاملة (iPhone notch / Android bars) */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   font-family: 'Segoe UI', Tahoma, 'Arial', sans-serif;
 }
 
 #app {
   height: 100%;
+  min-height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
 
 #game-container {

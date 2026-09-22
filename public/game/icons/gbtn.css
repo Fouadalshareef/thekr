@@ -127,6 +127,25 @@
   list-style: none;
 }
 .gbtn-menu .gbtn { margin-bottom: 0; }
+/* Toggle button sits independently above the dropdown items container,
+   so menu buttons stack below it with zero coordinate overlap. */
+.gbtn-menu__toggle {
+  flex: none;
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+}
+/* Dropdown items container below the toggle (flex column, gap 12px). */
+.gbtn-menu__items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 
 /* =====================================================================
    ★ منطقة الاستجابة الكاملة 100% — النقر يمر مباشرة للزر الرئيسي:
