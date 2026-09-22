@@ -216,7 +216,8 @@ async function main() {
   await new Promise((r) => setTimeout(r, 1000))
   check(await hasContent(page), 'المشهد الرئيسي يعرض محتوى بعد إغلاق نافذة النصائح')
 
-  await clickGame(page, 56, 142) // فتح قائمة الأنماط
+  await clickGame(page, 56, 62) // فتح القائمة الجانبية بزر السهم
+  await clickGame(page, 56, 234) // فتح قائمة الأنماط (الزر الثاني تحت السهم)
   check(await hasContent(page), 'قائمة الأنماط تُفتح وتُعرض')
 
   await clickGame(page, 240, 581) // اختيار "أذكار الصباح"
@@ -247,7 +248,8 @@ async function main() {
   await clickGame(page3, 240, 500)
   await page3.evaluate(() => document.querySelector('#advice-close')?.click())
   await new Promise((r) => setTimeout(r, 1000))
-  await clickGame(page3, 56, 142) // قائمة الأنماط
+  await clickGame(page3, 56, 62) // فتح القائمة الجانبية بزر السهم
+  await clickGame(page3, 56, 234) // قائمة الأنماط
   await clickGame(page3, 240, 505) // "تخصيص"
   check(await hasContent(page3), 'لوحة اختيار الذكر المخصص تُفتح')
   await clickGame(page3, 240, 283) // اختيار أول ذكر في القائمة

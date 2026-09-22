@@ -24,11 +24,13 @@ import { recordTodayDhikr, isGameEnabled, isQuranEnabled, areIconsEnabled, markA
 import { hasPendingUpdate } from '../../services/AppVersion'
 import { getNextQuote } from '../../services/QuotesDB'
 import {
+  BTN_GAP,
   BTN_ICON_SIZE,
   BTN_RADIUS,
   BTN_SIZE,
   BTN_SKIN_OFFSET_Y,
   BTN_SKIN_SIZE,
+  BTN_TOUCH_PADDING,
   ICON_THEME,
   getButtonSkinTexture,
   getGlowTexture,
@@ -36,9 +38,17 @@ import {
   themeGlowColor,
   type HudIcon,
 } from '../ui/GameButtonSkin'
+import { setCircleHitArea } from '../ui/hitArea'
 
 /** المدة التأخيرية قبل ظهور الجسم التالي بعد تفجير الحالي (بالمللي). */
 const NEXT_DELAY = 150
+
+/** موضع عمود الأزرار الجانبية أفقياً (كل الأزرار على نفس الخط الرأسي). */
+const SIDEBAR_X = 56
+/** أعلى نقطة في العمود الجانبي (زر الإعدادات). */
+const SIDEBAR_TOP = 62
+/** المسافة الرأسية بين كل زرين = قطر الزر + الفاصل (12px) = 86px. */
+const SIDEBAR_STEP = BTN_SIZE + BTN_GAP
 
 interface CollectPayload {
   id: string
@@ -103,6 +113,13 @@ export default class MainScene extends Phaser.Scene {
   private btnSliders!: Phaser.GameObjects.Container
   private btnLeaf!: Phaser.GameObjects.Container
   private btnQuran!: Phaser.GameObjects.Container
+  /** زر السهم لطي/فتح القائمة الجانبية — يبقى ظاهراً دائماً. */
+  private btnArrow!: Phaser.GameObjects.Container
+  private arrowIcon!: Phaser.GameObjects.Image
+  /** هل القائمة الجانبية مفتوحة؟ (تبدأ مطوية: مخفية ويظهر السهم فقط). */
+  private sideMenuOpen = false
+  /** حركة فتح/إغلاق جارية (لمنع التداخل عند النقر السريع). */
+  private sideMenuAnimating = false
   private sessionPill!: Phaser.GameObjects.Graphics
   private sessionLabel!: Phaser.GameObjects.Text
 
@@ -190,24 +207,105 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildHud(): void {
-    // شريط جانبي موحّد: أزرار d=74px على مسافات ثابتة (80px) لتفادي التداخل.
-    // أزرار الشريط الجانبي الجديدة (نفس المواضع ونفس وظائف النقر السابقة)
-    this.btnGear = this.buildRoundButton(56, 62, 'gear', () => {
-      window.dispatchEvent(new CustomEvent('open-dashboard'))
+    // العمود الجانبي: 4 أزرار بقطر 74px وفاصل رأسي 12px (gap متناسق ومريح بصرياً):
+    //   y = ‏62‏، ‏148‏، ‏234‏، ‏320‏ (‏SIDEBAR_TOP + i × (BTN_SIZE + BTN_GAP)‏).
+    // زر السهم يتصدّر العمود (62)؛ الأزرار الأربعة تحته. عند الإقلاع تكون القائمة
+    // مطوية (مخفية) ويظهر السهم فقط؛ الضغط عليه يفتحها بحركة انزلاق/تلاشي ناعمة،
+    // والضغط في أي مكان آخر من الشاشة يطويها تلقائياً (Outside Click).
+    this.btnArrow = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP, 'arrow', () => this.toggleSideMenu())
+    this.btnArrow.setData('homeY', SIDEBAR_TOP)
+
+    const menuTaps: (() => void)[] = [
+      () => window.dispatchEvent(new CustomEvent('open-dashboard')),
+      () => this.openModePanel(),
+      () => window.dispatchEvent(new CustomEvent('open-garden')),
+      () => window.dispatchEvent(new CustomEvent('open-quran')),
+    ]
+    const icons: HudIcon[] = ['gear', 'sliders', 'leaf', 'quran']
+    const menuBtns: Phaser.GameObjects.Container[] = []
+    icons.forEach((icon, i) => {
+      const y = SIDEBAR_TOP + (i + 1) * SIDEBAR_STEP
+      const btn = this.buildRoundButton(SIDEBAR_X, y, icon, menuTaps[i])
+      btn.setData('homeY', y)
+      menuBtns.push(btn)
     })
-    this.btnSliders = this.buildRoundButton(56, 142, 'sliders', () => this.openModePanel())
-    this.btnLeaf = this.buildRoundButton(56, 222, 'leaf', () => {
-      window.dispatchEvent(new CustomEvent('open-garden'))
-    })
-    this.btnQuran = this.buildRoundButton(56, 302, 'quran', () => {
-      window.dispatchEvent(new CustomEvent('open-quran'))
-    })
+    ;[this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran] = menuBtns as [Phaser.GameObjects.Container, Phaser.GameObjects.Container, Phaser.GameObjects.Container, Phaser.GameObjects.Container]
 
     // أقصى اليمين العلوي: الإيقاف أعلى عداد الجلسة بفاصل رأسي 25px على الأقل.
     this.buildPauseButton()
     this.buildSessionCounter()
     this.buildComboCounter()
     this.buildAzkarCounter()
+
+    // الحالة الابتدائية: القائمة مطوية — الأزرار مخفية والسهم ظاهر فقط.
+    this.setSideMenuVisible(false, true)
+
+    // الضغط في أي مكان آخر من الشاشة (خارج الأزرار) يطوي القائمة تلقائياً
+    // لعدم تشويش مساحة اللعب — من دون حجب نقرات الفقاعات (نستقبل الحدث فقط
+    // عندما لا يكون هدفه زراً تفاعلياً، ولا نضع أي طبقة Overlay فوق اللعب).
+    this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer, targets: Phaser.GameObjects.GameObject[]) => {
+      if (!this.sideMenuOpen || this.sideMenuAnimating) return
+      const hitButton = (targets ?? []).some((t) => t === this.btnArrow || t === this.btnGear || t === this.btnSliders || t === this.btnLeaf || t === this.btnQuran || t === this.pauseButton)
+      void pointer
+      if (!hitButton) this.toggleSideMenu(false)
+    })
+  }
+
+  /** فتح/طي القائمة الجانبية بحركة انزلاق + تلاشي ناعمة (Slide/Fade). */
+  private toggleSideMenu(force?: boolean): void {
+    const open = force ?? !this.sideMenuOpen
+    if (open === this.sideMenuOpen || this.sideMenuAnimating) return
+    this.sideMenuOpen = open
+    this.sideMenuAnimating = true
+    const menu = [this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran]
+    // دوران السهم 180°: يمين (مغلق) ⇄ يسار (مفتوح — ينطوي للجهة الأخرى).
+    this.tweens.add({ targets: this.arrowIcon, angle: open ? 180 : 0, duration: 260, ease: 'Quad.easeInOut' })
+    menu.forEach((btn, i) => {
+      const homeY: number = btn.getData('homeY')
+      this.tweens.killTweensOf(btn)
+      if (open) {
+        // الظهور: انزلاق من موضع السهم + تلاشي تدريجي متتابع (Stagger).
+        btn.setVisible(true)
+        btn.setAlpha(0).setX(SIDEBAR_X - 26).setY(SIDEBAR_TOP)
+        btn.setScale(0.7)
+        this.tweens.add({ targets: btn, x: SIDEBAR_X, y: homeY, alpha: 1, scale: 1, duration: 300, delay: i * 55, ease: 'Back.easeOut' })
+      } else {
+        // الإخفاء: انزلاق عكسي سريع نحو السهم ثم إخفاء.
+        this.tweens.add({
+          targets: btn, x: SIDEBAR_X - 26, y: SIDEBAR_TOP, alpha: 0, scale: 0.7,
+          duration: 220, delay: (menu.length - 1 - i) * 35, ease: 'Quad.easeIn',
+          onComplete: () => btn.setVisible(false),
+        })
+      }
+    })
+    this.time.delayedCall(open ? 300 + menu.length * 55 : 220 + menu.length * 35, () => {
+      this.sideMenuAnimating = false
+    })
+    // إبقاء شارة التحديث ملتصقة بزر الإعدادات عند انتهاء الحركة.
+    this.time.delayedCall(open ? 320 + menu.length * 55 : 260, () => this.pinUpdateBadge())
+  }
+
+  /** إظهار/إخفاء فوري (بلا حركة) — يُستخدم عند الإقلاع وتطبيق الإعدادات. */
+  private setSideMenuVisible(open: boolean, instant = false): void {
+    this.sideMenuOpen = open
+    for (const btn of [this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran]) {
+      if (!btn) continue
+      btn.setVisible(open)
+      if (instant && btn) {
+        btn.setAlpha(open ? 1 : 0)
+        const homeY: number = btn.getData('homeY') ?? btn.y
+        btn.setPosition(SIDEBAR_X, homeY).setScale(1)
+      }
+    }
+    this.arrowIcon?.setAngle(open ? 180 : 0)
+    if (instant) this.pinUpdateBadge()
+  }
+
+  /** تثبيت شارة التحديث على زاوية زر الإعدادات (تتحرك مع القائمة). */
+  private pinUpdateBadge(): void {
+    if (!this.updateBadge || !this.btnGear) return
+    const homeY: number = this.btnGear.getData('homeY') ?? this.btnGear.y
+    this.updateBadge.setPosition(this.btnGear.x + 26, (this.btnGear.visible ? this.btnGear.y : homeY) - 26)
   }
 
   private buildAzkarCounter(): void {
@@ -249,12 +347,15 @@ export default class MainScene extends Phaser.Scene {
   private applyUiSettings(): void {
     const icons = areIconsEnabled()
     const quran = isQuranEnabled()
-    // جميع الأيقونات
+    // زر السهم يبقى ظاهراً دائماً (هو بوابة القائمة) ما دامت الأيقونات مفعّلة.
+    this.btnArrow?.setVisible(icons)
+    // عناصر القائمة تُعرض فقط إذا كانت الأيقونات مفعّلة والقائمة مفتوحة.
+    const showMenu = icons && this.sideMenuOpen
     for (const b of [this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran]) {
-      b?.setVisible(icons)
+      b?.setVisible(showMenu)
     }
-    // زر المصحف يظهر فقط إذا كانت الأيقونات والمصحف مفعّلين معاً
-    this.btnQuran?.setVisible(icons && quran)
+    // زر المصحف يظهر فقط إذا كانت الأيقونات والمصحف مفعّلين معاً والقائمة مفتوحة.
+    this.btnQuran?.setVisible(icons && quran && this.sideMenuOpen)
     // يمين الشاشة
     this.pauseButton?.setVisible(icons)
     this.sessionPill?.setVisible(icons)
@@ -291,9 +392,10 @@ export default class MainScene extends Phaser.Scene {
    * وتختفي عند فتح لوحة التحكم (أين يوجد زر "تحديث النسخة الآن").
    */
   private buildUpdateBadge(): void {
-    // موضع زر الإعدادات (56, 62) — الشارة في زاويته العلوية اليمنى (r=32)
-    const bx = 56 + 26
-    const by = 62 - 26
+    // موضع زر الإعدادات الجديد (أول عناصر القائمة تحت السهم): y = ‏148‏ —
+    // الشارة في زاويته العلوية اليمنى، وتُثبَّت عبر pinUpdateBadge مع كل حركة.
+    const bx = SIDEBAR_X + 26
+    const by = SIDEBAR_TOP + SIDEBAR_STEP - 26
 
     this.updateBadge = this.add.container(bx, by)
     this.updateBadge.setDepth(2200)
@@ -406,17 +508,24 @@ export default class MainScene extends Phaser.Scene {
 
     // الأيقونة SVG البيضاء (46% من قطر الزر) — مع منطقة لمس إضافية حول الزر
     const svgIcon = this.add
-      .image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran' } as const)[icon])
+      .image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran', arrow: 'hud-arrow' } as const)[icon])
       .setOrigin(0.5)
       .setDisplaySize(BTN_ICON_SIZE, BTN_ICON_SIZE)
     btn.add(svgIcon)
     if (icon === 'pause') {
       this.pauseIcon = svgIcon
     }
+    if (icon === 'arrow') {
+      this.arrowIcon = svgIcon
+    }
+    // منطقة النقر تغطي كامل الدائرة 100%: الحجم = قطر الجسم المرئي، والتوسيط
+    // على مركز اللمس الحقيقي عبر setCircleHitArea (يُصحّح إزاحة displayOrigin
+    // التي كانت تُزيح الدائرة (0,0) للأعلى فلا يستجيب إلا الجزء العلوي).
+    // ملاحظة Phaser/Canvas: لا توجد عناصر <button>/SVG/DOM هنا، فلا حاجة لـ
+    // pointer-events — أطفال الحاوية لا يعترضون اللمس أبداً، والقرار كله لمنطقة
+    // اللمس هذه. لا توجد أي طبقة Overlay فوق الأزرار بعمق 2000.
     btn.setSize(BTN_SIZE, BTN_SIZE)
-    btn.setInteractive({ useHandCursor: true })
-    btn.input!.hitArea = new Phaser.Geom.Circle(0, 0, BTN_RADIUS + 12)
-    btn.input!.hitAreaCallback = Phaser.Geom.Circle.Contains
+    setCircleHitArea(btn, BTN_RADIUS + BTN_TOUCH_PADDING, true)
 
     const baseY = y
     let hovering = false

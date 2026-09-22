@@ -5,7 +5,7 @@
  *  - HTML: Network-First (آخر نسخة عند توفر الشبكة، وFallback للكاش أوفلاين).
  *  - Assets: Cache-First مع تحديث في الخلفية (يعمل كاملاً و بسرعة أوفلاين).
  */
-const CACHE_NAME = 'albaqiyat-v1.7.0'
+const CACHE_NAME = 'albaqiyat-v1.8.0'
 
 // قائمة أصول البناء المُجزَّأة (JS/CSS hashed) — تُحقن تلقائياً عند كل build
 // بواسطة إضافة vite-plugin-precache في vite.config.ts.
@@ -43,6 +43,7 @@ const ASSETS = [
   './game/icons/quran-gbtn.svg',
   './game/icons/pause-gbtn.svg',
   './game/icons/play-gbtn.svg',
+  './game/icons/arrow-gbtn.svg',
   // مكوّن الأزرار الأصلية + صفحة المعاينة التفاعلية
   './game/icons/gbtn.css',
   './game/icons/gbtn.js',

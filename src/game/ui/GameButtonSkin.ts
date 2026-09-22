@@ -19,6 +19,16 @@ export const BTN_SIZE = 74
 export const BTN_ICON_SIZE = 38
 /** نصف قطر جسم الزر. */
 export const BTN_RADIUS = BTN_SIZE / 2
+/**
+ * الفاصل الرأسي بين أزرار القائمة الجانبية — مطابق للمتغيّر `--gbtn-gap: 12px`
+ * في gbtn.css (نفس المسافة البصرية بين أزرار الواجهة الرسومية وداخل اللعبة).
+ */
+export const BTN_GAP = 12
+/**
+ * هامش منطقة اللمس حول الزر. نُبقيه أصغر من نصف الفاصل (12/2 = 6) حتى لا تتداخل
+ * دوائر اللمس بين زرين متجاورين فيستجيب زران لنفس الضغطة.
+ */
+export const BTN_TOUCH_PADDING = 5
 /** سماكة الحافة السفلية: (0 10px 0) من قياس 132px في الحزمة = 7.5% من القطر. */
 const THICKNESS_RATIO = 0.075
 /** إزاحة الوجه الداخلي: inset: 9% في الحزمة. */
@@ -75,12 +85,17 @@ export const BUTTON_THEMES = {
     faceHi: '#4d2b3c', face: '#2f1a27', faceLo: '#1a0e16',
     glow: [255, 130, 160],
   },
+  violet: {
+    rimHi: '#ddd6fe', rim: '#8b5cf6', rimLo: '#5b21b6', rimShadow: '#2e1065',
+    faceHi: '#3b2f57', face: '#241c3b', faceLo: '#130f22',
+    glow: [170, 140, 255],
+  },
 } satisfies Record<string, ButtonTheme>
 
 export type ButtonThemeKey = keyof typeof BUTTON_THEMES
 
 /** أيقونات شريط الأدوات الجانبي. */
-export type HudIcon = 'gear' | 'sliders' | 'leaf' | 'quran' | 'pause' | 'play'
+export type HudIcon = 'gear' | 'sliders' | 'leaf' | 'quran' | 'pause' | 'play' | 'arrow'
 
 /** ربط كل أيقونة بنمطها اللوني (نفس توزيع الحزمة: الإعدادات/الترس = steel …). */
 export const ICON_THEME: Record<HudIcon, ButtonThemeKey> = {
@@ -90,6 +105,7 @@ export const ICON_THEME: Record<HudIcon, ButtonThemeKey> = {
   quran: 'gold',
   pause: 'coral',
   play: 'coral',
+  arrow: 'violet',
 }
 
 /** لون الهالة كرقم 0xRRGGBB (لرسومات Phaser). */

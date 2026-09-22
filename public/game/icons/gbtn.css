@@ -113,6 +113,49 @@
 
 
 /* =====================================================================
+   ★ القائمة الجانبية القابلة للطي — مسافة متناسقة 12px بين الأزرار
+   (نفس BTN_GAP داخل اللعبة: SIDEBAR_STEP = BTN_SIZE + 12px)
+   ===================================================================== */
+.gbtn-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.gbtn-menu .gbtn { margin-bottom: 0; }
+
+/* =====================================================================
+   ★ منطقة الاستجابة الكاملة 100% — النقر يمر مباشرة للزر الرئيسي:
+   العناصر الداخلية (SVG/Spans) لا تعترض النقر (pointer-events: none)،
+   والزر نفسه يستقبل كامل الدائرة (pointer-events: auto) مع توسيط flex
+   كامل يغطي الشكل بنسبة 100% — فيستجيب من الوسط والأسفل وأي زاوية فوراً.
+   ===================================================================== */
+.gbtn {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.gbtn .ring,
+.gbtn .ico,
+.gbtn .gbtn__size,
+.gbtn svg,
+.gbtn img,
+.gbtn span {
+  pointer-events: none;
+}
+/* لا توجد أي طبقة Overlay شفافة فوق الأزرار: الظلال والهالات تزيينية فقط */
+.gbtn::before,
+.gbtn::after,
+.ring::before {
+  pointer-events: none;
+}
+
+/* =====================================================================
    ★ أنماط الألوان (Themes) — كل نمط يضبط متغيّراته فقط
    نفس القيم المستخدمة داخل اللعبة (BUTTON_THEMES في GameButtonSkin.ts)
    ===================================================================== */
@@ -140,6 +183,11 @@
   --rim-hi: #ffb3c0; --rim: #ef5f7a; --rim-lo: #b83450; --rim-shadow: #67172c;
   --face-hi: #4d2b3c; --face: #2f1a27; --face-lo: #1a0e16;
   --glow: 255, 130, 160;
+}
+.gbtn[data-theme="violet"] {
+  --rim-hi: #ddd6fe; --rim: #8b5cf6; --rim-lo: #5b21b6; --rim-shadow: #2e1065;
+  --face-hi: #3b2f57; --face: #241c3b; --face-lo: #130f22;
+  --glow: 170, 140, 255;
 }
 
 /* =====================================================================

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+  <!-- أيقونة زر طي/فتح القائمة الجانبية (سهم يشير لليمين)
+       عند فتح القائمة يُدار 180° ليشير لليسار (ينطوي للجهة الأخرى) -->
+  <path d="M9.5 5.6 16 12l-6.5 6.4"/>
+</svg>

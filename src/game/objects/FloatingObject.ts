@@ -9,6 +9,7 @@ import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
 import { getSpeed } from '../../services/SettingsService'
+import { setCircleHitArea } from '../ui/hitArea'
 
 /** معامل تكبير الأجسام العائمة — 2.0 يعطي حجماً مريحاً للمس دون طغيان على الشاشة. */
 const BODY_SCALE = 2.25
@@ -90,16 +91,17 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     label.setStroke('#0a0f1e', 2)
     this.add(label)
 
-    // منطقة لمس دائرية مركزة 100% على مركز المجسم:
-    // الإحداثيات المحلية للدائرة تُضرب في scale (2.6) عند تحويل Phaser لها لإحداثيات دولية،
-    // لذلك نقسم على BODY_SCALE للحصول على المقياس المحلي الصحيح المطابق للجسم المرئي.
-    // نُضيف هامش 12px مقسوماً على BODY_SCALE أيضاً لزيادة مساحة اللمس الفعلية.
+    // منطقة لمس دائرية مركزة 100% على مركز المجسم (بلا إزاحة علوية):
+    // الحاوية هنا بلا setSize (عرض/ارتفاع = 0) لذا displayOrigin = (0,0) ومركز
+    // الشكل هو النقطة المحلية (0,0) — والدائرة (0,0) صحيحة هنا تماماً.
+    // الطبقات الداخلية (صور/نصوص/توهج) لا تعترض اللمس في Phaser: القرار كله
+    // لمنطقة اللمس هذه، فتستجيب الفقاعة من أي زاوية (وسط/أسفل/أطراف) فوراً.
+    // ملاحظة: لا توجد عناصر DOM/SVG هنا فلا حاجة لـ pointer-events —
+    // المكافئ في Phaser هو أن الأطفال غير تفاعليين افتراضياً وهو متحقق.
+    // لا توجد أي طبقة Overlay شفافة فوق الفقاعات بعمق 1500.
     const localHitR = options.hitRadius / BODY_SCALE + 22
     this.localHitRadius = localHitR
-    this.setInteractive(new Phaser.Geom.Circle(0, 0, localHitR), Phaser.Geom.Circle.Contains)
-    // تأكيد وجود منطقة لمس أوسع من الرسم الفعلي، خصوصاً قرب أسفل الشاشة.
-    this.input!.hitArea = new Phaser.Geom.Circle(0, 0, localHitR)
-    this.input!.hitAreaCallback = Phaser.Geom.Circle.Contains
+    setCircleHitArea(this, localHitR)
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.handlePointerDown, this)
 
     // اندفاع أولي سريع: الوصول إلى ربع ارتفاع الشاشة خلال 175ms ثم الانتقال للسرعة العادية
@@ -115,7 +117,7 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   /** تعطيل/إعادة تفعيل لمس الفقاعة أثناء الإيقاف المؤقت مع الحفاظ على منطقة اللمس الموسعة. */
   public setBubbleInteractive(enabled: boolean): void {
     if (enabled) {
-      this.setInteractive(new Phaser.Geom.Circle(0, 0, this.localHitRadius), Phaser.Geom.Circle.Contains)
+      setCircleHitArea(this, this.localHitRadius)
     } else {
       this.disableInteractive()
     }

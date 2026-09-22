@@ -71,10 +71,16 @@
     بالملف <code>src/game/ui/GameButtonSkin.ts</code> بنفس الألوان والطبقات.
     كل زر يُطلق حدثه البرمجي السابق:
     <code>open-dashboard</code> · <code>open-mode-panel</code> · <code>open-garden</code> ·
-    <code>open-quran</code> · <code>toggle-pause</code>.
+    <code>open-quran</code> · <code>toggle-pause</code> · <code>toggle-side-menu</code>.
   </p>
 
-  <div class="showcase">
+  <div class="showcase gbtn-menu" style="flex-direction:row;">
+    <!-- 0) زر السهم — طي/فتح القائمة الجانبية (violet) -->
+    <button class="gbtn gbtn--sm" data-theme="violet" data-name="طي/فتح القائمة"
+            data-action="toggle-side-menu" aria-label="طي/فتح القائمة" title="طي/فتح القائمة">
+      <span class="gbtn__size"></span>
+      <span class="ring"><img class="ico" src="./arrow-gbtn.svg" alt=""></span>
+    </button>
     <!-- 1) الإعدادات (steel) -->
     <button class="gbtn" data-theme="steel" data-name="الإعدادات"
             data-action="open-dashboard" aria-label="الإعدادات" title="الإعدادات">
@@ -130,7 +136,7 @@
   <script>
     // إثبات ربط الأزرار بوظائفها البرمجية السابقة (تسجيل الأحداث المُطلقة عند النقر)
     var log = document.getElementById('action-log')
-    ;['open-dashboard', 'open-mode-panel', 'open-garden', 'open-quran', 'toggle-pause'].forEach(function (name) {
+    ;['open-dashboard', 'open-mode-panel', 'open-garden', 'open-quran', 'toggle-pause', 'toggle-side-menu'].forEach(function (name) {
       document.addEventListener(name, function () {
         var li = document.createElement('li')
         li.textContent = 'الحدث المُطلق: ' + name

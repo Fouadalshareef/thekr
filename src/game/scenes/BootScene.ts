@@ -26,6 +26,8 @@ export default class BootScene extends Phaser.Scene {
     this.load.svg('hud-quran',    'game/icons/quran-gbtn.svg',    { width: 256, height: 256 })
     this.load.svg('hud-pause',    'game/icons/pause-gbtn.svg',    { width: 256, height: 256 })
     this.load.svg('hud-play',     'game/icons/play-gbtn.svg',     { width: 256, height: 256 })
+    // أيقونة سهم فتح/طي القائمة الجانبية
+    this.load.svg('hud-arrow',    'game/icons/arrow-gbtn.svg',    { width: 256, height: 256 })
     // أيقونات النوافذ (تبقى بتصميمها الذهبي السابق)
     this.load.svg('modal-close',  'game/icons/close.svg',    { width: 112, height: 112 })
     this.load.svg('modal-index',  'game/icons/index.svg',    { width: 240, height:  90 })

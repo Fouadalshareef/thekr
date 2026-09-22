@@ -27,8 +27,9 @@
     leaf: '#77e06e',
     gold: '#ffd577',
     coral: '#ff7ea0',
+    violet: '#aa8cff',
   }
-  var toneMap = { steel: 520, sunset: 660, leaf: 600, gold: 740, coral: 460 }
+  var toneMap = { steel: 520, sunset: 660, leaf: 600, gold: 740, coral: 460, violet: 560 }
 
   /* --- نغمة نقرة قصيرة عبر Web Audio (بدون أي ملفات صوت) --- */
   function clickTone(freq) {
