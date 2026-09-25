@@ -19,11 +19,6 @@ body {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  /* مسافات أمان فوق خلفية الموبايل الكاملة (iPhone notch / Android bars) */
-  padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  padding-left: env(safe-area-inset-left, 0px);
-  padding-right: env(safe-area-inset-right, 0px);
   font-family: 'Segoe UI', Tahoma, 'Arial', sans-serif;
 }
 
@@ -119,7 +114,13 @@ body {
 
 #game-container canvas {
   display: block;
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  padding: 0;
   z-index: 1;
   pointer-events: auto;
   width: 100%;

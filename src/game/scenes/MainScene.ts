@@ -257,7 +257,9 @@ export default class MainScene extends Phaser.Scene {
     if (open === this.sideMenuOpen || this.sideMenuAnimating) return
     this.sideMenuOpen = open
     this.sideMenuAnimating = true
-    const menu = [this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran]
+    // زر اختيار النمط مستقل عن القائمة القابلة للطي، ويبقى متاحاً دائماً
+    // مباشرة أسفل السهم.
+    const menu = [this.btnGear, this.btnLeaf, this.btnQuran]
     // دوران السهم 180°: يمين (مغلق) ⇄ يسار (مفتوح — ينطوي للجهة الأخرى).
     this.tweens.add({ targets: this.arrowIcon, angle: open ? 180 : 0, duration: 260, ease: 'Quad.easeInOut' })
     menu.forEach((btn, i) => {
@@ -291,7 +293,7 @@ export default class MainScene extends Phaser.Scene {
   /** إظهار/إخفاء فوري (بلا حركة) — يُستخدم عند الإقلاع وتطبيق الإعدادات. */
   private setSideMenuVisible(open: boolean, instant = false): void {
     this.sideMenuOpen = open
-    for (const btn of [this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran]) {
+    for (const btn of [this.btnGear, this.btnLeaf, this.btnQuran]) {
       if (!btn) continue
       btn.setVisible(open)
       if (instant && btn) {
@@ -351,9 +353,11 @@ export default class MainScene extends Phaser.Scene {
     const icons = areIconsEnabled()
     // زر السهم يبقى ظاهراً دائماً (هو بوابة القائمة) ما دامت الأيقونات مفعّلة.
     this.btnArrow?.setVisible(icons)
+    // زر اختيار النمط ثابت دائماً، حتى حين تكون بقية القائمة مطوية.
+    this.btnSliders?.setVisible(true).setAlpha(1).setScale(1)
     // عناصر القائمة تُعرض فقط إذا كانت الأيقونات مفعّلة والقائمة مفتوحة.
     const showMenu = icons && this.sideMenuOpen
-    for (const b of [this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran]) {
+    for (const b of [this.btnGear, this.btnLeaf, this.btnQuran]) {
       b?.setVisible(showMenu)
     }
     // أيقونة المصحف الشريف ثابتة في الواجهة كعنصر رئيسي (بلا خيار إخفاء).
@@ -712,7 +716,7 @@ export default class MainScene extends Phaser.Scene {
     this.modePanel.setDepth(2000)
     this.modePanel.setVisible(false)
 
-    const dim = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
+    const dim = this.add.rectangle(0, 0, width, height, 0x020617, 0.72)
     dim.setOrigin(0)
     dim.setInteractive()
     dim.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
@@ -731,17 +735,15 @@ export default class MainScene extends Phaser.Scene {
     this.modeScrollMax = 0
     this.modeScrollThumb = undefined
     this.modeListCenterY = 0
-    const base = 0x172554 // كحلي زجاجي هادئ
+    const base = 0x0f172a // كحلي مصمت عالي التباين
     const gfx = this.add.graphics()
-    // بطاقة زجاجية ناعمة بلا حواف سوداء أو ظل ثقيل.
-    gfx.fillStyle(base, 0.88)
-    gfx.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 30)
-    gfx.fillStyle(0x60a5fa, 0.16)
-    gfx.fillRoundedRect(-panelW / 2 + 2, -panelH / 2 + 2, panelW - 4, 92, 28)
-    gfx.lineStyle(1.5, 0xbfdbfe, 0.65)
-    gfx.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 30)
-    gfx.lineStyle(1, 0xffffff, 0.16)
-    gfx.strokeRoundedRect(-panelW / 2 + 8, -panelH / 2 + 8, panelW - 16, panelH - 16, 24)
+    // بطاقة مصمتة: بلا شفافية أو لمعان زجاجي.
+    gfx.fillStyle(base, 1)
+    gfx.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8)
+    gfx.lineStyle(2, 0x475569, 1)
+    gfx.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 8)
+    gfx.lineStyle(1, 0x334155, 1)
+    gfx.lineBetween(-panelW / 2 + 24, -panelH / 2 + 84, panelW / 2 - 24, -panelH / 2 + 84)
     /* legacy card drawing removed
     // ظل أرضي ساقط
     gfx.fillStyle(0x000000, 0.4)
@@ -767,7 +769,7 @@ export default class MainScene extends Phaser.Scene {
     const title = this.add
       .text(0, -panelH / 2 + 52, 'اختر النمط', {
         fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Tahoma, sans-serif',
-        fontSize: '28px',
+        fontSize: '30px',
         fontStyle: 'bold',
         color: '#fef3c7',
       })
@@ -776,7 +778,7 @@ export default class MainScene extends Phaser.Scene {
 
     const activeMode = gameMode.getMode()
     const btnW = panelW - 56
-    const btnH = 50
+    const btnH = 56
     const GAP = 8 // مسافة نسبية ثابتة بين الأزرار — لا تتغير عند التفاعل
     const STEP = btnH + GAP
 
@@ -823,7 +825,6 @@ export default class MainScene extends Phaser.Scene {
       // الإحداثي الأساسي ثابت: gap ثابت 12px — لا يتغير أبداً عند التفاعل
       const baseY = -((MODE_OPTIONS.length - 1) * STEP) / 2 + idx * STEP
       const bg = this.add.graphics()
-      const glow = this.add.graphics()
       const label = this.add
         .text(0, 0, isActive ? `❀ ${opt.label}` : opt.label, {
           fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Tahoma, sans-serif',
@@ -835,32 +836,22 @@ export default class MainScene extends Phaser.Scene {
 
       const drawBg = (hovered: boolean): void => {
         bg.clear()
-        glow.clear()
         if (isActive) {
-          glow.fillStyle(0x2ecc71, 0.35)
-          glow.fillRoundedRect(-btnW / 2 - 4, -btnH / 2 - 4, btnW + 8, btnH + 8, 20)
-          bg.fillStyle(0x1e8e4f, 1)
-          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 16)
-          bg.fillStyle(hovered ? 0x35d37f : 0x2ecc71, 1)
-          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH - 10, 12)
-          bg.fillStyle(0xffffff, 0.16)
-          bg.fillRoundedRect(-btnW / 2 + 6, -btnH / 2 + 5, btnW - 12, btnH / 2 - 4, 10)
-          bg.lineStyle(1.5, 0xffd700, 0.6)
-          bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 16)
+          bg.fillStyle(hovered ? 0x047857 : 0x059669, 1)
+          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 8)
+          bg.lineStyle(2, 0xfbbf24, 1)
+          bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 8)
         } else {
-          const idle = hovered ? 0x64748b : 0x475569
-          bg.fillStyle(idle, 0.82)
-          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 20)
-          bg.fillStyle(0xffffff, hovered ? 0.14 : 0.08)
-          bg.fillRoundedRect(-btnW / 2 + 5, -btnH / 2 + 4, btnW - 10, btnH / 2, 14)
-          bg.lineStyle(1.5, 0x94a3b8, 0.65)
-          bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 20)
+          bg.fillStyle(hovered ? 0x475569 : 0x334155, 1)
+          bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 8)
+          bg.lineStyle(1.5, 0x64748b, 1)
+          bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 8)
         }
       }
       drawBg(false)
 
       const btn = this.add.container(0, baseY)
-      btn.add([glow, bg, label])
+      btn.add([bg, label])
       btn.setData('baseY', baseY)
       btn.setInteractive(new Phaser.Geom.Rectangle(-btnW / 2 - 10, -btnH / 2 - 8, btnW + 20, btnH + 16), Phaser.Geom.Rectangle.Contains)
 

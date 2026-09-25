@@ -39,8 +39,9 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
       topOnly: false,
     } as Phaser.Types.Core.InputConfig,
     scale: {
-      mode: Phaser.Scale.FIT,
-      autoCenter: Phaser.Scale.CENTER_BOTH,
+      // اجعل مساحة الرسم مطابقة للـ viewport الفعلي بدلاً من احتواء مقاس
+      // ثابت داخلها؛ بذلك لا تظهر أشرطة سوداء عند اختلاف نسبة أبعاد الهاتف.
+      mode: Phaser.Scale.RESIZE,
       parent: config.parent ?? 'game-container',
       width: config.width,
       height: config.height,
