@@ -5,7 +5,7 @@
  *  - HTML: Network-First (آخر نسخة عند توفر الشبكة، وFallback للكاش أوفلاين).
  *  - Assets: Cache-First مع تحديث في الخلفية (يعمل كاملاً و بسرعة أوفلاين).
  */
-const CACHE_NAME = 'albaqiyat-v1.8.0'
+const CACHE_NAME = 'baqiyat-v1.0.4'
 
 // قائمة أصول البناء المُجزَّأة (JS/CSS hashed) — تُحقن تلقائياً عند كل build
 // بواسطة إضافة vite-plugin-precache في vite.config.ts.
@@ -60,6 +60,14 @@ const ASSETS = [
   ...BUILD_ASSETS,
 ]
 
+// نص المصحف يُجلب من واجهة Quran Cloud عند فتح السورة. نحدد جميع السور هنا
+// كي يخزن زر التنزيل النص كاملاً فعلياً، لا السور التي زارها المستخدم فقط.
+const QURAN_ASSETS = Array.from(
+  { length: 114 },
+  (_, index) => `https://api.alquran.cloud/v1/surah/${index + 1}/quran-simple`,
+)
+const OFFLINE_ASSETS = [...ASSETS, ...QURAN_ASSETS]
+
 // تثبيت: تخزين كل الأصول الأساسية + تفعيل فوري بدون انتظار
 self.addEventListener('install', (event) => {
   // تفعيل النسخة الجديدة فوراً حتى لا تبقى نسخة قديمة معلّقة
@@ -69,7 +77,7 @@ self.addEventListener('install', (event) => {
       .open(CACHE_NAME)
       .then((cache) =>
         // addAll قد يفشل لو ملف مفقود — نلتقط كل ملف على حدة لضمان التثبيت
-        Promise.allSettled(ASSETS.map((url) => cache.add(url).catch(() => null))),
+        Promise.allSettled(OFFLINE_ASSETS.map((url) => cache.add(url).catch(() => null))),
       )
       .then(() => self.skipWaiting()), // ← يستبدل SW القديم فوراً
   )
@@ -143,22 +151,21 @@ self.addEventListener('fetch', (event) => {
 })
 
 // إعادة تنزيل كل الأصول اليدوياً (يُستدعى من زر "تثبيت للأوفلاين" في الإعدادات)
-async function runManualPrecache() {
+async function runManualPrecache(onProgress) {
   const cache = await caches.open(CACHE_NAME)
   let ok = 0
-  await Promise.all(
-    ASSETS.map((asset) =>
-      fetch(asset)
-        .then((response) => {
-          if (response && response.status === 200) {
-            cache.put(new Request(asset), response.clone())
-            ok += 1
-          }
-        })
-        .catch(() => {}),
-    ),
-  )
-  return ok
+  let failed = 0
+  // التخزين متسلسل لتقديم تقدم حقيقي ومنع إغراق واجهة المصحف بـ 114 طلباً دفعة واحدة.
+  for (const asset of OFFLINE_ASSETS) {
+    try {
+      await cache.add(asset)
+      ok += 1
+    } catch {
+      failed += 1
+    }
+    onProgress?.(ok + failed, OFFLINE_ASSETS.length)
+  }
+  return { ok, failed }
 }
 
 // استقبال رسائل من الصفحة: SKIP_WAITING (تحديث) وPRECACHE (تنزيل كامل للأوفلاين)
@@ -172,10 +179,10 @@ self.addEventListener('message', (event) => {
         clients.forEach((client) => client.postMessage(payload))
       })
     }
-    reply({ type: 'PRECACHE_PROGRESS', done: 0, total: ASSETS.length })
-    runManualPrecache().then((ok) =>
-      reply({ type: 'PRECACHE_DONE', cached: ok, total: ASSETS.length }),
+    reply({ type: 'PRECACHE_PROGRESS', done: 0, total: OFFLINE_ASSETS.length })
+    event.waitUntil(
+      runManualPrecache((done, total) => reply({ type: 'PRECACHE_PROGRESS', done, total }))
+        .then(({ ok, failed }) => reply({ type: 'PRECACHE_DONE', cached: ok, failed, total: OFFLINE_ASSETS.length })),
     )
   }
 })
-

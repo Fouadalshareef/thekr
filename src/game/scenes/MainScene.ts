@@ -1043,40 +1043,24 @@ export default class MainScene extends Phaser.Scene {
 
     // بطاقة مركزية
     const itemCount = SEQUENCE_DHIKRS.length
-    const itemHeight = 44
+    const itemHeight = 56
     const listHeight = itemCount * itemHeight
     const cardHeight = listHeight + 140
     const startY = -(listHeight / 2) + 10
 
     const card = this.add.container(0, 0)
-    const lift = 7
-    const base = 0x059669 // أخضر زمردي
-    const sideCol = this.darker(base, 0.55)
     const cardBg = this.add.graphics()
-    // ظل أرضي
-    cardBg.fillStyle(0x000000, 0.4)
-    cardBg.fillRoundedRect(-180, -cardHeight / 2 + lift + 2, 360, cardHeight, 20)
-    // جسم الحافة
-    cardBg.fillStyle(sideCol, 1)
-    cardBg.fillRoundedRect(-180, -cardHeight / 2 + lift - 2, 360, cardHeight, 20)
-    // وجه
-    cardBg.fillStyle(base, 1)
-    cardBg.fillRoundedRect(-180, -cardHeight / 2, 360, cardHeight, 20)
-    // تدرّج علوي
-    cardBg.fillStyle(this.lighter(base, 1.12), 0.5)
-    cardBg.fillRoundedRect(-180, -cardHeight / 2, 360, 60, 20)
-    // لمعة علوية
-    cardBg.fillStyle(0xffffff, 0.16)
-    cardBg.fillRoundedRect(-172, -cardHeight / 2 + 8, 344, 30, 14)
-    // حد أبيض ناصع
-    cardBg.lineStyle(3, 0xffffff, 0.88)
-    cardBg.strokeRoundedRect(-180, -cardHeight / 2, 360, cardHeight, 20)
+    // بطاقة مصمتة مطابقة لنافذة اختيار النمط.
+    cardBg.fillStyle(0x0f172a, 1)
+    cardBg.fillRoundedRect(-180, -cardHeight / 2, 360, cardHeight, 8)
+    cardBg.lineStyle(2, 0x475569, 1)
+    cardBg.strokeRoundedRect(-180, -cardHeight / 2, 360, cardHeight, 8)
     card.add(cardBg)
 
     const title = this.add
       .text(0, -cardHeight / 2 + 30, 'اختر ذكراً واحداً للتكرار', {
         fontFamily: '"Segoe UI", Tahoma, sans-serif',
-        fontSize: '20px',
+        fontSize: '24px',
         fontStyle: 'bold',
         color: '#fef3c7',
       })
@@ -1089,31 +1073,21 @@ export default class MainScene extends Phaser.Scene {
       const y = startY + i * itemHeight
       const bg = this.add.graphics()
       const drawItem = (c: number) => {
-        const sideI = this.darker(c, 0.5)
-        const liftB = 4
         bg.clear()
-        bg.fillStyle(0x000000, 0.3)
-        bg.fillRoundedRect(-150, -18 + liftB + 2, 300, 36, 14)
-        bg.fillStyle(sideI, 1)
-        bg.fillRoundedRect(-150, -18 + liftB - 1, 300, 36, 14)
         bg.fillStyle(c, 1)
-        bg.fillRoundedRect(-150, -18, 300, 36, 14)
-        bg.fillStyle(0xffffff, 0.22)
-        bg.fillRoundedRect(-145, -14, 290, 15, 11)
-        bg.lineStyle(2, 0xffffff, 0.8)
-        bg.strokeRoundedRect(-150, -18, 300, 36, 14)
+        bg.fillRoundedRect(-150, -24, 300, 48, 8)
       }
-      drawItem(0x475569)
+      drawItem(0x1e293b)
       const label = this.add
         .text(0, 0, `${i + 1}. ${dhikr.name} (${dhikr.target})`, {
           fontFamily: '"Segoe UI", Tahoma, sans-serif',
-          fontSize: '17px',
+          fontSize: '18px',
           color: '#e2e8f0',
         })
         .setOrigin(0.5)
       const btn = this.add.container(0, y)
       btn.add([bg, label])
-      btn.setInteractive(new Phaser.Geom.Rectangle(-150, -18, 300, 36), Phaser.Geom.Rectangle.Contains)
+      btn.setInteractive(new Phaser.Geom.Rectangle(-150, -24, 300, 48), Phaser.Geom.Rectangle.Contains)
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
         this.tweens.add({ targets: btn, scale: 0.96, duration: 60, ease: 'Quad.easeOut' })
         gameMode.setMode('focus', i)
@@ -1126,29 +1100,21 @@ export default class MainScene extends Phaser.Scene {
     })
 
     // زر الإغلاق
-    const closeY = startY + (SEQUENCE_DHIKRS.length) * itemHeight + 15
+    const closeY = startY + (SEQUENCE_DHIKRS.length) * itemHeight + 8
     const close = this.add.container(0, closeY)
     const closeBg = this.add.graphics()
-    const closeSide = this.darker(0xdc2626, 0.55)
-    closeBg.fillStyle(0x000000, 0.3)
-    closeBg.fillRoundedRect(-70, -18 + 6, 140, 36, 18)
-    closeBg.fillStyle(closeSide, 1)
-    closeBg.fillRoundedRect(-70, -18 + 5, 140, 36, 18)
-    closeBg.fillStyle(0xdc2626, 1)
-    closeBg.fillRoundedRect(-70, -18, 140, 36, 18)
-    closeBg.fillStyle(0xffffff, 0.25)
-    closeBg.fillRoundedRect(-65, -14, 130, 15, 12)
-    closeBg.lineStyle(2.5, 0xffffff, 0.9)
-    closeBg.strokeRoundedRect(-70, -18, 140, 36, 18)
+    closeBg.fillStyle(0x1e293b, 1)
+    closeBg.fillRoundedRect(-150, -24, 300, 48, 8)
     const closeText = this.add
       .text(0, 0, 'رجوع', {
         fontFamily: '"Segoe UI", Tahoma, sans-serif',
-        fontSize: '17px',
-        color: '#fee2e2',
+        fontSize: '18px',
+        fontStyle: 'bold',
+        color: '#e2e8f0',
       })
       .setOrigin(0.5)
     close.add([closeBg, closeText])
-    close.setInteractive(new Phaser.Geom.Rectangle(-70, -18, 140, 36), Phaser.Geom.Rectangle.Contains)
+    close.setInteractive(new Phaser.Geom.Rectangle(-150, -24, 300, 48), Phaser.Geom.Rectangle.Contains)
     close.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
       this.toggleFocusPanel(false)
       this.openModePanel()
@@ -1169,7 +1135,7 @@ export default class MainScene extends Phaser.Scene {
     const selected = gameMode.getFocusIndex()
     this.focusButtons.forEach((item, i) => {
       const isActive = i === selected
-      item.draw(isActive ? 0x10b981 : 0x475569)
+      item.draw(isActive ? 0x10b981 : 0x1e293b)
       item.label.setColor(isActive ? '#ffffff' : '#e2e8f0')
     })
   }

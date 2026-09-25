@@ -208,6 +208,9 @@ function renderContent(): string {
           class="w-full flex items-center justify-center gap-2 rounded-lg bg-gradient-to-l from-amber-500 to-orange-500 shadow-[0_0_18px_rgba(249,115,22,0.5)] hover:from-amber-400 hover:to-orange-400 active:scale-95 transition-all px-3 py-2.5 text-sm font-bold text-white cursor-pointer">
           📥 تثبيت / تنزيل التطبيق للأوفلاين
         </button>
+        <div id="dash-install-progress" class="hidden h-2 overflow-hidden rounded-full bg-slate-700" role="progressbar" aria-label="تقدم تنزيل الأوفلاين" aria-valuemin="0" aria-valuemax="100">
+          <div id="dash-install-progress-bar" class="h-full w-0 bg-emerald-500 transition-[width] duration-200"></div>
+        </div>
         <p id="dash-install-status" class="hidden text-xs text-center text-emerald-300 font-bold"></p>
       </div>
     </section>
@@ -257,13 +260,29 @@ function bindEvents(): void {
         statusEl.classList.remove('hidden')
       }
     }
+    const progress = modal?.querySelector<HTMLElement>('#dash-install-progress')
+    const progressBar = modal?.querySelector<HTMLElement>('#dash-install-progress-bar')
+    const showProgress = (done: number, total: number) => {
+      const percent = total ? Math.round((done / total) * 100) : 0
+      progress?.classList.remove('hidden')
+      progress?.setAttribute('aria-valuenow', String(percent))
+      if (progressBar) progressBar.style.width = `${percent}%`
+    }
     const swReg = await navigator.serviceWorker?.getRegistration()
     const activeWorker = swReg?.active ?? navigator.serviceWorker?.controller
     // مستمع مؤقت لرسائل تقدم التنزيل اليدوي من الـ Service Worker
     const onPrecacheMessage = (e: MessageEvent) => {
-      if (e.data?.type === 'PRECACHE_PROGRESS') showStatus(`⏬ تنزيل ملفات الأوفلاين... (0/${e.data.total})`)
+      if (e.data?.type === 'PRECACHE_PROGRESS') {
+        showProgress(e.data.done, e.data.total)
+        showStatus(`⏬ تنزيل ملفات الأوفلاين... (${e.data.done}/${e.data.total})`)
+      }
       if (e.data?.type === 'PRECACHE_DONE') {
-        showStatus(`✅ تم تنزيل كل الملفات (${e.data.cached}/${e.data.total}) — يعمل الآن بدون إنترنت!`)
+        showProgress(e.data.cached + (e.data.failed ?? 0), e.data.total)
+        showStatus(
+          e.data.failed
+            ? `⚠️ اكتمل التنزيل مع تعذر ${e.data.failed} ملفاً (${e.data.cached}/${e.data.total}). تحقق من الاتصال وأعد المحاولة.`
+            : `✅ اكتمل تنزيل جميع الملفات (${e.data.cached}/${e.data.total}) — يعمل الآن بدون إنترنت!`,
+        )
         navigator.serviceWorker.removeEventListener('message', onPrecacheMessage)
       }
     }
@@ -273,6 +292,7 @@ function bindEvents(): void {
     const triggerPrecache = () => {
       if (activeWorker) {
         activeWorker.postMessage({ type: 'PRECACHE' })
+        showProgress(0, 1)
         showStatus('⏬ جاري تنزيل ملفات الأوفلاين...')
       } else {
         navigator.serviceWorker.removeEventListener('message', onPrecacheMessage)
