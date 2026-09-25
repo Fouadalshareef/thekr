@@ -112,6 +112,7 @@ export default class MainScene extends Phaser.Scene {
   // مراجع أيقونات شريط الأدوات (لتطبيق إظهار/إخفاء فوري حسب الإعدادات).
   private btnGear!: Phaser.GameObjects.Container
   private btnSliders!: Phaser.GameObjects.Container
+  private btnLeaf!: Phaser.GameObjects.Container
   private btnQuran!: Phaser.GameObjects.Container
   /** زر السهم لطي/فتح القائمة الجانبية — يبقى ظاهراً دائماً. */
   private btnArrow!: Phaser.GameObjects.Container
@@ -220,11 +221,12 @@ export default class MainScene extends Phaser.Scene {
     this.btnArrow = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP, 'arrow', () => this.toggleSideMenu())
     this.btnArrow.setData('homeY', SIDEBAR_TOP)
 
-    // الترتيب: السهم، اختيار النمط (ثابت)، المصحف، الإعدادات.
+    // الترتيب: السهم، اختيار النمط (ثابت)، مزرعة الحسنات، المصحف، الإعدادات.
     this.btnSliders = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + SIDEBAR_STEP, 'sliders', () => this.openModePanel())
-    this.btnQuran = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 2 * SIDEBAR_STEP, 'quran', () => window.dispatchEvent(new CustomEvent('open-quran')))
-    this.btnGear = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 3 * SIDEBAR_STEP, 'gear', () => window.dispatchEvent(new CustomEvent('open-dashboard')))
-    ;[this.btnSliders, this.btnQuran, this.btnGear].forEach((btn) => btn.setData('homeY', btn.y))
+    this.btnLeaf = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 2 * SIDEBAR_STEP, 'leaf', () => window.dispatchEvent(new CustomEvent('open-garden')))
+    this.btnQuran = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 3 * SIDEBAR_STEP, 'quran', () => window.dispatchEvent(new CustomEvent('open-quran')))
+    this.btnGear = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 4 * SIDEBAR_STEP, 'gear', () => window.dispatchEvent(new CustomEvent('open-dashboard')))
+    ;[this.btnSliders, this.btnLeaf, this.btnQuran, this.btnGear].forEach((btn) => btn.setData('homeY', btn.y))
 
     // أقصى اليمين العلوي: الإيقاف أعلى عداد الجلسة بفاصل رأسي 25px على الأقل.
     this.buildPauseButton()
@@ -240,7 +242,7 @@ export default class MainScene extends Phaser.Scene {
     // عندما لا يكون هدفه زراً تفاعلياً، ولا نضع أي طبقة Overlay فوق اللعب).
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer, targets: Phaser.GameObjects.GameObject[]) => {
       if (!this.sideMenuOpen || this.sideMenuAnimating) return
-      const hitButton = (targets ?? []).some((t) => t === this.btnArrow || t === this.btnGear || t === this.btnSliders || t === this.btnQuran || t === this.pauseButton)
+      const hitButton = (targets ?? []).some((t) => t === this.btnArrow || t === this.btnGear || t === this.btnSliders || t === this.btnLeaf || t === this.btnQuran || t === this.pauseButton)
       void pointer
       if (!hitButton) this.toggleSideMenu(false)
     })
@@ -254,7 +256,7 @@ export default class MainScene extends Phaser.Scene {
     this.sideMenuAnimating = true
     // زر اختيار النمط مستقل عن القائمة القابلة للطي، ويبقى متاحاً دائماً
     // مباشرة أسفل السهم.
-    const menu = [this.btnQuran, this.btnGear]
+    const menu = [this.btnLeaf, this.btnQuran, this.btnGear]
     // دوران السهم 180°: يمين (مغلق) ⇄ يسار (مفتوح — ينطوي للجهة الأخرى).
     this.tweens.add({ targets: this.arrowIcon, angle: open ? 180 : 0, duration: 260, ease: 'Quad.easeInOut' })
     menu.forEach((btn, i) => {
@@ -288,7 +290,7 @@ export default class MainScene extends Phaser.Scene {
   /** إظهار/إخفاء فوري (بلا حركة) — يُستخدم عند الإقلاع وتطبيق الإعدادات. */
   private setSideMenuVisible(open: boolean, instant = false): void {
     this.sideMenuOpen = open
-    for (const btn of [this.btnQuran, this.btnGear]) {
+    for (const btn of [this.btnLeaf, this.btnQuran, this.btnGear]) {
       if (!btn) continue
       btn.setVisible(open)
       if (instant && btn) {
@@ -381,7 +383,7 @@ export default class MainScene extends Phaser.Scene {
     this.btnSliders?.setVisible(true).setAlpha(1).setScale(1)
     // عناصر القائمة تُعرض فقط إذا كانت الأيقونات مفعّلة والقائمة مفتوحة.
     const showMenu = icons && this.sideMenuOpen
-    for (const b of [this.btnQuran, this.btnGear]) {
+    for (const b of [this.btnLeaf, this.btnQuran, this.btnGear]) {
       b?.setVisible(showMenu)
     }
     // أيقونة المصحف الشريف ثابتة في الواجهة كعنصر رئيسي (بلا خيار إخفاء).
