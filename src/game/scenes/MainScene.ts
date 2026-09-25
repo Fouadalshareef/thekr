@@ -101,6 +101,7 @@ export default class MainScene extends Phaser.Scene {
 
   private azkarCounterText!: Phaser.GameObjects.Text
   private azkarCounterBg!: Phaser.GameObjects.Graphics
+  private azkarCloseButton!: Phaser.GameObjects.Container
 
   private paused = false
   private modeUIOpen = false
@@ -111,7 +112,6 @@ export default class MainScene extends Phaser.Scene {
   // مراجع أيقونات شريط الأدوات (لتطبيق إظهار/إخفاء فوري حسب الإعدادات).
   private btnGear!: Phaser.GameObjects.Container
   private btnSliders!: Phaser.GameObjects.Container
-  private btnLeaf!: Phaser.GameObjects.Container
   private btnQuran!: Phaser.GameObjects.Container
   /** زر السهم لطي/فتح القائمة الجانبية — يبقى ظاهراً دائماً. */
   private btnArrow!: Phaser.GameObjects.Container
@@ -137,6 +137,11 @@ export default class MainScene extends Phaser.Scene {
   private modeDragY: number | null = null
   private modeDragStart = 0
   private modeWasDragging = false
+  private modeButtons: {
+    mode: GameMode
+    draw: (active: boolean, hovered: boolean) => void
+    label: Phaser.GameObjects.Text
+  }[] = []
   private focusPanel!: Phaser.GameObjects.Container
   private focusButtons: {
     bg: Phaser.GameObjects.Graphics
@@ -215,21 +220,11 @@ export default class MainScene extends Phaser.Scene {
     this.btnArrow = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP, 'arrow', () => this.toggleSideMenu())
     this.btnArrow.setData('homeY', SIDEBAR_TOP)
 
-    const menuTaps: (() => void)[] = [
-      () => window.dispatchEvent(new CustomEvent('open-dashboard')),
-      () => this.openModePanel(),
-      () => window.dispatchEvent(new CustomEvent('open-garden')),
-      () => window.dispatchEvent(new CustomEvent('open-quran')),
-    ]
-    const icons: HudIcon[] = ['gear', 'sliders', 'leaf', 'quran']
-    const menuBtns: Phaser.GameObjects.Container[] = []
-    icons.forEach((icon, i) => {
-      const y = SIDEBAR_TOP + (i + 1) * SIDEBAR_STEP
-      const btn = this.buildRoundButton(SIDEBAR_X, y, icon, menuTaps[i])
-      btn.setData('homeY', y)
-      menuBtns.push(btn)
-    })
-    ;[this.btnGear, this.btnSliders, this.btnLeaf, this.btnQuran] = menuBtns as [Phaser.GameObjects.Container, Phaser.GameObjects.Container, Phaser.GameObjects.Container, Phaser.GameObjects.Container]
+    // الترتيب: السهم، اختيار النمط (ثابت)، المصحف، الإعدادات.
+    this.btnSliders = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + SIDEBAR_STEP, 'sliders', () => this.openModePanel())
+    this.btnQuran = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 2 * SIDEBAR_STEP, 'quran', () => window.dispatchEvent(new CustomEvent('open-quran')))
+    this.btnGear = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 3 * SIDEBAR_STEP, 'gear', () => window.dispatchEvent(new CustomEvent('open-dashboard')))
+    ;[this.btnSliders, this.btnQuran, this.btnGear].forEach((btn) => btn.setData('homeY', btn.y))
 
     // أقصى اليمين العلوي: الإيقاف أعلى عداد الجلسة بفاصل رأسي 25px على الأقل.
     this.buildPauseButton()
@@ -245,7 +240,7 @@ export default class MainScene extends Phaser.Scene {
     // عندما لا يكون هدفه زراً تفاعلياً، ولا نضع أي طبقة Overlay فوق اللعب).
     this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer, targets: Phaser.GameObjects.GameObject[]) => {
       if (!this.sideMenuOpen || this.sideMenuAnimating) return
-      const hitButton = (targets ?? []).some((t) => t === this.btnArrow || t === this.btnGear || t === this.btnSliders || t === this.btnLeaf || t === this.btnQuran || t === this.pauseButton)
+      const hitButton = (targets ?? []).some((t) => t === this.btnArrow || t === this.btnGear || t === this.btnSliders || t === this.btnQuran || t === this.pauseButton)
       void pointer
       if (!hitButton) this.toggleSideMenu(false)
     })
@@ -259,7 +254,7 @@ export default class MainScene extends Phaser.Scene {
     this.sideMenuAnimating = true
     // زر اختيار النمط مستقل عن القائمة القابلة للطي، ويبقى متاحاً دائماً
     // مباشرة أسفل السهم.
-    const menu = [this.btnGear, this.btnLeaf, this.btnQuran]
+    const menu = [this.btnQuran, this.btnGear]
     // دوران السهم 180°: يمين (مغلق) ⇄ يسار (مفتوح — ينطوي للجهة الأخرى).
     this.tweens.add({ targets: this.arrowIcon, angle: open ? 180 : 0, duration: 260, ease: 'Quad.easeInOut' })
     menu.forEach((btn, i) => {
@@ -293,7 +288,7 @@ export default class MainScene extends Phaser.Scene {
   /** إظهار/إخفاء فوري (بلا حركة) — يُستخدم عند الإقلاع وتطبيق الإعدادات. */
   private setSideMenuVisible(open: boolean, instant = false): void {
     this.sideMenuOpen = open
-    for (const btn of [this.btnGear, this.btnLeaf, this.btnQuran]) {
+    for (const btn of [this.btnQuran, this.btnGear]) {
       if (!btn) continue
       btn.setVisible(open)
       if (instant && btn) {
@@ -332,6 +327,22 @@ export default class MainScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(2001)
       .setAlpha(0)
+
+    this.azkarCloseButton = this.add.container(width / 2, 84).setDepth(2002).setVisible(false)
+    const closeBg = this.add.graphics()
+    closeBg.fillStyle(0x1e293b, 1)
+    closeBg.fillRoundedRect(-78, -20, 156, 40, 8)
+    closeBg.lineStyle(1.5, 0x64748b, 1)
+    closeBg.strokeRoundedRect(-78, -20, 156, 40, 8)
+    const closeLabel = this.add.text(0, 0, 'إغلاق الأذكار', {
+      fontFamily: '"Segoe UI", Tahoma, sans-serif',
+      fontSize: '17px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+    }).setOrigin(0.5)
+    this.azkarCloseButton.add([closeBg, closeLabel])
+    this.azkarCloseButton.setInteractive(new Phaser.Geom.Rectangle(-78, -20, 156, 40), Phaser.Geom.Rectangle.Contains)
+    this.azkarCloseButton.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => this.closeAzkarMode())
   }
 
   private updateAzkarCounter(): void {
@@ -342,10 +353,23 @@ export default class MainScene extends Phaser.Scene {
       this.azkarCounterText.setText(`المتبقي: ${total - current + 1} / ${total}`)
       this.azkarCounterBg.setAlpha(1)
       this.azkarCounterText.setAlpha(1)
+      this.azkarCloseButton.setVisible(true)
     } else {
       this.azkarCounterBg.setAlpha(0)
       this.azkarCounterText.setAlpha(0)
+      this.azkarCloseButton.setVisible(false)
     }
+  }
+
+  /** الخروج من أذكار الصباح/المساء يلغي التقدم الجزئي ويعيد النمط المترابط. */
+  private closeAzkarMode(): void {
+    const mode = gameMode.getMode()
+    if (mode !== 'morning' && mode !== 'evening') return
+    for (const body of [...this.alive]) body.destroy()
+    this.alive = []
+    gameMode.setMode('sequence')
+    this.updateAzkarCounter()
+    this.spawnIfEmpty()
   }
 
   /** تطبيق إعدادات إظهار/إخفاء الأيقونات فوراً (أيقونة المصحف ثابتة دائماً كعنصر رئيسي). */
@@ -357,7 +381,7 @@ export default class MainScene extends Phaser.Scene {
     this.btnSliders?.setVisible(true).setAlpha(1).setScale(1)
     // عناصر القائمة تُعرض فقط إذا كانت الأيقونات مفعّلة والقائمة مفتوحة.
     const showMenu = icons && this.sideMenuOpen
-    for (const b of [this.btnGear, this.btnLeaf, this.btnQuran]) {
+    for (const b of [this.btnQuran, this.btnGear]) {
       b?.setVisible(showMenu)
     }
     // أيقونة المصحف الشريف ثابتة في الواجهة كعنصر رئيسي (بلا خيار إخفاء).
@@ -400,8 +424,8 @@ export default class MainScene extends Phaser.Scene {
   private buildUpdateBadge(): void {
     // موضع زر الإعدادات الجديد (أول عناصر القائمة تحت السهم): y = ‏148‏ —
     // الشارة في زاويته العلوية اليمنى، وتُثبَّت عبر pinUpdateBadge مع كل حركة.
-    const bx = SIDEBAR_X + 26
-    const by = SIDEBAR_TOP + SIDEBAR_STEP - 26
+    const bx = this.btnGear.x + 26
+    const by = this.btnGear.y - 26
 
     this.updateBadge = this.add.container(bx, by)
     this.updateBadge.setDepth(2200)
@@ -728,7 +752,8 @@ export default class MainScene extends Phaser.Scene {
     // نافذة عريضة مريحة (~90% من عرض الشاشة) — بطاقة كرتونية بارزة
     const panelW = Math.min(width * 0.9, 480)
     // الارتفاع محدود بنسبة من الشاشة — كافٍ لعرض الأزرار كلها بلا تمرير
-    const panelH = Math.min(520, Math.max(400, height * 0.62))
+    // لا تتجاوز البطاقة مساحة العرض المتاحة في المتصفح أو الهاتف.
+    const panelH = Math.max(220, Math.min(520, height - 24))
     const card = this.add.container(width / 2, height / 2)
     // إعادة ضبط حالة التمرير عند كل بناء (تُبنى اللوحة مرة واحدة عند create)
     this.modeScrollY = 0
@@ -777,15 +802,16 @@ export default class MainScene extends Phaser.Scene {
     card.add(title)
 
     const activeMode = gameMode.getMode()
-    const btnW = panelW - 56
-    const btnH = 56
-    const GAP = 8 // مسافة نسبية ثابتة بين الأزرار — لا تتغير عند التفاعل
+    const btnW = panelW - 48
+    const btnH = 48
+    const GAP = 10
     const STEP = btnH + GAP
 
     // ── حاوية قائمة الأزرار القابلة للتمرير (داخل البطاقة، أسفل العنوان) ──
     const listTop = -panelH / 2 + 96
     const listBottom = panelH / 2 - 20
-    const listH = Math.max(120, listBottom - listTop)
+    // مساحة التمرير لا تتجاوز 70% من ارتفاع نافذة العرض.
+    const listH = Math.max(80, Math.min(listBottom - listTop, height * 0.7))
     this.modeListCenterY = (listTop + listBottom) / 2
     this.modeScrollTrackH = listH
     this.modeList = this.add.container(0, this.modeListCenterY)
@@ -817,38 +843,35 @@ export default class MainScene extends Phaser.Scene {
     scrollbar.fillRoundedRect(trackX - 3, this.modeListCenterY - listH / 2, 6, listH, 3)
     this.modeScrollThumb = this.add.graphics()
 
-    type ModeBtn = { root: Phaser.GameObjects.Container; baseY: number }
-    const modeButtons: ModeBtn[] = []
+    this.modeButtons = []
 
     MODE_OPTIONS.forEach((opt, idx) => {
-      const isActive = opt.mode === activeMode
       // الإحداثي الأساسي ثابت: gap ثابت 12px — لا يتغير أبداً عند التفاعل
       const baseY = -((MODE_OPTIONS.length - 1) * STEP) / 2 + idx * STEP
       const bg = this.add.graphics()
       const label = this.add
-        .text(0, 0, isActive ? `❀ ${opt.label}` : opt.label, {
+        .text(0, 0, opt.label, {
           fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Tahoma, sans-serif',
-          fontSize: '26px',
+          fontSize: '18px',
           fontStyle: 'bold',
-          color: '#ffffff',
+          color: '#e2e8f0',
         })
         .setOrigin(0.5)
 
-      const drawBg = (hovered: boolean): void => {
+      const drawBg = (active: boolean, hovered: boolean): void => {
         bg.clear()
-        if (isActive) {
-          bg.fillStyle(hovered ? 0x047857 : 0x059669, 1)
+        if (active) {
+          bg.fillStyle(hovered ? 0x059669 : 0x10b981, 1)
           bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 8)
-          bg.lineStyle(2, 0xfbbf24, 1)
-          bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 8)
         } else {
-          bg.fillStyle(hovered ? 0x475569 : 0x334155, 1)
+          bg.fillStyle(hovered ? 0x334155 : 0x1e293b, 1)
           bg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 8)
-          bg.lineStyle(1.5, 0x64748b, 1)
-          bg.strokeRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 8)
         }
       }
-      drawBg(false)
+      const isMode = opt.mode !== 'zen'
+      const isActive = isMode && opt.mode === activeMode
+      drawBg(isActive, false)
+      label.setColor(isActive ? '#ffffff' : '#e2e8f0')
 
       const btn = this.add.container(0, baseY)
       btn.add([bg, label])
@@ -856,8 +879,8 @@ export default class MainScene extends Phaser.Scene {
       btn.setInteractive(new Phaser.Geom.Rectangle(-btnW / 2 - 10, -btnH / 2 - 8, btnW + 20, btnH + 16), Phaser.Geom.Rectangle.Contains)
 
       // سلسلة تفاعل ناعمة (Hover / Active) — scale فقط، المواضع baseY ثابتة
-      btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => drawBg(true))
-      btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => drawBg(false))
+      btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => drawBg(isMode && opt.mode === gameMode.getMode(), true))
+      btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => drawBg(isMode && opt.mode === gameMode.getMode(), false))
       btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
         if (this.modeWasDragging) return
         this.tweens.killTweensOf(btn)
@@ -873,7 +896,7 @@ export default class MainScene extends Phaser.Scene {
         this.tweens.add({ targets: btn, scale: 1, duration: 100, ease: 'Back.easeOut' })
       })
       this.modeList.add(btn)
-      modeButtons.push({ root: btn, baseY })
+      if (opt.mode !== 'zen') this.modeButtons.push({ mode: opt.mode, draw: drawBg, label })
     })
 
     // (حجم المحتوى وmodeScrollMax حُسبا سابقاً قبل القناع)
@@ -969,7 +992,18 @@ export default class MainScene extends Phaser.Scene {
     this.modeUIOpen = true
     this.modePanel.setVisible(true)
     this.modePanel.setDepth(3000)
+    this.refreshModeSelection()
     this.pauseForModal()
+  }
+
+  /** يطبق النمط النشط الحالي عند فتح اللوحة أو اختيار نمط جديد. */
+  private refreshModeSelection(): void {
+    const activeMode = gameMode.getMode()
+    this.modeButtons.forEach(({ mode, draw, label }) => {
+      const active = mode === activeMode
+      draw(active, false)
+      label.setColor(active ? '#ffffff' : '#e2e8f0')
+    })
   }
 
   private closeModePanel(): void {
@@ -1147,6 +1181,7 @@ export default class MainScene extends Phaser.Scene {
       this.toggleFocusPanel(true)
     } else {
       gameMode.setMode(mode, focusIndex)
+      this.refreshModeSelection()
       this.closeModePanel()
       this.toggleFocusPanel(false)
       this.updateAzkarCounter()
