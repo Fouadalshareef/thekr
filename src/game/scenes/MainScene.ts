@@ -1028,7 +1028,6 @@ export default class MainScene extends Phaser.Scene {
 
   private buildFocusPanel(): void {
     this.buildFocusDom()
-    return
     this.focusPanel = this.add.container(this.scale.width / 2, this.scale.height / 2)
     this.focusPanel.setDepth(3000)
     this.focusPanel.setVisible(false)
@@ -1139,7 +1138,10 @@ export default class MainScene extends Phaser.Scene {
       card.addEventListener('click', () => this.showDhikrVirtue(root, index))
       list.appendChild(card)
     })
-    root.querySelector('.focus-dom-close')?.addEventListener('click', () => this.toggleFocusPanel(false))
+    root.querySelector('.focus-dom-close')?.addEventListener('click', () => {
+      this.toggleFocusPanel(false)
+      this.closeModePanel()
+    })
     document.body.appendChild(root)
     this.focusDom = root
   }
@@ -1151,9 +1153,13 @@ export default class MainScene extends Phaser.Scene {
     content.innerHTML = `<button class="focus-dom-back" type="button">‹ العودة إلى القائمة</button><article class="virtue-card" dir="rtl"><p class="focus-dom-eyebrow">فضل الذكر</p><h2>${dhikr.name}</h2><div class="virtue-target">الورد الموصى به: <strong>${virtue.recommended} مرة</strong></div><blockquote>${virtue.hadith}</blockquote><button class="focus-dom-start" type="button">ابدأ الذكر</button></article>`
     content.querySelector('.focus-dom-back')?.addEventListener('click', () => this.buildFocusDomView(root))
     content.querySelector('.focus-dom-start')?.addEventListener('click', () => {
+      // اختيار الذكر أولاً، ثم إغلاق اللوحات واستئناف المحرك والتوليد صراحةً.
       gameMode.setMode('focus', index)
+      this.closeModePanel()
       this.toggleFocusPanel(false)
+      this.physics.resume()
       this.updateAzkarCounter()
+      this.spawnIfEmpty()
     })
   }
 
@@ -1170,7 +1176,10 @@ export default class MainScene extends Phaser.Scene {
       card.innerHTML = `<span class="focus-dom-number">${index + 1}</span><span class="focus-dom-name">${dhikr.name}</span><span class="focus-dom-count">${dhikr.target} مرة</span>`
       card.addEventListener('click', () => this.showDhikrVirtue(root, index)); list.appendChild(card)
     })
-    content.querySelector('.focus-dom-close')?.addEventListener('click', () => this.toggleFocusPanel(false))
+    content.querySelector('.focus-dom-close')?.addEventListener('click', () => {
+      this.toggleFocusPanel(false)
+      this.closeModePanel()
+    })
     root.appendChild(content); this.focusDom = root
   }
 

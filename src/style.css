@@ -365,7 +365,8 @@ body.modal-open {
   position: fixed;
   inset: 0;
   z-index: 5000;
-  overflow-y: auto;
+  overflow: hidden;
+  touch-action: auto;
   background: #f4fdf8;
   color: #17352b;
   font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
@@ -376,8 +377,11 @@ body.modal-open {
   box-sizing: border-box;
   width: min(100%, 1100px);
   min-height: 100%;
+  max-height: 100vh;
   margin: 0 auto;
   padding: clamp(24px, 5vw, 64px) clamp(18px, 5vw, 72px);
+  overflow: hidden;
+  touch-action: auto;
 }
 .focus-dom-header {
   display: flex;
@@ -394,7 +398,17 @@ body.modal-open {
   background: #fff; color: #166534; font-size: 30px; line-height: 1; cursor: pointer;
   box-shadow: 0 4px 14px rgba(22, 101, 52, .12);
 }
-.focus-dom-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr)); gap: 14px; }
+.focus-dom-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
+  gap: 14px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: calc(100vh - 120px);
+  padding-bottom: 40px;
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+}
 .focus-dom-card {
   display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 12px;
   width: 100%; min-height: 56px; height: auto; padding: 14px 18px;

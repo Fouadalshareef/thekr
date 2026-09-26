@@ -1,0 +1,17 @@
+{
+  "name": "albaqiyat-alsalihat",
+  "engine": "generic",
+  "launch": {
+    "cmd": "C:\\Program Files\\nodejs\\npm.cmd",
+    "args": ["run", "dev", "--", "--host", "127.0.0.1"]
+  },
+  "log": {
+    "stdout": true
+  },
+  "ready": "Local:",
+  "window": "127.0.0.1",
+  "sourceRoots": [
+    "src"
+  ],
+  "vars": {}
+}
