@@ -366,6 +366,7 @@ body.modal-open {
   inset: 0;
   z-index: 5000;
   display: flex;
+  align-items: center;
   overflow: hidden;
   touch-action: pan-y;
   pointer-events: auto;
@@ -375,12 +376,14 @@ body.modal-open {
   direction: rtl;
 }
 .focus-dom-modal.hidden { display: none; }
+/* Modal Overlay داخلي: عمودي بارتفاع أقصى 90vh مع قصّ الفواضل،
+   والتمرير الفعلي يحدث داخل الحاوية الابنة .focus-dom-list فقط */
 .focus-dom-content {
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   width: min(100%, 1100px);
-  height: 100%;
+  max-height: 90vh;
   min-height: 0;
   margin: 0 auto;
   padding: clamp(24px, 5vw, 64px) clamp(18px, 5vw, 72px);
@@ -403,36 +406,52 @@ body.modal-open {
   background: #fff; color: #166534; font-size: 30px; line-height: 1; cursor: pointer;
   box-shadow: 0 4px 14px rgba(22, 101, 52, .12);
 }
+/* حاوية الأذكار الفعلية (List Container): تمرير عمودي حر وسلس على الجوال.
+   لا يوجد touch-action: none أو overflow: hidden على هذا المستوى الابن */
 .focus-dom-list {
-  display: grid;
-  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   min-height: 0;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
-  align-content: start;
-  gap: 14px;
+  gap: 12px;
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  max-height: calc(100vh - 120px);
-  padding-bottom: 40px;
+  padding: 10px 16px 30px 16px;
   touch-action: pan-y;
   overscroll-behavior: contain;
 }
 .focus-dom-card {
-  display: grid; grid-template-columns: 34px 1fr auto; align-items: center; gap: 12px;
-  width: 100%; min-height: 56px; height: auto; padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  min-height: auto;
+  height: auto;
+  width: 100%;
+  box-sizing: border-box;
   border: 1px solid #e0eee7; border-radius: 12px; background: #fff; color: #17352b;
   text-align: right; cursor: pointer; box-shadow: 0 4px 14px rgba(31, 91, 65, .09);
   font: inherit; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
 }
 .focus-dom-card:hover, .focus-dom-card:focus-visible { transform: translateY(-2px); border-color: #6ee7b7; box-shadow: 0 8px 20px rgba(31, 91, 65, .14); outline: none; }
-.focus-dom-number { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #d1fae5; color: #047857; font-weight: 700; }
+/* دائرة الترقيم: ضمن تدفق المحتوى (لا position: absolute) بجانب النص يميناً في RTL */
+.focus-dom-number {
+  width: 32px; height: 32px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background-color: #d1fae5; color: #065f46; font-weight: bold;
+}
+/* عمود النص: الذكر مع عدد المرات أسفل منه — كلاهما داخل الحاوية البيضاء */
+.focus-dom-text {
+  display: flex; flex-direction: column; align-items: flex-start;
+  flex: 1; min-width: 0; text-align: right;
+}
 .focus-dom-name { white-space: normal; overflow: visible; text-overflow: clip; line-height: 1.8; font-size: clamp(1rem, 2vw, 1.15rem); }
-.focus-dom-count { color: #059669; font-size: .9rem; white-space: nowrap; font-weight: 700; }
+.focus-dom-count { display: block; color: #059669; font-size: 0.85rem; margin-top: 4px; white-space: nowrap; font-weight: 700; }
 .focus-dom-back { border: 0; background: transparent; color: #047857; padding: 0 0 22px; font: inherit; font-weight: 700; cursor: pointer; }
 .virtue-card { max-width: 760px; margin: 4vh auto 0; padding: clamp(24px, 5vw, 50px); border-radius: 12px; background: #fff; box-shadow: 0 10px 35px rgba(31, 91, 65, .12); text-align: right; }
 .virtue-target { display: inline-block; margin: 12px 0 24px; padding: 10px 14px; border-radius: 10px; background: #ecfdf5; color: #047857; }
 .virtue-card blockquote { margin: 0 0 28px; padding: 20px; border-right: 4px solid #34d399; border-radius: 8px; background: #f4fdf8; color: #28483d; font-size: clamp(1.05rem, 2.2vw, 1.3rem); line-height: 2; }
 .focus-dom-start { display: block; width: 100%; padding: 14px 20px; border: 0; border-radius: 12px; background: #059669; color: #fff; font: inherit; font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: 0 8px 18px rgba(5, 150, 105, .22); }
 .focus-dom-start:hover { background: #047857; }
-@media (max-width: 560px) { .focus-dom-card { grid-template-columns: 30px 1fr; } .focus-dom-count { grid-column: 2; text-align: right; } }

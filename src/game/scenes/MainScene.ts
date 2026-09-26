@@ -1134,7 +1134,7 @@ export default class MainScene extends Phaser.Scene {
       const card = document.createElement('button')
       card.type = 'button'
       card.className = 'focus-dom-card'
-      card.innerHTML = `<span class="focus-dom-number">${index + 1}</span><span class="focus-dom-name">${dhikr.name}</span><span class="focus-dom-count">${dhikr.target} مرة</span>`
+      card.innerHTML = `<span class="focus-dom-number">${index + 1}</span><span class="focus-dom-text"><span class="focus-dom-name">${dhikr.name}</span><span class="focus-dom-count">${dhikr.target} مرة</span></span>`
       card.addEventListener('click', () => this.showDhikrVirtue(root, index))
       list.appendChild(card)
     })
@@ -1173,7 +1173,7 @@ export default class MainScene extends Phaser.Scene {
     FOCUS_OPTIONS.forEach((dhikr, index) => {
       const card = document.createElement('button')
       card.type = 'button'; card.className = 'focus-dom-card'
-      card.innerHTML = `<span class="focus-dom-number">${index + 1}</span><span class="focus-dom-name">${dhikr.name}</span><span class="focus-dom-count">${dhikr.target} مرة</span>`
+      card.innerHTML = `<span class="focus-dom-number">${index + 1}</span><span class="focus-dom-text"><span class="focus-dom-name">${dhikr.name}</span><span class="focus-dom-count">${dhikr.target} مرة</span></span>`
       card.addEventListener('click', () => this.showDhikrVirtue(root, index)); list.appendChild(card)
     })
     content.querySelector('.focus-dom-close')?.addEventListener('click', () => {
