@@ -45,7 +45,8 @@ window.addEventListener('orientationchange', refreshScale)
 const blockScroll = (e: Event) => {
   const target = e.target as HTMLElement | null
   // السماح بالتمرير في أي نافذة منبثقة تحتاج إلى التمرير العمودي
-  if (target && target.closest('#dashboard-modal, #garden-modal, #advice-modal, #quran-modal')) return
+  // (بما فيها نافذة تخصيص الأذكار .focus-dom-modal)
+  if (target && target.closest('#dashboard-modal, #garden-modal, #advice-modal, #quran-modal, .focus-dom-modal')) return
   e.preventDefault()
 }
 document.addEventListener('touchmove', blockScroll, { passive: false })

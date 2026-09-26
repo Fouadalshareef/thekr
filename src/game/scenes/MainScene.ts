@@ -479,14 +479,6 @@ export default class MainScene extends Phaser.Scene {
     })
   }
 
-  /** تفتيح لون (يعيد صيغة 0xRRGGBB). */
-  private lighter = (c: number, f = 1.35): number => {
-    const r = Math.min(255, Math.round(((c >> 16) & 0xff) * f))
-    const g = Math.min(255, Math.round(((c >> 8) & 0xff) * f))
-    const b = Math.min(255, Math.round((c & 0xff) * f))
-    return (r << 16) | (g << 8) | b
-  }
-
   /** تغميق لون (يعيد صيغة 0xRRGGBB). */
   private darker = (c: number, f = 0.6): number => {
     const r = Math.min(255, Math.round(((c >> 16) & 0xff) * f))
