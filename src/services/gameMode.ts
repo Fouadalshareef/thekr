@@ -17,18 +17,38 @@ export interface DhikrDef {
   target: number
 }
 
-/** سلسلة الأذكار في النمط المترابط ("الباقيات الصالحات"). */
+/** الأذكار الأساسية في النمط المترابط وقائمة التخصيص. */
 export const SEQUENCE_DHIKRS: readonly DhikrDef[] = [
   { id: 'subhanallah', name: 'سُبْحَانَ الله', target: 33 },
   { id: 'alhamdulillah', name: 'الْحَمْدُ لِلَّه', target: 33 },
   { id: 'allahu-akbar', name: 'اللهُ أَكْبَر', target: 34 },
-  { id: 'la-ilaha-illa-allah', name: 'لَا إِلَٰهَ إِلَّا الله', target: 100 },
-  { id: 'la-hawla', name: 'لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ', target: 100 },
-  { id: 'subhanallah-wa-bihamdih', name: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ', target: 100 },
-  { id: 'salawat', name: 'اللَّهُمَّ صَلِّ عَلَى مُحَمَّدٍ...', target: 10 },
+  { id: 'la-ilaha-illa-allah', name: 'لا إله إلا الله، وحده لا شريك له، له الملك وله الحمد، وهو على كل شيء قدير', target: 100 },
+  { id: 'la-hawla', name: 'لا حول ولا قوة إلا بالله', target: 100 },
+  { id: 'subhanallah-wa-bihamdih', name: 'سبحان الله وبحمده، سبحان الله العظيم', target: 100 },
+  { id: 'astaghfirullah-al-azim', name: 'أستغفر الله العظيم الذي لا إله إلا هو الحي القيوم وأتوب إليه', target: 100 },
+  { id: 'four-phrases', name: 'سبحان الله، والحمد لله، ولا إله إلا الله، والله أكبر', target: 100 },
+  { id: 'salawat', name: 'اللهم صلِّ وسلم على نبينا محمد', target: 10 },
 ]
 
-/** خيارات النمط المخصص (نفس قائمة السلسلة). */
+export interface DhikrVirtue {
+  recommended: number
+  hadith: string
+}
+
+/** نصوص الفضائل المأثورة التي تظهر قبل بدء التكرار. */
+export const DHIKR_VIRTUES: Record<string, DhikrVirtue> = {
+  subhanallah: { recommended: 33, hadith: 'قال رسول الله ﷺ: «من قال سبحان الله وبحمده في يوم مائة مرة حُطَّت خطاياه وإن كانت مثل زبد البحر» — رواه البخاري ومسلم.' },
+  alhamdulillah: { recommended: 33, hadith: 'قال رسول الله ﷺ: «والحمد لله تملأ الميزان» — رواه مسلم.' },
+  'allahu-akbar': { recommended: 34, hadith: 'قال رسول الله ﷺ: «أحب الكلام إلى الله أربع: سبحان الله، والحمد لله، ولا إله إلا الله، والله أكبر» — رواه مسلم.' },
+  'la-ilaha-illa-allah': { recommended: 100, hadith: 'قال رسول الله ﷺ: «من قال لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير، في يوم مائة مرة، كانت له عدل عشر رقاب، وكُتبت له مائة حسنة، ومُحيت عنه مائة سيئة، وكانت له حرزاً من الشيطان يومه ذلك حتى يمسي» — رواه البخاري ومسلم.' },
+  'la-hawla': { recommended: 100, hadith: 'قال رسول الله ﷺ: «أكثروا من قول لا حول ولا قوة إلا بالله، فإنها كنز من كنوز الجنة» — رواه أحمد.' },
+  'subhanallah-wa-bihamdih': { recommended: 100, hadith: 'قال رسول الله ﷺ: «كلمتان خفيفتان على اللسان، ثقيلتان في الميزان، حبيبتان إلى الرحمن: سبحان الله وبحمده، سبحان الله العظيم» — رواه البخاري ومسلم.' },
+  'astaghfirullah-al-azim': { recommended: 100, hadith: 'قال رسول الله ﷺ: «من لزم الاستغفار جعل الله له من كل هم فرجاً، ومن كل ضيق مخرجاً، ورزقه من حيث لا يحتسب» — رواه أبو داود.' },
+  'four-phrases': { recommended: 100, hadith: 'قال رسول الله ﷺ: «لأن أقول سبحان الله، والحمد لله، ولا إله إلا الله، والله أكبر، أحب إلي مما طلعت عليه الشمس» — رواه مسلم.' },
+  salawat: { recommended: 10, hadith: 'قال رسول الله ﷺ: «من صلى عليَّ واحدة صلى الله عليه بها عشراً» — رواه مسلم.' },
+}
+
+/** خيارات النمط المخصص. */
 export const FOCUS_OPTIONS: readonly DhikrDef[] = SEQUENCE_DHIKRS
 
 class GameModeManager {

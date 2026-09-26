@@ -19,7 +19,7 @@ import GardenLayer from '../objects/GardenLayer'
 import SkyLayer from '../objects/SkyLayer'
 import { Events } from '../events'
 import { incrementDhikr } from '../../services/DhikrStorage'
-import { SEQUENCE_DHIKRS, gameMode, type GameMode } from '../../services/gameMode'
+import { SEQUENCE_DHIKRS, FOCUS_OPTIONS, DHIKR_VIRTUES, gameMode, type GameMode } from '../../services/gameMode'
 import { recordTodayDhikr, isGameEnabled, areIconsEnabled, markAzkarDone } from '../../services/SettingsService'
 import { hasPendingUpdate } from '../../services/AppVersion'
 import { getNextQuote } from '../../services/QuotesDB'
@@ -149,6 +149,7 @@ export default class MainScene extends Phaser.Scene {
     label: Phaser.GameObjects.Text
     draw: (c: number) => void
   }[] = []
+  private focusDom?: HTMLElement
 
   // نظام الاستراحة (Rest Banner)
   private restTimerEvent: Phaser.Time.TimerEvent | null = null
@@ -1026,6 +1027,8 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildFocusPanel(): void {
+    this.buildFocusDom()
+    return
     this.focusPanel = this.add.container(this.scale.width / 2, this.scale.height / 2)
     this.focusPanel.setDepth(3000)
     this.focusPanel.setVisible(false)
@@ -1122,13 +1125,63 @@ export default class MainScene extends Phaser.Scene {
     card.add(close)
   }
 
+  private buildFocusDom(): void {
+    const root = document.createElement('section')
+    root.className = 'focus-dom-modal hidden'
+    root.setAttribute('aria-label', 'اختيار الذكر')
+    root.innerHTML = '<div class="focus-dom-content" dir="rtl"><header class="focus-dom-header"><div><p class="focus-dom-eyebrow">التخصيص</p><h2>اختر ذكراً للتكرار</h2><p>اختر الذكر لعرض فضله والبدء بهدوء.</p></div><button class="focus-dom-close" type="button" aria-label="إغلاق">×</button></header><div class="focus-dom-list"></div></div>'
+    const list = root.querySelector('.focus-dom-list') as HTMLElement
+    FOCUS_OPTIONS.forEach((dhikr, index) => {
+      const card = document.createElement('button')
+      card.type = 'button'
+      card.className = 'focus-dom-card'
+      card.innerHTML = `<span class="focus-dom-number">${index + 1}</span><span class="focus-dom-name">${dhikr.name}</span><span class="focus-dom-count">${dhikr.target} مرة</span>`
+      card.addEventListener('click', () => this.showDhikrVirtue(root, index))
+      list.appendChild(card)
+    })
+    root.querySelector('.focus-dom-close')?.addEventListener('click', () => this.toggleFocusPanel(false))
+    document.body.appendChild(root)
+    this.focusDom = root
+  }
+
+  private showDhikrVirtue(root: HTMLElement, index: number): void {
+    const dhikr = FOCUS_OPTIONS[index]
+    const virtue = DHIKR_VIRTUES[dhikr.id]
+    const content = root.querySelector('.focus-dom-content') as HTMLElement
+    content.innerHTML = `<button class="focus-dom-back" type="button">‹ العودة إلى القائمة</button><article class="virtue-card" dir="rtl"><p class="focus-dom-eyebrow">فضل الذكر</p><h2>${dhikr.name}</h2><div class="virtue-target">الورد الموصى به: <strong>${virtue.recommended} مرة</strong></div><blockquote>${virtue.hadith}</blockquote><button class="focus-dom-start" type="button">ابدأ الذكر</button></article>`
+    content.querySelector('.focus-dom-back')?.addEventListener('click', () => this.buildFocusDomView(root))
+    content.querySelector('.focus-dom-start')?.addEventListener('click', () => {
+      gameMode.setMode('focus', index)
+      this.toggleFocusPanel(false)
+      this.updateAzkarCounter()
+    })
+  }
+
+  private buildFocusDomView(root: HTMLElement): void {
+    root.querySelector('.focus-dom-content')?.remove()
+    const content = document.createElement('div')
+    content.className = 'focus-dom-content'
+    content.dir = 'rtl'
+    content.innerHTML = '<header class="focus-dom-header"><div><p class="focus-dom-eyebrow">التخصيص</p><h2>اختر ذكراً للتكرار</h2><p>اختر الذكر لعرض فضله والبدء بهدوء.</p></div><button class="focus-dom-close" type="button" aria-label="إغلاق">×</button></header><div class="focus-dom-list"></div>'
+    const list = content.querySelector('.focus-dom-list') as HTMLElement
+    FOCUS_OPTIONS.forEach((dhikr, index) => {
+      const card = document.createElement('button')
+      card.type = 'button'; card.className = 'focus-dom-card'
+      card.innerHTML = `<span class="focus-dom-number">${index + 1}</span><span class="focus-dom-name">${dhikr.name}</span><span class="focus-dom-count">${dhikr.target} مرة</span>`
+      card.addEventListener('click', () => this.showDhikrVirtue(root, index)); list.appendChild(card)
+    })
+    content.querySelector('.focus-dom-close')?.addEventListener('click', () => this.toggleFocusPanel(false))
+    root.appendChild(content); this.focusDom = root
+  }
+
   private toggleFocusPanel(show: boolean): void {
-    this.focusPanel.setVisible(show)
+    this.focusDom?.classList.toggle('hidden', !show)
+    this.focusPanel?.setVisible(false)
     if (show) {
-        this.refreshFocusSelection()
-    } else if (!this.modeUIOpen) {
-        this.spawnIfEmpty()
-    }
+      this.focusDom?.classList.remove('hidden')
+      if (!this.focusDom?.querySelector('.virtue-card')) this.buildFocusDomView(this.focusDom!)
+      this.refreshFocusSelection()
+    } else if (!this.modeUIOpen) this.spawnIfEmpty()
   }
 
   private refreshFocusSelection(): void {
