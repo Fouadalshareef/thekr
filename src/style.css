@@ -365,8 +365,10 @@ body.modal-open {
   position: fixed;
   inset: 0;
   z-index: 5000;
+  display: flex;
   overflow: hidden;
-  touch-action: auto;
+  touch-action: pan-y;
+  pointer-events: auto;
   background: #f4fdf8;
   color: #17352b;
   font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
@@ -375,16 +377,19 @@ body.modal-open {
 .focus-dom-modal.hidden { display: none; }
 .focus-dom-content {
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   width: min(100%, 1100px);
-  min-height: 100%;
-  max-height: 100vh;
+  height: 100%;
+  min-height: 0;
   margin: 0 auto;
   padding: clamp(24px, 5vw, 64px) clamp(18px, 5vw, 72px);
   overflow: hidden;
-  touch-action: auto;
+  touch-action: pan-y;
 }
 .focus-dom-header {
   display: flex;
+  flex: 0 0 auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
@@ -400,9 +405,13 @@ body.modal-open {
 }
 .focus-dom-list {
   display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 330px), 1fr));
+  align-content: start;
   gap: 14px;
   overflow-y: auto;
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   max-height: calc(100vh - 120px);
   padding-bottom: 40px;
