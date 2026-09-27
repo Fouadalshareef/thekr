@@ -183,10 +183,15 @@ class GameModeManager {
   onCollected(id: string): { completed: boolean } {
     this.counts[id] = (this.counts[id] ?? 0) + 1
     const current = this.getCurrentDhikr()
-    if (this.mode === 'sequence' && current && this.counts[current.id] >= current.target) {
-      return { completed: true }
+    if (current && this.counts[current.id] >= current.target) {
+      if (this.mode === 'sequence' || this.mode === 'focus') return { completed: true }
     }
     return { completed: false }
+  }
+
+  /** تصفير عدّادات الجلسة الحالية (يُستخدم عند إعادة بدء الورد بعد الاحتفال). */
+  resetCounts(): void {
+    this.counts = {}
   }
 
   /** الانتقال للذكر التالي في سلسلة النمط المترابط (مع إعادة الدوران). */

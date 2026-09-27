@@ -24,9 +24,7 @@ import { recordTodayDhikr, isGameEnabled, areIconsEnabled, markAzkarDone } from 
 import { hasPendingUpdate } from '../../services/AppVersion'
 import { getNextQuote } from '../../services/QuotesDB'
 import {
-  BTN_GAP,
   BTN_ICON_SIZE,
-  BTN_RADIUS,
   BTN_SIZE,
   BTN_SKIN_OFFSET_Y,
   BTN_SKIN_SIZE,
@@ -47,8 +45,18 @@ const NEXT_DELAY = 150
 const SIDEBAR_X = 56
 /** أعلى نقطة في العمود الجانبي (زر الإعدادات). */
 const SIDEBAR_TOP = 62
-/** المسافة الرأسية بين كل زرين = قطر الزر + الفاصل (12px) = 86px. */
-const SIDEBAR_STEP = BTN_SIZE + BTN_GAP
+/**
+ * حجم أيقونات العمود الجانبي بعد التصغير — مقاس ألعاب الموبايل (46px بدل 74px).
+ * جميع مقاييس الزر الداخلية (الظل/الهالة/النسيج/الأيقونة) تُشتق من هذا الرقم بنسبة ثابتة.
+ */
+const SIDE_BTN_SIZE = 46
+/** المسافة الرأسية بين كل أيقونتين = حجم الأيقونة + فاصل يتسع لبطاقة الاسم. */
+const SIDEBAR_STEP = SIDE_BTN_SIZE + 32
+/** أبعاد بطاقة الاسم أسفل كل أيقونة — موحّدة تماماً لكل الأيقونات. */
+const SIDE_BADGE_W = 58
+const SIDE_BADGE_H = 18
+/** المسافة بين أسفل الأيقونة وأعلى بطاقة الاسم. */
+const SIDE_BADGE_GAP = 4
 
 interface CollectPayload {
   id: string
@@ -122,6 +130,12 @@ export default class MainScene extends Phaser.Scene {
   /** حركة فتح/إغلاق جارية (لمنع التداخل عند النقر السريع). */
   private sideMenuAnimating = false
   private sessionPill!: Phaser.GameObjects.Graphics
+  /** شريط تقدم الورد في النمط المخصص (0/33 … 33/33). */
+  private focusBarBg!: Phaser.GameObjects.Graphics
+  private focusBarFill!: Phaser.GameObjects.Rectangle
+  private focusBarText!: Phaser.GameObjects.Text
+  /** هل نافذة الاحتفال بالورد مفتوحة حالياً (منع التكرار أثناء العرض). */
+  private focusCelebrationOpen = false
   private sessionLabel!: Phaser.GameObjects.Text
 
   private sessionText!: Phaser.GameObjects.Text
@@ -214,19 +228,20 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildHud(): void {
-    // العمود الجانبي: 4 أزرار بقطر 74px وفاصل رأسي 12px (gap متناسق ومريح بصرياً):
+    // العمود الجانبي بأيقونات مصغّرة (46px — مقاس ألعاب الموبايل) مع بطاقة اسم ثابتة
+    // موحّدة الأبعاد أسفل كل أيقونة، والفاصل الرأسي يتسع لها (SIDEBAR_STEP = 78px).
     //   y = ‏62‏، ‏148‏، ‏234‏، ‏320‏ (‏SIDEBAR_TOP + i × (BTN_SIZE + BTN_GAP)‏).
     // زر السهم يتصدّر العمود (62)؛ الأزرار الأربعة تحته. عند الإقلاع تكون القائمة
     // مطوية (مخفية) ويظهر السهم فقط؛ الضغط عليه يفتحها بحركة انزلاق/تلاشي ناعمة،
     // والضغط في أي مكان آخر من الشاشة يطويها تلقائياً (Outside Click).
-    this.btnArrow = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP, 'arrow', () => this.toggleSideMenu())
+    this.btnArrow = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP, 'arrow', () => this.toggleSideMenu(), { size: SIDE_BTN_SIZE })
     this.btnArrow.setData('homeY', SIDEBAR_TOP)
 
     // الترتيب: السهم، اختيار النمط (ثابت)، مزرعة الحسنات، المصحف، الإعدادات.
-    this.btnSliders = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + SIDEBAR_STEP, 'sliders', () => this.openModePanel())
-    this.btnLeaf = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 2 * SIDEBAR_STEP, 'leaf', () => window.dispatchEvent(new CustomEvent('open-garden')))
-    this.btnQuran = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 3 * SIDEBAR_STEP, 'quran', () => window.dispatchEvent(new CustomEvent('open-quran')))
-    this.btnGear = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 4 * SIDEBAR_STEP, 'gear', () => window.dispatchEvent(new CustomEvent('open-dashboard')))
+    this.btnSliders = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + SIDEBAR_STEP, 'sliders', () => this.openModePanel(), { size: SIDE_BTN_SIZE, label: 'النمط' })
+    this.btnLeaf = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 2 * SIDEBAR_STEP, 'leaf', () => window.dispatchEvent(new CustomEvent('open-garden')), { size: SIDE_BTN_SIZE, label: 'المزرعة' })
+    this.btnQuran = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 3 * SIDEBAR_STEP, 'quran', () => window.dispatchEvent(new CustomEvent('open-quran')), { size: SIDE_BTN_SIZE, label: 'المصحف' })
+    this.btnGear = this.buildRoundButton(SIDEBAR_X, SIDEBAR_TOP + 4 * SIDEBAR_STEP, 'gear', () => window.dispatchEvent(new CustomEvent('open-dashboard')), { size: SIDE_BTN_SIZE, label: 'الإعدادات' })
     ;[this.btnSliders, this.btnLeaf, this.btnQuran, this.btnGear].forEach((btn) => btn.setData('homeY', btn.y))
 
     // أقصى اليمين العلوي: الإيقاف أعلى عداد الجلسة بفاصل رأسي 25px على الأقل.
@@ -234,6 +249,7 @@ export default class MainScene extends Phaser.Scene {
     this.buildSessionCounter()
     this.buildComboCounter()
     this.buildAzkarCounter()
+    this.buildFocusBar()
 
     // الحالة الابتدائية: القائمة مطوية — الأزرار مخفية والسهم ظاهر فقط.
     this.setSideMenuVisible(false, true)
@@ -348,6 +364,69 @@ export default class MainScene extends Phaser.Scene {
     this.azkarCloseButton.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => this.closeAzkarMode())
   }
 
+  /** عرض شريط الورد أو إخفاؤه. */
+  private setFocusBarVisible(visible: boolean): void {
+    this.focusBarBg?.setVisible(visible)
+    this.focusBarFill?.setVisible(visible)
+    this.focusBarText?.setVisible(visible)
+  }
+
+  /**
+   * شريط تقدم الورد في النمط المخصص: شريط طاقة علوي شبيه بألعاب الموبايل،
+   * يعرض العدّاد الموصى به (0/33 → 33/33) ويمتلئ من اليمين نحو اليسار.
+   */
+  private buildFocusBar(): void {
+    const { width } = this.scale
+    const w = 210
+    const h = 24
+    const y = 34
+    const x = width / 2 - w / 2
+    this.focusBarBg = this.add.graphics().setDepth(2000)
+    this.focusBarBg.fillStyle(0x022c22, 0.92)
+    this.focusBarBg.fillRoundedRect(x, y - h / 2, w, h, 12)
+    this.focusBarBg.lineStyle(2, 0x34d399, 0.95)
+    this.focusBarBg.strokeRoundedRect(x, y - h / 2, w, h, 12)
+
+    // قناة التعبئة: مستطيل يتمدّد بالعرض من الحافة اليمنى (نقطة الأصل يميناً)
+    this.focusBarFill = this.add
+      .rectangle(x + w - 3, y, 0, h - 6, 0x10b981, 1)
+      .setOrigin(1, 0.5)
+      .setDepth(2001)
+
+    this.focusBarText = this.add
+      .text(width / 2, y, '0 / 0', {
+        fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+        fontSize: '15px',
+        fontStyle: 'bold',
+        color: '#ecfdf5',
+      })
+      .setOrigin(0.5)
+      .setDepth(2002)
+    this.focusBarText.setShadow(0, 1, 'rgba(0,0,0,0.65)', 3, true, true)
+
+    this.setFocusBarVisible(false)
+  }
+
+  /** تحديث شريط الورد — يظهر في النمط المخصص فقط ويتقدم بسلاسة مع كل تكرار. */
+  private updateFocusBar(animate = true): void {
+    const dhikr = gameMode.getMode() === 'focus' ? gameMode.getCurrentDhikr() : null
+    if (!dhikr || this.focusCelebrationOpen) {
+      this.setFocusBarVisible(false)
+      return
+    }
+    this.setFocusBarVisible(true)
+    const target = Math.max(1, dhikr.target)
+    const count = Math.min(target, gameMode.getCount(dhikr.id))
+    this.focusBarText.setText(`${count} / ${target}`)
+    this.tweens.killTweensOf(this.focusBarFill)
+    this.tweens.add({
+      targets: this.focusBarFill,
+      displayWidth: (count / target) * 204,
+      duration: animate ? 280 : 0,
+      ease: 'Quad.easeOut',
+    })
+  }
+
   private updateAzkarCounter(): void {
     const mode = gameMode.getMode()
     if (mode === 'morning' || mode === 'evening') {
@@ -362,6 +441,9 @@ export default class MainScene extends Phaser.Scene {
       this.azkarCounterText.setAlpha(0)
       this.azkarCloseButton.setVisible(false)
     }
+    // شريط الورد يعمل في النمط المخصص فقط (يُخفى في بقية الأنماط)
+    this.updateFocusBar()
+
   }
 
   /** الخروج من أذكار الصباح/المساء يلغي التقدم الجزئي ويعيد النمط المترابط. */
@@ -498,36 +580,44 @@ export default class MainScene extends Phaser.Scene {
     y: number,
     icon: HudIcon,
     onTap: () => void,
+    opts: { size?: number; label?: string } = {},
   ): Phaser.GameObjects.Container {
     const btn = this.add.container(x, y)
     btn.setDepth(2000)
     const theme = ICON_THEME[icon]
+    // كل المقاييس الداخلية مشتقّة من حجم الزر المطلوب بنسبة ثابتة (46 للأيقونات الجانبية).
+    const size = opts.size ?? BTN_SIZE
+    const ratio = size / BTN_SIZE
+    const radius = size / 2
+    const iconSize = BTN_ICON_SIZE * ratio
+    const skinSize = BTN_SKIN_SIZE * ratio
+    const skinOffsetY = BTN_SKIN_OFFSET_Y * ratio
 
     // ظل أرضي ناعم أسفل الزر (box-shadow: 0 20px 28px -8px rgba(4,9,22,.75))
     const shadow = this.add
-      .image(0, BTN_SIZE * 0.42, getShadowTexture(this))
-      .setDisplaySize(BTN_SIZE * 1.45, BTN_SIZE * 0.85)
+      .image(0, size * 0.42, getShadowTexture(this))
+      .setDisplaySize(size * 1.45, size * 0.85)
       .setAlpha(0.85)
     btn.add(shadow)
 
     // هالة توهّج ملوّنة خلف الزر تظهر عند المرور/الضغط (--glow في الحزمة)
     const glow = this.add
       .image(0, 0, getGlowTexture(this, theme))
-      .setDisplaySize(BTN_SIZE * 1.75, BTN_SIZE * 1.75)
+      .setDisplaySize(size * 1.75, size * 1.75)
       .setAlpha(0)
       .setBlendMode(Phaser.BlendModes.ADD)
     btn.add(glow)
 
     // جسم الزر: نسيج مرسوم بالـ Canvas بنفس طبقات .gbtn::before و ::after و .ring
     const skin = this.add
-      .image(0, BTN_SKIN_OFFSET_Y, getButtonSkinTexture(this, theme))
-      .setDisplaySize(BTN_SKIN_SIZE, BTN_SKIN_SIZE)
+      .image(0, skinOffsetY, getButtonSkinTexture(this, theme))
+      .setDisplaySize(skinSize, skinSize)
     btn.add(skin)
 
     // حلقة الموجة النقرية (@keyframes gbtn-pulse) — تنطلق من الزر عند كل ضغطة
     const pulse = this.add.graphics()
     pulse.lineStyle(2.5, themeGlowColor(theme), 1)
-    pulse.strokeCircle(0, 0, BTN_RADIUS)
+    pulse.strokeCircle(0, 0, radius)
     pulse.setAlpha(0)
     btn.add(pulse)
 
@@ -535,8 +625,32 @@ export default class MainScene extends Phaser.Scene {
     const svgIcon = this.add
       .image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran', arrow: 'hud-arrow' } as const)[icon])
       .setOrigin(0.5)
-      .setDisplaySize(BTN_ICON_SIZE, BTN_ICON_SIZE)
+      .setDisplaySize(iconSize, iconSize)
     btn.add(svgIcon)
+    // بطاقة الاسم أسفل الأيقونة (Label Badge): مستطيل موحّد الأبعاد لكل الأيقونات،
+    // بخلفية ذهبية مصمتة وحدّ ناعم ونص أبيض واضح وصغير. تُضاف للحاوية لتتحرك معها.
+    if (opts.label) {
+      const badgeTop = radius + SIDE_BADGE_GAP
+      const badge = this.add.graphics()
+      badge.fillStyle(0x000000, 0.28)
+      badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop + 2, SIDE_BADGE_W, SIDE_BADGE_H, 6)
+      badge.fillStyle(0xb45309, 1)
+      badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop, SIDE_BADGE_W, SIDE_BADGE_H, 6)
+      badge.lineStyle(1.5, 0xfcd34d, 0.95)
+      badge.strokeRoundedRect(-SIDE_BADGE_W / 2, badgeTop, SIDE_BADGE_W, SIDE_BADGE_H, 6)
+      btn.add(badge)
+
+      const badgeText = this.add
+        .text(0, badgeTop + SIDE_BADGE_H / 2, opts.label, {
+          fontFamily: '"Segoe UI", Tahoma, sans-serif',
+          fontSize: '11px',
+          fontStyle: 'bold',
+          color: '#ffffff',
+        })
+        .setOrigin(0.5)
+      btn.add(badgeText)
+    }
+
     if (icon === 'pause') {
       this.pauseIcon = svgIcon
     }
@@ -549,8 +663,8 @@ export default class MainScene extends Phaser.Scene {
     // ملاحظة Phaser/Canvas: لا توجد عناصر <button>/SVG/DOM هنا، فلا حاجة لـ
     // pointer-events — أطفال الحاوية لا يعترضون اللمس أبداً، والقرار كله لمنطقة
     // اللمس هذه. لا توجد أي طبقة Overlay فوق الأزرار بعمق 2000.
-    btn.setSize(BTN_SIZE, BTN_SIZE)
-    setCircleHitArea(btn, BTN_RADIUS + BTN_TOUCH_PADDING, true)
+    btn.setSize(size, size)
+    setCircleHitArea(btn, radius + BTN_TOUCH_PADDING, true)
 
     const baseY = y
     let hovering = false
@@ -1340,18 +1454,209 @@ export default class MainScene extends Phaser.Scene {
     recordTodayDhikr(id)
     this.garden.refresh()
 
-    // تقدم ورد الجلسة في النمط المترابط
+    // تقدم ورد الجلسة: النمط المترابط ينتقل للذكر التالي، ونمط التخصص يحتفل بالورد
     const { completed } = gameMode.onCollected(id)
-    if (completed && gameMode.getMode() === 'sequence') {
+    if (completed && mode === 'sequence') {
       gameMode.advanceSequence()
     }
+    this.updateFocusBar()
+    const focusDone = completed && mode === 'focus' && !this.focusCelebrationOpen
 
     // احتفال خفيف
     emitGoldBurst(this, this.scale.width / 2, this.scale.height / 2)
     confetti({ particleCount: 30, spread: 60, origin: { y: 0.6 }, scalar: 0.7, ticks: 100 })
 
+    // اكتمال الورد في النمط المخصص: نافذة احتفال + سؤال المتابعة
+    if (focusDone && current) {
+      this.time.delayedCall(260, () => this.showFocusCelebration(dhikr))
+    }
+
     // توليد التالية بعد فرقعة الحالية
     this.scheduleNext()
+  }
+
+  // ------------------------------------------------------------------
+  // نافذة الاحتفال بالورد + تدفق المتابعة (نمط التخصيص)
+  // ------------------------------------------------------------------
+
+  /** زر نصي داخل بطاقة الاحتفال بحدود ذهبية ونص أبيض. */
+  private createCelebrationButton(
+    label: string,
+    y: number,
+    width: number,
+    fill: number,
+    onTap: () => void,
+  ): Phaser.GameObjects.Container {
+    const btn = this.add.container(0, y)
+    const bg = this.add.graphics()
+    bg.fillStyle(fill, 1)
+    bg.fillRoundedRect(-width / 2, -22, width, 44, 12)
+    bg.lineStyle(2, 0xfcd34d, 0.95)
+    bg.strokeRoundedRect(-width / 2, -22, width, 44, 12)
+    btn.add(bg)
+    btn.add(
+      this.add
+        .text(0, 0, label, {
+          fontFamily: '"Segoe UI", Tahoma, sans-serif',
+          fontSize: '17px',
+          fontStyle: 'bold',
+          color: '#ffffff',
+        })
+        .setOrigin(0.5),
+    )
+    btn.setSize(width, 44)
+    btn.setInteractive(new Phaser.Geom.Rectangle(-width / 2, -22, width, 44), Phaser.Geom.Rectangle.Contains)
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
+      this.tweens.add({ targets: btn, scale: 0.95, duration: 70, yoyo: true, ease: 'Quad.easeOut' })
+    })
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, onTap)
+    return btn
+  }
+
+  /** نافذة الاحتفال: تهنئة بإكمال الورد، ثم سؤال "الاستمرار أم ذكر آخر؟". */
+  private showFocusCelebration(dhikr: { name: string; target: number }): void {
+    const { width, height } = this.scale
+    this.focusCelebrationOpen = true
+    this.setFocusBarVisible(false)
+    this.physics.pause()
+    this.toggleSideMenu(false)
+
+    const blocker = this.add
+      .rectangle(0, 0, width, height, 0x022c22, 0.78)
+      .setOrigin(0)
+      .setDepth(3999)
+      .setInteractive()
+    const card = this.add.container(width / 2, height / 2).setDepth(4000).setAlpha(0)
+
+    const bg = this.add.graphics()
+    bg.fillStyle(0x0f2a1e, 0.97)
+    bg.fillRoundedRect(-165, -150, 330, 300, 22)
+    bg.lineStyle(3, 0x34d399, 1)
+    bg.strokeRoundedRect(-165, -150, 330, 300, 22)
+    card.add(bg)
+
+    card.add(
+      this.add
+        .text(0, -104, 'ما شاء الله', {
+          fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+          fontSize: '30px',
+          fontStyle: 'bold',
+          color: '#34d399',
+        })
+        .setOrigin(0.5),
+    )
+    card.add(
+      this.add
+        .text(0, -56, `أكملت ورد: ${dhikr.name}`, {
+          fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+          fontSize: '20px',
+          color: '#ecfdf5',
+          align: 'center',
+          wordWrap: { width: 290 },
+        })
+        .setOrigin(0.5),
+    )
+    card.add(
+      this.add
+        .text(0, -8, `${dhikr.target} / ${dhikr.target} مرة`, {
+          fontFamily: 'Consolas, monospace',
+          fontSize: '24px',
+          fontStyle: 'bold',
+          color: '#fcd34d',
+        })
+        .setOrigin(0.5),
+    )
+    card.add(
+      this.add
+        .text(0, 34, 'تقبّل الله منك', {
+          fontFamily: '"Segoe UI", Tahoma, sans-serif',
+          fontSize: '17px',
+          color: '#a7f3d0',
+        })
+        .setOrigin(0.5),
+    )
+
+    const next = this.createCelebrationButton('متابعة', 104, 190, 0x059669, () => {
+      card.destroy()
+      this.showFocusNextStep(dhikr, blocker)
+    })
+    card.add(next)
+
+    this.data.set('celebrationCard', card)
+    this.tweens.add({ targets: card, alpha: 1, scale: { from: 0.85, to: 1 }, duration: 320, ease: 'Back.easeOut' })
+    confetti({ particleCount: 140, spread: 110, origin: { y: 0.5 } })
+  }
+
+  /** الخطوة الثانية: هل يُكمل نفس الذكر أم يعود لاختيار ذكر آخر؟ */
+  private showFocusNextStep(
+    dhikr: { name: string; target: number },
+    blocker: Phaser.GameObjects.Rectangle,
+  ): void {
+    const { width, height } = this.scale
+    const card = this.add.container(width / 2, height / 2).setDepth(4000).setAlpha(0)
+
+    const bg = this.add.graphics()
+    bg.fillStyle(0x0f2a1e, 0.97)
+    bg.fillRoundedRect(-165, -130, 330, 260, 22)
+    bg.lineStyle(3, 0xfbbf24, 1)
+    bg.strokeRoundedRect(-165, -130, 330, 260, 22)
+    card.add(bg)
+
+    card.add(
+      this.add
+        .text(0, -74, 'هل تريد الاستمرار على نفس الذكر؟', {
+          fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+          fontSize: '22px',
+          fontStyle: 'bold',
+          color: '#fcd34d',
+          align: 'center',
+          wordWrap: { width: 280 },
+        })
+        .setOrigin(0.5),
+    )
+    card.add(
+      this.add
+        .text(0, -26, `الاستمرار يعيد العدّاد إلى 0/${dhikr.target}`, {
+          fontFamily: '"Segoe UI", Tahoma, sans-serif',
+          fontSize: '15px',
+          color: '#a7f3d0',
+          align: 'center',
+          wordWrap: { width: 280 },
+        })
+        .setOrigin(0.5),
+    )
+
+    // 1) الاستمرار: تصفير العدّاد ومتابعة نفس الذكر
+    const keep = this.createCelebrationButton('نعم، واصل الذكر', 22, 240, 0x059669, () => {
+      gameMode.resetCounts()
+      this.closeFocusCelebration(blocker, card)
+      this.updateFocusBar()
+    })
+    card.add(keep)
+
+    // 2) عودة: إغلاق الذكر وفتح واجهة "التخصيص - اختر ذكراً للتكرار"
+    const back = this.createCelebrationButton('اختيار ذكر آخر', 84, 240, 0x7c2d12, () => {
+      gameMode.setMode('sequence')
+      this.closeFocusCelebration(blocker, card)
+      this.updateAzkarCounter()
+      this.toggleFocusPanel(true)
+    })
+    card.add(back)
+
+    this.tweens.add({ targets: card, alpha: 1, scale: { from: 0.85, to: 1 }, duration: 300, ease: 'Back.easeOut' })
+  }
+
+  /** إغلاق نافذة الاحتفال واستئناف اللعب. */
+  private closeFocusCelebration(
+    blocker: Phaser.GameObjects.Rectangle,
+    card: Phaser.GameObjects.Container,
+  ): void {
+    blocker.destroy()
+    card.destroy()
+    this.data.remove('celebrationCard')
+    this.focusCelebrationOpen = false
+    this.physics.resume()
+    this.spawnIfEmpty()
   }
 
   private showAzkarCompleteMessage(mode: string): void {
