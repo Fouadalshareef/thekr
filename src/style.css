@@ -562,10 +562,13 @@ body.modal-open {
 /* ------------------------------------------------------------------ */
 /* حدة الأيقونات وبطاقات الأسماء                                      */
 /* ------------------------------------------------------------------ */
+/* حدة الأيقونات + الحفاظ على نسبة الأبعاد (object-fit: contain) في نسخة DOM.
+   ملاحظة: أيقونات HUD في هذا المشروع تُرسم داخل Phaser (WebGL Canvas) وليست
+   <img>، لذا CSS هنا وثيق مرجعي؛ التطبيق الفعلي في MainScene.buildRoundButton. */
 .hud-icon, .hud-icon svg, img.hud-icon {
+  object-fit: contain;
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
-  image-rendering: pixelated;
 }
 /* بطاقة الاسم أسفل الأيقونة: تدرّج ذهبي/برتقالي دافئ + حد أبيض + ظل */
 .label-badge {

@@ -36,7 +36,7 @@ import {
   themeGlowColor,
   type HudIcon,
 } from '../ui/GameButtonSkin'
-import { setCircleHitArea, setRectHitArea } from '../ui/hitArea'
+import { setCircleHitArea } from '../ui/hitArea'
 
 /** المدة التأخيرية قبل ظهور الجسم التالي بعد تفجير الحالي (بالمللي). */
 const NEXT_DELAY = 150
@@ -45,20 +45,22 @@ const NEXT_DELAY = 150
 const SIDEBAR_X = 56
 /** أعلى نقطة في العمود الجانبي (زر الإعدادات). */
 const SIDEBAR_TOP = 62
-/** حجم الأيقونة المجرّدة المعروضة مباشرة (44px — مطابق لـ w-11 h-11 في الوصف). */
-const SIDE_ICON_SIZE = 44
+/** قياس الأيقونة داخل الحاضنة الدائرية (38px — واضح，不会压到 الحدّ الذهبي). */
+const SIDE_ICON_SIZE = 38
+/** قطر الحاضنة الدائرية المجسّمة (50px) — القرص الأزرق بحدّ ذهبي. */
+const SIDE_CRADLE_SIZE = 50
 /**
  * حجم أيقونات العمود الجانبي بعد التصغير — مقاس ألعاب الموبايل (46px بدل 74px).
  * جميع مقاييس الزر الداخلية (الظل/الهالة/النسيج/الأيقونة) تُشتق من هذا الرقم بنسبة ثابتة.
  */
 const SIDE_BTN_SIZE = 46
-/** المسافة الرأسية بين كل أيقونتين = حجم الأيقونة + فاصل يتسع لبطاقة الاسم. */
-const SIDEBAR_STEP = SIDE_BTN_SIZE + 32
+/** المسافة الرأسية بين كل أيقونتين = قطر الحاضنة + فاصل يتسع لبطاقة الاسم. */
+const SIDEBAR_STEP = SIDE_CRADLE_SIZE + 34
 /** أبعاد بطاقة الاسم أسفل كل أيقونة — موحّدة تماماً لكل الأيقونات. */
 const SIDE_BADGE_W = 58
 const SIDE_BADGE_H = 18
-/** المسافة بين أسفل الأيقونة وأعلى بطاقة الاسم. */
-const SIDE_BADGE_GAP = 4
+/** تداخل بطاقة الاسم مع أسفل الحاضنة الدائرية (margin-top: -8px في المواصفة). */
+const SIDE_BADGE_GAP = -8
 
 interface CollectPayload {
   id: string
@@ -636,18 +638,53 @@ export default class MainScene extends Phaser.Scene {
       btn.add(pulse)
     }
 
-    // الأيقونة: صورة PNG ثلاثية الأبعاد (44px) للأيقونات المجرّدة، أو SVG للإطارات
+    // الحاضنة الدائرية المجسّمة (Game-Style Circle Container) للأيقونات المجرّدة:
+    // قرص أزرق بتدرّج شعاعي + حدّ ذهبي 2px + ظل سفلي ولمعة داخلية علوية.
+    // الغرض: حماية حواف الصورة ومنع "انحسار" الأيقونة على خلفية التطبيق.
+    if (bare) {
+      const cradleR = SIDE_CRADLE_SIZE / 2
+      const cradle = this.add.graphics()
+      // ظل أسفل القرص (box-shadow: 0 4px 6px rgba(0,0,0,.4))
+      cradle.fillStyle(0x000000, 0.4)
+      cradle.fillCircle(0, 4, cradleR)
+      // تدرّج شعاعي محاكى: مركز فاتح (#3b82f6 عند 30%/30%) ← حافة غامقة (#1d4ed8)
+      const STEPS = 14
+      for (let i = STEPS; i >= 1; i--) {
+        const t = i / STEPS
+        const rr = cradleR * t
+        const c = Phaser.Display.Color.Interpolate.ColorWithColor(
+          Phaser.Display.Color.ValueToColor(0x3b82f6),
+          Phaser.Display.Color.ValueToColor(0x1d4ed8),
+          100,
+          Math.round(t * 100),
+        )
+        cradle.fillStyle(Phaser.Display.Color.GetColor(c.r, c.g, c.b), 1)
+        cradle.fillCircle(0, 0, rr)
+      }
+      // لمعة داخلية علوية (inset 0 2px 2px rgba(255,255,255,.5)) — بيضاوية فاتحة
+      cradle.fillStyle(0xffffff, 0.5)
+      cradle.fillEllipse(-cradleR * 0.18, -cradleR * 0.42, cradleR * 0.95, cradleR * 0.42)
+      cradle.fillStyle(0xffffff, 0.22)
+      cradle.fillEllipse(0, -cradleR * 0.1, cradleR * 1.3, cradleR * 1.1)
+      // حدّ ذهبي بارز 2px (border: 2px solid #fbbf24)
+      cradle.lineStyle(2, 0xfbbf24, 1)
+      cradle.strokeCircle(0, 0, cradleR)
+      btn.add(cradle)
+    }
+
+    // الأيقونة: صورة PNG ثلاثية الأبعاد (38px) داخل الحاضنة، أو SVG للإطارات القديمة
     const displayIconSize = bare ? SIDE_ICON_SIZE : iconSize
     const svgIcon = this.add
       .image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran', arrow: 'hud-arrow' } as const)[icon])
       .setOrigin(0.5)
+      // object-fit: contain مكافئ — العرض والارتفاع بنفس القياس ⇒ بلا تشويه
       .setDisplaySize(displayIconSize, displayIconSize)
     btn.add(svgIcon)
     // بطاقة الاسم أسفل الأيقونة (Label Badge): مستطيل موحّد الأبعاد لكل الأيقونات،
     // بتدرّج ذهبي/برتقالي دافئ عالي التباين، وحدّ أبيض سميك، ونص أبيض عريض مظلّل.
     if (opts.label) {
-      // الأيقونات المجرّدة (bare) لها حدّ بصري أوسع قليلاً، فتنزل البطاقة 2px
-      const badgeTop = (bare ? SIDE_ICON_SIZE / 2 : radius) + SIDE_BADGE_GAP
+      // بطاقة الاسم تتداخل مع أسفل الحاضنة (-8px) لتبدو كقطعة واحدة متماسكة
+      const badgeTop = (bare ? SIDE_CRADLE_SIZE / 2 : radius) + SIDE_BADGE_GAP
       const badge = this.add.graphics()
       // ظل أسفل البطاقة (box-shadow: 0 2px 4px rgba(0,0,0,.3))
       badge.fillStyle(0x000000, 0.3)
@@ -659,7 +696,7 @@ export default class MainScene extends Phaser.Scene {
       badge.fillRect(-SIDE_BADGE_W / 2, badgeTop + SIDE_BADGE_H / 2 - 1, SIDE_BADGE_W, SIDE_BADGE_H / 2 + 1)
       badge.fillStyle(0xd97706, 1)
       badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop + SIDE_BADGE_H - 8, SIDE_BADGE_W, 8, 4)
-      // حدّ أبيض سميك يرفع التباين مع الخلفية الداكنة
+      // حدّ أبيض سميك (1.5px) يرفع التباين ويصل بين الدالة والبطاقة كقطعة واحدة
       badge.lineStyle(1.5, 0xffffff, 1)
       badge.strokeRoundedRect(-SIDE_BADGE_W / 2, badgeTop, SIDE_BADGE_W, SIDE_BADGE_H, 6)
       btn.add(badge)
@@ -689,10 +726,10 @@ export default class MainScene extends Phaser.Scene {
     // ملاحظة Phaser/Canvas: لا توجد عناصر <button>/SVG/DOM هنا، فلا حاجة لـ
     // pointer-events — أطفال الحاوية لا يعترضون اللمس أبداً، والقرار كله لمنطقة
     // اللمس هذه. لا توجد أي طبقة Overlay فوق الأزرار بعمق 2000.
-    btn.setSize(size, size)
-    // الأيقونات المجرّدة مربّعة بصرياً ⇒ منطقة لمس مستطيلة تغطي كامل الصورة
+    btn.setSize(size, bare ? SIDE_CRADLE_SIZE : size)
+    // الأيقونات المجرّدة داخل حاضنة دائرية ⇒ منطقة لمس دائرية تغطّي القرص كاملاً
     if (bare) {
-      setRectHitArea(btn, SIDE_ICON_SIZE, SIDE_ICON_SIZE, BTN_TOUCH_PADDING, true)
+      setCircleHitArea(btn, SIDE_CRADLE_SIZE / 2 + BTN_TOUCH_PADDING, true)
     } else {
       setCircleHitArea(btn, radius + BTN_TOUCH_PADDING, true)
     }
