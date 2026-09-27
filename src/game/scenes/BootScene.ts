@@ -21,9 +21,10 @@ export default class BootScene extends Phaser.Scene {
     // أيقونات أزرار اللعبة الجديدة (SVG أبيض ناصع — حزمة Game UI Buttons)
     // تُرسم فوق أزرار Phaser المجسّمة (انظر GameButtonSkin.ts) — بلا خلفية ولا إطار
     this.load.svg('hud-settings', 'game/icons/settings-gbtn.svg', { width: 256, height: 256 })
-    this.load.svg('hud-theme',    'game/icons/theme-gbtn.svg',    { width: 256, height: 256 })
-    this.load.svg('hud-farm',     'game/icons/farm-gbtn.svg',     { width: 256, height: 256 })
-    this.load.svg('hud-quran',    'game/icons/quran-gbtn.svg',    { width: 256, height: 256 })
+    // Pattern / Farm / Quran: صور PNG جاهزة بدل SVG (مصدرها pi/icons)
+    this.load.image('hud-theme',  'game/icons/icon-pattern.png')
+    this.load.image('hud-farm',   'game/icons/icon-farm.png')
+    this.load.image('hud-quran',  'game/icons/icon-quran.png')
     this.load.svg('hud-pause',    'game/icons/pause-gbtn.svg',    { width: 256, height: 256 })
     this.load.svg('hud-play',     'game/icons/play-gbtn.svg',     { width: 256, height: 256 })
     // أيقونة سهم فتح/طي القائمة الجانبية

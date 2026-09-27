@@ -38,9 +38,9 @@ const ASSETS = [
   // أيقونات HUD/MODAL (كل الـ SVG)
   // أزرار اللعبة الجديدة (Game UI Buttons) — أيقونات بيضاء تُرسم فوق أزرار Phaser المجسّمة
   './game/icons/settings-gbtn.svg',
-  './game/icons/theme-gbtn.svg',
-  './game/icons/farm-gbtn.svg',
-  './game/icons/quran-gbtn.svg',
+  './game/icons/icon-pattern.png',
+  './game/icons/icon-farm.png',
+  './game/icons/icon-quran.png',
   './game/icons/pause-gbtn.svg',
   './game/icons/play-gbtn.svg',
   './game/icons/arrow-gbtn.svg',
