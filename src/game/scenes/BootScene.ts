@@ -22,9 +22,9 @@ export default class BootScene extends Phaser.Scene {
     // تُرسم فوق أزرار Phaser المجسّمة (انظر GameButtonSkin.ts) — بلا خلفية ولا إطار
     this.load.svg('hud-settings', 'game/icons/settings-gbtn.svg', { width: 256, height: 256 })
     // Pattern / Farm / Quran: صور PNG جاهزة بدل SVG (مصدرها pi/icons)
-    this.load.image('hud-theme',  'game/icons/icon-pattern.png')
-    this.load.image('hud-farm',   'game/icons/icon-farm.png')
-    this.load.image('hud-quran',  'game/icons/icon-quran.png')
+    this.load.image('hud-theme',  'icons/icon-pattern.png')
+    this.load.image('hud-farm',   'icons/icon-farm.png')
+    this.load.image('hud-quran',  'icons/icon-quran.png')
     this.load.svg('hud-pause',    'game/icons/pause-gbtn.svg',    { width: 256, height: 256 })
     this.load.svg('hud-play',     'game/icons/play-gbtn.svg',     { width: 256, height: 256 })
     // أيقونة سهم فتح/طي القائمة الجانبية
