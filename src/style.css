@@ -580,3 +580,32 @@ body.modal-open {
   font-size: 0.75rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
+
+/* حاوية الأيقونة: أبعاد ثابتة لا تتمدّد، بلا إطارات داكنة، centring دقيق */
+.icon-frame {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  outline: none;
+}
+.icon-frame > img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.icon-frame,
+.icon-frame > img,
+.icon-btn { transition: transform 150ms ease-in-out; }
+/* تأثير ضغط لحظي فقط — لا hover ولا focus يغيّران الحجم (منع الالتصاق) */
+.icon-frame:active > img,
+.icon-btn:active { transform: scale(0.95); }
+.icon-frame:focus,
+.icon-frame:focus-visible,
+.icon-btn:focus,
+.icon-btn:focus-visible { outline: none; }

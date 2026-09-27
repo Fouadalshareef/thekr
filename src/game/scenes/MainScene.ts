@@ -45,10 +45,14 @@ const NEXT_DELAY = 150
 const SIDEBAR_X = 56
 /** أعلى نقطة في العمود الجانبي (زر الإعدادات). */
 const SIDEBAR_TOP = 62
-/** قياس الأيقونة داخل الحاضنة الدائرية (38px — واضح，不会压到 الحدّ الذهبي). */
-const SIDE_ICON_SIZE = 38
-/** قطر الحاضنة الدائرية المجسّمة (50px) — القرص الأزرق بحدّ ذهبي. */
-const SIDE_CRADLE_SIZE = 50
+/** قطر الحاضنة/الحاوية الثابتة (46px) — width/height/flex-shrink/position/overflow. */
+const SIDE_CRADLE_SIZE = 46
+/**
+ * قياس الأيقونة داخل الحاضنة: تملأ الحاوية بالكامل (width/height: 100%).
+ * الصور مربّعة 256×256 ⇒ العرض = الارتفاع ⇒ مكافئ تماماً لـ object-fit: contain
+ * (بلا تشويه وبلا مساحة فارغة داخل القرص).
+ */
+const SIDE_ICON_SIZE = SIDE_CRADLE_SIZE
 /**
  * حجم أيقونات العمود الجانبي بعد التصغير — مقاس ألعاب الموبايل (46px بدل 74px).
  * جميع مقاييس الزر الداخلية (الظل/الهالة/النسيج/الأيقونة) تُشتق من هذا الرقم بنسبة ثابتة.
@@ -737,10 +741,25 @@ export default class MainScene extends Phaser.Scene {
     const baseY = y
     let hovering = false
 
-    // الضغط: نزول فعلي للزر + تقلّص بسيط (.gbtn:active) + موجة نقرية دائرية
-    const press = () => {
+    /**
+     * إعادة الحالة البصرية إلى الوضع الطبيعي حتماً.
+     * السبب: عند فتح نافذة (النمط/التخصيص) أثناء الضغط، لا يصل PointerUp/Out
+     * إلى الزر ⇒ كان يبقى محتجزاً على تكبير Hover (1.08) أو تصغير الضغط (0.95)
+     * بشكل دائم. هذه الدالة تُستدعى عند الإفلات وعبر مؤقّت أمان بعد كل نقرة.
+     */
+    const normalize = (): void => {
       this.tweens.killTweensOf(btn)
-      this.tweens.add({ targets: btn, y: baseY + 3, scale: 0.955, duration: 90, ease: 'Quad.easeOut' })
+      this.tweens.killTweensOf(svgIcon)
+      btn.setPosition(btn.x, baseY).setScale(1)
+      svgIcon.setScale(1)
+      if (glow) this.tweens.add({ targets: glow, alpha: hovering ? 1 : 0, duration: 220 })
+    }
+
+    // الضغط: نزول خفيف للزر + تقلّص لحظي (0.95) — تأثير لحظي فقط بلا أي بقاء
+    const press = (): void => {
+      this.tweens.killTweensOf(btn)
+      this.tweens.killTweensOf(svgIcon)
+      this.tweens.add({ targets: btn, y: baseY + 3, scale: 0.95, duration: 100, ease: 'Quad.easeOut' })
       if (glow) this.tweens.add({ targets: glow, alpha: 1, duration: 140 })
       if (pulse) {
         this.tweens.killTweensOf(pulse)
@@ -748,30 +767,27 @@ export default class MainScene extends Phaser.Scene {
         this.tweens.add({ targets: pulse, alpha: 0, scale: 1.55, duration: 550, ease: 'Sine.easeOut' })
       } else {
         // بلا حلقة نقرية (أيقونة مجرّدة): نومض الصورة نفسها عند الضغط
-        this.tweens.add({ targets: svgIcon, scale: svgIcon.scale * 0.88, duration: 90, ease: 'Quad.easeOut' })
+        this.tweens.add({ targets: svgIcon, scale: 0.88, duration: 100, ease: 'Quad.easeOut' })
       }
     }
 
-    // الإفلات: قفزة مرنة ممتعة (.gbtn.is-clicked / @keyframes gbtn-pop)
-    const release = () => {
+    // الإفلات: نابضة مرنة قصيرة ثم عودة كاملة ومؤكدة إلى الحجم الأصلي
+    const release = (): void => {
       this.tweens.killTweensOf(btn)
       this.tweens.add({
         targets: btn,
-        y: baseY - 5,
-        scale: 1.06,
-        duration: 180,
+        y: baseY - 4,
+        scale: 1.04,
+        duration: 140,
         ease: 'Quad.easeOut',
-        onComplete: () => {
-          this.tweens.add({ targets: btn, y: baseY, scale: 1, duration: 160, ease: 'Back.easeOut' })
-        },
+        onComplete: normalize,
       })
       if (glow) {
         this.tweens.killTweensOf(glow)
         this.tweens.add({ targets: glow, alpha: hovering ? 1 : 0, duration: 220 })
       }
-      // للأيقونات المجرّدة: عودة الصورة إلى حجمها الطبيعي بعد نبض الضغط
       if (bare) {
-        this.tweens.add({ targets: svgIcon, scale: 1, duration: 180, ease: 'Back.easeOut' })
+        this.tweens.add({ targets: svgIcon, scale: 1, duration: 140, ease: 'Back.easeOut' })
       }
     }
 
@@ -779,21 +795,20 @@ export default class MainScene extends Phaser.Scene {
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
       press()
       onTap()
+      // مؤقّت أمان: إن أخفت النافذةُ الجديدة الزر أو ابتلعت الحدث، نُعيد التطبيع
+      this.time.delayedCall(360, normalize)
     })
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, release)
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => {
       hovering = false
       release()
     })
-    // المرور (Hover): رفع الزر + هالة ملوّنة — `.gbtn:hover` في الحزمة
+    // المرور (Hover): لا يغيّر حجم الأيقونة أبداً — فقط الهالة الملوّنة، منعاً للالتصاق التكبير
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => {
       hovering = true
       if (glow) {
         this.tweens.killTweensOf(glow)
         this.tweens.add({ targets: glow, alpha: 1, duration: 220 })
-      } else if (bare) {
-        // بلا هالة: تكبير خفيف للصورة المجرّدة عند المرور
-        this.tweens.add({ targets: svgIcon, scale: 1.08, duration: 200, ease: 'Quad.easeOut' })
       }
     })
     return btn
