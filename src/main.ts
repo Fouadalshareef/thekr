@@ -46,7 +46,7 @@ const blockScroll = (e: Event) => {
   const target = e.target as HTMLElement | null
   // السماح بالتمرير في أي نافذة منبثقة تحتاج إلى التمرير العمودي
   // (بما فيها نافذة تخصيص الأذكار .focus-dom-modal)
-  if (target && target.closest('#dashboard-modal, #garden-modal, #advice-modal, #quran-modal, .focus-dom-modal')) return
+  if (target && target.closest('#dashboard-modal, #garden-modal, #advice-modal, #quran-modal, .focus-dom-modal, .mode-dom-modal')) return
   e.preventDefault()
 }
 document.addEventListener('touchmove', blockScroll, { passive: false })

@@ -164,6 +164,8 @@ export default class MainScene extends Phaser.Scene {
     draw: (c: number) => void
   }[] = []
   private focusDom?: HTMLElement
+  /** نافذة "اختر النمط" الفاتحة كاملة الشاشة (DOM) — بديل اللوحة الداكنة داخل المشهد. */
+  private modeDom?: HTMLElement
 
   // نظام الاستراحة (Rest Banner)
   private restTimerEvent: Phaser.Time.TimerEvent | null = null
@@ -628,26 +630,35 @@ export default class MainScene extends Phaser.Scene {
       .setDisplaySize(iconSize, iconSize)
     btn.add(svgIcon)
     // بطاقة الاسم أسفل الأيقونة (Label Badge): مستطيل موحّد الأبعاد لكل الأيقونات،
-    // بخلفية ذهبية مصمتة وحدّ ناعم ونص أبيض واضح وصغير. تُضاف للحاوية لتتحرك معها.
+    // بتدرّج ذهبي/برتقالي دافئ عالي التباين، وحدّ أبيض سميك، ونص أبيض عريض مظلّل.
     if (opts.label) {
       const badgeTop = radius + SIDE_BADGE_GAP
       const badge = this.add.graphics()
-      badge.fillStyle(0x000000, 0.28)
+      // ظل أسفل البطاقة (box-shadow: 0 2px 4px rgba(0,0,0,.3))
+      badge.fillStyle(0x000000, 0.3)
       badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop + 2, SIDE_BADGE_W, SIDE_BADGE_H, 6)
-      badge.fillStyle(0xb45309, 1)
-      badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop, SIDE_BADGE_W, SIDE_BADGE_H, 6)
-      badge.lineStyle(1.5, 0xfcd34d, 0.95)
+      // تدرّج عمودي محاكى: الجزء العلوي أفتح (#f59e0b) والسفلي أغمق (#d97706)
+      badge.fillStyle(0xf59e0b, 1)
+      badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop, SIDE_BADGE_W, SIDE_BADGE_H / 2, 6)
+      badge.fillStyle(0xd97706, 1)
+      badge.fillRect(-SIDE_BADGE_W / 2, badgeTop + SIDE_BADGE_H / 2 - 1, SIDE_BADGE_W, SIDE_BADGE_H / 2 + 1)
+      badge.fillStyle(0xd97706, 1)
+      badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop + SIDE_BADGE_H - 8, SIDE_BADGE_W, 8, 4)
+      // حدّ أبيض سميك يرفع التباين مع الخلفية الداكنة
+      badge.lineStyle(1.5, 0xffffff, 1)
       badge.strokeRoundedRect(-SIDE_BADGE_W / 2, badgeTop, SIDE_BADGE_W, SIDE_BADGE_H, 6)
       btn.add(badge)
 
       const badgeText = this.add
         .text(0, badgeTop + SIDE_BADGE_H / 2, opts.label, {
           fontFamily: '"Segoe UI", Tahoma, sans-serif',
-          fontSize: '11px',
-          fontStyle: 'bold',
+          fontSize: '12px',
+          fontStyle: '900',
           color: '#ffffff',
         })
         .setOrigin(0.5)
+      // ظل نصّي أسود (text-shadow: 0 1px 2px rgba(0,0,0,.8)) لضمان الوضوح
+      badgeText.setShadow(0, 1, 'rgba(0,0,0,0.8)', 2, false, true)
       btn.add(badgeText)
     }
 
@@ -844,6 +855,8 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildModePanel(): void {
+    // الواجهة الداكنة القديمة تُبقى احتياطاً، لكن المستخدم يرى الآن نافذة DOM الفاتحة.
+    this.buildModeDom()
     const { width, height } = this.scale
     this.modePanel = this.add.container(0, 0)
     this.modePanel.setDepth(2000)
@@ -1096,18 +1109,63 @@ export default class MainScene extends Phaser.Scene {
     thumb.fillRoundedRect(186, y0, 6, h, 3)
   }
 
+  /** وصف مختصر لكل نمط يظهر داخل البطاقة البيضاء. */
+  private static readonly MODE_HINTS: Record<string, string> = {
+    sequence: 'يتنقّل تلقائياً بين الأذكار الموصى بها ورداً بعد ورد.',
+    random: 'أذكار متنوعة عشوائياً تُبقي الجلسة حيّة ومتنوعة.',
+    focus: 'تختار ذكراً واحداً وتكرره مع شريط تقدم للورد.',
+    morning: 'أذكار الصباح كاملة بالترتيب مع عدّاد.',
+    evening: 'أذكار المساء كاملة بالترتيب مع عدّاد.',
+    zen: 'جلسة استغفار هادئة لشاشة استرخاء كاملة.',
+  }
+
+  /**
+   * نافذة "اختر النمط": واجهة DOM فاتحة كاملة الشاشة (100vw × 100dvh) مطابقة
+   * لنافذة التخصيص — بطاقات بيضاء بظلال خفيفة والنمط الحالي بخلفية زمردية.
+   */
+  private buildModeDom(): void {
+    const root = document.createElement('section')
+    root.className = 'mode-dom-modal hidden'
+    root.setAttribute('aria-label', 'اختر النمط')
+    root.innerHTML =
+      '<div class="mode-dom-content" dir="rtl"><header class="mode-dom-header"><div><p class="mode-dom-eyebrow">الأنماط</p><h2>اختر النمط</h2><p>اختر أسلوب اللعب المناسب لحالتك الآن.</p></div><button class="mode-dom-close" type="button" aria-label="إغلاق">×</button></header><div class="mode-dom-list"></div></div>'
+    const list = root.querySelector('.mode-dom-list') as HTMLElement
+    MODE_OPTIONS.forEach((opt) => {
+      const card = document.createElement('button')
+      card.type = 'button'
+      card.className = 'mode-dom-card'
+      card.dataset.mode = opt.mode
+      card.innerHTML = `<strong>${opt.label}</strong><small>${MainScene.MODE_HINTS[opt.mode] ?? ''}</small>`
+      card.addEventListener('click', () => {
+        if (opt.mode === 'zen') {
+          this.closeModePanel()
+          this.scene.start('ZenScene')
+          return
+        }
+        this.setMode(opt.mode)
+      })
+      list.appendChild(card)
+    })
+    root.querySelector('.mode-dom-close')?.addEventListener('click', () => this.closeModePanel())
+    document.body.appendChild(root)
+    this.modeDom = root
+    this.refreshModeSelection()
+  }
+
   private openModePanel(): void {
-    // فتح اللوحة لا يعتمد على حالة إيقاف اللعبة؛ لوحة النمط نفسها يجب أن تبقى قابلة للتفاعل.
+    // فتح النافذة الفاتحة كاملة الشاشة (DOM) بدل اللوحة الداكنة.
     this.modeUIOpen = true
-    this.modePanel.setVisible(true)
-    this.modePanel.setDepth(3000)
+    this.modeDom?.classList.remove('hidden')
     this.refreshModeSelection()
     this.pauseForModal()
   }
 
-  /** يطبق النمط النشط الحالي عند فتح اللوحة أو اختيار نمط جديد. */
+  /** يطبّق النمط النشط الحالي على بطاقات النافذة الفاتحة. */
   private refreshModeSelection(): void {
     const activeMode = gameMode.getMode()
+    this.modeDom?.querySelectorAll<HTMLElement>('.mode-dom-card').forEach((card) => {
+      card.classList.toggle('is-active', card.dataset.mode === activeMode)
+    })
     this.modeButtons.forEach(({ mode, draw, label }) => {
       const active = mode === activeMode
       draw(active, false)
@@ -1117,6 +1175,7 @@ export default class MainScene extends Phaser.Scene {
 
   private closeModePanel(): void {
     this.modeUIOpen = false
+    this.modeDom?.classList.add('hidden')
     this.modePanel.setVisible(false)
     if (this.focusPanel.visible) return
     if (!this.paused) {
@@ -1311,7 +1370,8 @@ export default class MainScene extends Phaser.Scene {
   /** تبديل النمط الحالي. */
   private setMode(mode: GameMode, focusIndex?: number): void {
     if (mode === 'focus') {
-      // إخفاء اللوحة الرئيسية للأنماط بدون استئناف اللعبة
+      // إخفاء النافذة الرئيسية للأنماط بدون استئناف اللعبة
+      this.modeDom?.classList.add('hidden')
       this.modePanel.setVisible(false)
       // إظهار لوحة التخصيص
       this.toggleFocusPanel(true)
@@ -1717,6 +1777,10 @@ export default class MainScene extends Phaser.Scene {
     for (const b of this.alive) b.destroy()
     this.alive = []
     this.events.off(Events.DHIKR_COLLECTED, this.onDhikrCollected, this)
+    this.modeDom?.remove()
+    this.modeDom = undefined
+    this.focusDom?.remove()
+    this.focusDom = undefined
   }
 
   // ------------------------------------------------------------------
