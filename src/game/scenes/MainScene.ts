@@ -245,14 +245,569 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildHud(): void {
+    // العمود الجانبي بأيقونات مصغّرة (46px — مقاس ألعاب الموبايل) مع بطاقة اسم ثابتة
+    // موحّدة الأبعاد أسفل كل أيقونة، والفاصل الرأسي يتسع لها (SIDEBAR_STEP = 78px).
+    //   y = ‏62‏، ‏148‏، ‏234‏، ‏320‏ (‏SIDEBAR_TOP + i × (BTN_SIZE + BTN_GAP)‏).
+    // زر السهم يتصدّر العمود (62)؛ الأزرار الأربعة تحته. عند الإقلاع تكون القائمة
+    // مطوية (مخفية) ويظهر السهم فقط؛ الضغط عليه يفتحها بحركة انزلاق/تلاشي ناعمة،
+    // والضغط في أي مكان آخر من الشاشة يطويها تلقائياً (Outside Click).
+    // تمت إزالة أزرار القائمة الجانبية من WebGL واستبدالها بواجهة DOM في Sidebar.ts
+    // للحصول على دقة Retina فائقة وحل مشاكل تداخل الأنيمشن.
+    
     // أقصى اليمين العلوي: الإيقاف أعلى عداد الجلسة بفاصل رأسي 25px على الأقل.
     this.buildPauseButton()
     this.buildSessionCounter()
     this.buildComboCounter()
     this.buildAzkarCounter()
     this.buildFocusBar()
+
+    // الحالة الابتدائية: القائمة مطوية — الأزرار مخفية والسهم ظاهر فقط.
+    this.setSideMenuVisible(false, true)
+
+    // الضغط في أي مكان آخر من الشاشة (خارج الأزرار) يطوي القائمة تلقائياً
+    // لعدم تشويش مساحة اللعب — من دون حجب نقرات الفقاعات (نستقبل الحدث فقط
+    // عندما لا يكون هدفه زراً تفاعلياً، ولا نضع أي طبقة Overlay فوق اللعب).
+    this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer, targets: Phaser.GameObjects.GameObject[]) => {
+      if (!this.sideMenuOpen || this.sideMenuAnimating) return
+      const hitButton = (targets ?? []).some((t) => t === this.btnArrow || t === this.btnGear || t === this.btnSliders || t === this.btnLeaf || t === this.btnQuran || t === this.pauseButton)
+      void pointer
+      if (!hitButton) this.toggleSideMenu(false)
+    })
   }
 
+  /** فتح/طي القائمة الجانبية بحركة انزلاق + تلاشي ناعمة (Slide/Fade). */
+  private toggleSideMenu(force?: boolean): void {
+    const open = force ?? !this.sideMenuOpen
+    if (open === this.sideMenuOpen || this.sideMenuAnimating) return
+    this.sideMenuOpen = open
+    this.sideMenuAnimating = true
+    // زر اختيار النمط مستقل عن القائمة القابلة للطي، ويبقى متاحاً دائماً
+    // مباشرة أسفل السهم.
+    const menu = [this.btnLeaf, this.btnQuran, this.btnGear]
+    // دوران السهم 180°: يمين (مغلق) ⇄ يسار (مفتوح — ينطوي للجهة الأخرى).
+    this.tweens.add({ targets: this.arrowIcon, angle: open ? 180 : 0, duration: 260, ease: 'Quad.easeInOut' })
+    menu.forEach((btn, i) => {
+      const homeY: number = btn.getData('homeY')
+      this.tweens.killTweensOf(btn)
+      if (open) {
+        // الظهور: زر السهم مستقل في أعلى الحاوية (SIDEBAR_TOP) وباقي الأزرار
+        // تظهر أسفله مباشرة في حاوية منسدلة (flex column, gap:12px) — أي كل زر
+        // ينزلق من موضعه النهائي (homeY) بلا مرور فوق زر السهم إطلاقاً،
+        // فيستحيل أي تداخل في الإحداثيات أثناء الحركة.
+        btn.setVisible(true)
+        btn.setAlpha(0).setX(SIDEBAR_X - 26).setY(homeY)
+        btn.setScale(0.7)
+        this.tweens.add({ targets: btn, x: SIDEBAR_X, y: homeY, alpha: 1, scale: 1, duration: 300, delay: i * 55, ease: 'Back.easeOut' })
+      } else {
+        // الإخفاء: تلاشي وانزلاق جانبي في نفس الصف ثم إخفاء (دون العودة فوق السهم).
+        this.tweens.add({
+          targets: btn, x: SIDEBAR_X - 26, y: homeY, alpha: 0, scale: 0.7,
+          duration: 220, delay: (menu.length - 1 - i) * 35, ease: 'Quad.easeIn',
+          onComplete: () => btn.setVisible(false),
+        })
+      }
+    })
+    this.time.delayedCall(open ? 300 + menu.length * 55 : 220 + menu.length * 35, () => {
+      this.sideMenuAnimating = false
+    })
+    // إبقاء شارة التحديث ملتصقة بزر الإعدادات عند انتهاء الحركة.
+    this.time.delayedCall(open ? 320 + menu.length * 55 : 260, () => this.pinUpdateBadge())
+  }
+
+  /** إظهار/إخفاء فوري (بلا حركة) — يُستخدم عند الإقلاع وتطبيق الإعدادات. */
+  private setSideMenuVisible(open: boolean, instant = false): void {
+    this.sideMenuOpen = open
+    for (const btn of [this.btnLeaf, this.btnQuran, this.btnGear]) {
+      if (!btn) continue
+      btn.setVisible(open)
+      if (instant && btn) {
+        btn.setAlpha(open ? 1 : 0)
+        const homeY: number = btn.getData('homeY') ?? btn.y
+        btn.setPosition(SIDEBAR_X, homeY).setScale(1)
+      }
+    }
+    this.arrowIcon?.setAngle(open ? 180 : 0)
+    if (instant) this.pinUpdateBadge()
+  }
+
+  /** تثبيت شارة التحديث على زاوية زر الإعدادات (تتحرك مع القائمة). */
+  private pinUpdateBadge(): void {
+    if (!this.updateBadge || !this.btnGear) return
+    const homeY: number = this.btnGear.getData('homeY') ?? this.btnGear.y
+    this.updateBadge.setPosition(this.btnGear.x + 26, (this.btnGear.visible ? this.btnGear.y : homeY) - 26)
+  }
+
+  private buildAzkarCounter(): void {
+    const { width } = this.scale
+    this.azkarCounterBg = this.add.graphics().setDepth(2000).setAlpha(0)
+    // خلفية بسيطة معتمة في أعلى المنتصف
+    this.azkarCounterBg.fillStyle(0x000000, 0.4)
+    this.azkarCounterBg.fillRoundedRect(width / 2 - 90, 15, 180, 40, 20)
+    this.azkarCounterBg.lineStyle(2, 0xfcd34d, 0.8)
+    this.azkarCounterBg.strokeRoundedRect(width / 2 - 90, 15, 180, 40, 20)
+
+    this.azkarCounterText = this.add
+      .text(width / 2, 35, '', {
+        fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+        fontSize: '18px',
+        fontStyle: 'bold',
+        color: '#fef3c7',
+      })
+      .setOrigin(0.5)
+      .setDepth(2001)
+      .setAlpha(0)
+
+    this.azkarCloseButton = this.add.container(width / 2, 84).setDepth(2002).setVisible(false)
+    const closeBg = this.add.graphics()
+    closeBg.fillStyle(0x1e293b, 1)
+    closeBg.fillRoundedRect(-78, -20, 156, 40, 8)
+    closeBg.lineStyle(1.5, 0x64748b, 1)
+    closeBg.strokeRoundedRect(-78, -20, 156, 40, 8)
+    const closeLabel = this.add.text(0, 0, 'إغلاق الأذكار', {
+      fontFamily: '"Segoe UI", Tahoma, sans-serif',
+      fontSize: '17px',
+      fontStyle: 'bold',
+      color: '#ffffff',
+    }).setOrigin(0.5)
+    this.azkarCloseButton.add([closeBg, closeLabel])
+    this.azkarCloseButton.setInteractive(new Phaser.Geom.Rectangle(-78, -20, 156, 40), Phaser.Geom.Rectangle.Contains)
+    this.azkarCloseButton.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => this.closeAzkarMode())
+  }
+
+  /** عرض شريط الورد أو إخفاؤه. */
+  private setFocusBarVisible(visible: boolean): void {
+    this.focusBarBg?.setVisible(visible)
+    this.focusBarFill?.setVisible(visible)
+    this.focusBarText?.setVisible(visible)
+  }
+
+  /**
+   * شريط تقدم الورد في النمط المخصص: شريط طاقة علوي شبيه بألعاب الموبايل،
+   * يعرض العدّاد الموصى به (0/33 → 33/33) ويمتلئ من اليمين نحو اليسار.
+   */
+  private buildFocusBar(): void {
+    const { width } = this.scale
+    const w = 210
+    const h = 24
+    const y = 34
+    const x = width / 2 - w / 2
+    this.focusBarBg = this.add.graphics().setDepth(2000)
+    this.focusBarBg.fillStyle(0x022c22, 0.92)
+    this.focusBarBg.fillRoundedRect(x, y - h / 2, w, h, 12)
+    this.focusBarBg.lineStyle(2, 0x34d399, 0.95)
+    this.focusBarBg.strokeRoundedRect(x, y - h / 2, w, h, 12)
+
+    // قناة التعبئة: مستطيل يتمدّد بالعرض من الحافة اليمنى (نقطة الأصل يميناً)
+    this.focusBarFill = this.add
+      .rectangle(x + w - 3, y, 0, h - 6, 0x10b981, 1)
+      .setOrigin(1, 0.5)
+      .setDepth(2001)
+
+    this.focusBarText = this.add
+      .text(width / 2, y, '0 / 0', {
+        fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+        fontSize: '15px',
+        fontStyle: 'bold',
+        color: '#ecfdf5',
+      })
+      .setOrigin(0.5)
+      .setDepth(2002)
+    this.focusBarText.setShadow(0, 1, 'rgba(0,0,0,0.65)', 3, true, true)
+
+    this.setFocusBarVisible(false)
+  }
+
+  /** تحديث شريط الورد — يظهر في النمط المخصص فقط ويتقدم بسلاسة مع كل تكرار. */
+  private updateFocusBar(animate = true): void {
+    const dhikr = gameMode.getMode() === 'focus' ? gameMode.getCurrentDhikr() : null
+    if (!dhikr || this.focusCelebrationOpen) {
+      this.setFocusBarVisible(false)
+      return
+    }
+    this.setFocusBarVisible(true)
+    const target = Math.max(1, dhikr.target)
+    const count = Math.min(target, gameMode.getCount(dhikr.id))
+    this.focusBarText.setText(`${count} / ${target}`)
+    this.tweens.killTweensOf(this.focusBarFill)
+    this.tweens.add({
+      targets: this.focusBarFill,
+      displayWidth: (count / target) * 204,
+      duration: animate ? 280 : 0,
+      ease: 'Quad.easeOut',
+    })
+  }
+
+  private updateAzkarCounter(): void {
+    const mode = gameMode.getMode()
+    if (mode === 'morning' || mode === 'evening') {
+      const current = gameMode.getCurrentAzkarNumber()
+      const total = gameMode.getTotalAzkar()
+      this.azkarCounterText.setText(`المتبقي: ${total - current + 1} / ${total}`)
+      this.azkarCounterBg.setAlpha(1)
+      this.azkarCounterText.setAlpha(1)
+      this.azkarCloseButton.setVisible(true)
+    } else {
+      this.azkarCounterBg.setAlpha(0)
+      this.azkarCounterText.setAlpha(0)
+      this.azkarCloseButton.setVisible(false)
+    }
+    // شريط الورد يعمل في النمط المخصص فقط (يُخفى في بقية الأنماط)
+    this.updateFocusBar()
+
+  }
+
+  /** الخروج من أذكار الصباح/المساء يلغي التقدم الجزئي ويعيد النمط المترابط. */
+  private closeAzkarMode(): void {
+    const mode = gameMode.getMode()
+    if (mode !== 'morning' && mode !== 'evening') return
+    for (const body of [...this.alive]) body.destroy()
+    this.alive = []
+    gameMode.setMode('sequence')
+    this.updateAzkarCounter()
+    this.spawnIfEmpty()
+  }
+
+  /** تطبيق إعدادات إظهار/إخفاء الأيقونات فوراً (أيقونة المصحف ثابتة دائماً كعنصر رئيسي). */
+  private applyUiSettings(): void {
+    const icons = areIconsEnabled()
+    // زر السهم يبقى ظاهراً دائماً (هو بوابة القائمة) ما دامت الأيقونات مفعّلة.
+    this.btnArrow?.setVisible(icons)
+    // زر اختيار النمط ثابت دائماً، حتى حين تكون بقية القائمة مطوية.
+    this.btnSliders?.setVisible(true).setAlpha(1).setScale(1)
+    // عناصر القائمة تُعرض فقط إذا كانت الأيقونات مفعّلة والقائمة مفتوحة.
+    const showMenu = icons && this.sideMenuOpen
+    for (const b of [this.btnLeaf, this.btnQuran, this.btnGear]) {
+      b?.setVisible(showMenu)
+    }
+    // أيقونة المصحف الشريف ثابتة في الواجهة كعنصر رئيسي (بلا خيار إخفاء).
+    this.btnQuran?.setVisible(icons && this.sideMenuOpen)
+    // يمين الشاشة
+    this.pauseButton?.setVisible(icons)
+    this.sessionPill?.setVisible(icons)
+    this.sessionLabel?.setVisible(icons)
+    this.sessionText?.setVisible(icons)
+    this.comboText?.setVisible(icons)
+  }
+
+  /** تشغيل/إيقاف اللعبة فوراً (توليد الأجسام والحركة). */
+  private applyGameToggle(): void {
+    this.gameEnabled = isGameEnabled()
+    if (this.gameEnabled) {
+      for (const b of this.alive) b.destroy()
+      this.alive = []
+      this.physics.resume()
+      this.data.set('paused', this.paused)
+      this.spawnIfEmpty()
+    } else {
+      for (const b of this.alive) b.destroy()
+      this.alive = []
+      this.physics.pause()
+    }
+  }
+
+  /** معالج تغيّر الإعدادات من لوحة التحكم. */
+  private onSettingsChanged = (): void => {
+    this.applyUiSettings()
+    this.applyGameToggle()
+  }
+
+  /**
+   * شارة إشعار حمراء نباضة 🔴 في الزاوية العلوية لأيقونة الإعدادات ⚙️
+   * تظهر عند وجود تحديث جديد (localStorage: has_update أو حدث app-update-available)
+   * وتختفي عند فتح لوحة التحكم (أين يوجد زر "تحديث النسخة الآن").
+   */
+  private buildUpdateBadge(): void {
+    if (!this.btnGear) return;
+    // موضع زر الإعدادات الجديد (أول عناصر القائمة تحت السهم): y = ‏148‏ —
+    // الشارة في زاويته العلوية اليمنى، وتُثبَّت عبر pinUpdateBadge مع كل حركة.
+    const bx = this.btnGear.x + 26
+    const by = this.btnGear.y - 26
+
+    this.updateBadge = this.add.container(bx, by)
+    this.updateBadge.setDepth(2200)
+    this.updateBadge.setVisible(false)
+
+    const dot = this.add.graphics()
+    dot.fillStyle(0x020617, 0.55)
+    dot.fillCircle(1, 2, 15) // ظل ناعم
+    dot.fillStyle(0xef4444, 1)
+    dot.fillCircle(0, 0, 13)
+    dot.lineStyle(2.5, 0xffffff, 0.95)
+    dot.strokeCircle(0, 0, 13)
+    dot.fillStyle(0xfca5a5, 0.85)
+    dot.fillCircle(-4, -4, 4) // لمعة
+    this.updateBadge.add(dot)
+
+    const exclaim = this.add
+      .text(0, -1, '!', {
+        fontFamily: '"Segoe UI", Tahoma, sans-serif',
+        fontSize: '16px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+      })
+      .setOrigin(0.5, 0.5)
+    this.updateBadge.add(exclaim)
+
+    // نباضة مستمرة لفت الانتباه
+    this.tweens.add({
+      targets: this.updateBadge,
+      scale: { from: 1, to: 1.25 },
+      yoyo: true,
+      repeat: -1,
+      duration: 550,
+      ease: 'Sine.easeInOut',
+    })
+
+    // إظهار فوري إن كان التحديث معلّقاً من جلسة سابقة
+    if (hasPendingUpdate()) this.updateBadge.setVisible(true)
+
+    // إظهار عند كشف تحديث جديد أثناء اللعب
+    window.addEventListener('app-update-available', () => {
+      this.updateBadge?.setVisible(true)
+    })
+
+    // إخفاء عند فتح لوحة التحكم (المستخدم سيتعامل مع التحديث هناك)
+    window.addEventListener('open-dashboard', () => {
+      this.updateBadge?.setVisible(false)
+    })
+  }
+
+  /** تغميق لون (يعيد صيغة 0xRRGGBB). */
+  private darker = (c: number, f = 0.6): number => {
+    const r = Math.min(255, Math.round(((c >> 16) & 0xff) * f))
+    const g = Math.min(255, Math.round(((c >> 8) & 0xff) * f))
+    const b = Math.min(255, Math.round((c & 0xff) * f))
+    return (r << 16) | (g << 8) | b
+  }
+
+  /**
+   * زر دائري مجسّم بأسلوب حزمة الأزرار الجديدة (Game UI Buttons):
+   * إطار معدني متدرّج + حافة سفلية داكنة (سماكة 3D) + وجه كحلي + لمعة علوية،
+   * مع أيقونة SVG بيضاء ناصعة في الحلقة الداخلية، وظل أرضي ناعم وهالة ملوّنة.
+   * (كل القيم البصرية مستخرجة من css/style.css في الحزمة — انظر GameButtonSkin.ts)
+   */
+  private buildRoundButton(
+    x: number,
+    y: number,
+    icon: HudIcon,
+    onTap: () => void,
+    opts: { size?: number; label?: string; bare?: boolean } = {},
+  ): Phaser.GameObjects.Container {
+    const btn = this.add.container(x, y)
+    btn.setDepth(2000)
+    const theme = ICON_THEME[icon]
+    // كل المقاييس الداخلية مشتقّة من حجم الزر المطلوب بنسبة ثابتة (46 للأيقونات الجانبية).
+    const size = opts.size ?? BTN_SIZE
+    const ratio = size / BTN_SIZE
+    const radius = size / 2
+    const iconSize = BTN_ICON_SIZE * ratio
+    const skinSize = BTN_SKIN_SIZE * ratio
+    const skinOffsetY = BTN_SKIN_OFFSET_Y * ratio
+
+    // أيقونات PNG ثلاثية الأبعاد: تُعرض مباشرة بخلفية شفافة بلا أي إطار/دائرة
+    // زجاجية أو ظل دائري (opts.bare) — لأن الصورة نفسها هي الأيقونة الكاملة.
+    const bare = opts.bare === true
+
+    let glow: Phaser.GameObjects.Image | null = null
+    let pulse: Phaser.GameObjects.Graphics | null = null
+
+    if (!bare) {
+      // ظل أرضي ناعم أسفل الزر (box-shadow: 0 20px 28px -8px rgba(4,9,22,.75))
+      const shadow = this.add
+        .image(0, size * 0.42, getShadowTexture(this))
+        .setDisplaySize(size * 1.45, size * 0.85)
+        .setAlpha(0.85)
+      btn.add(shadow)
+
+      // هالة توهّج ملوّنة خلف الزر تظهر عند المرور/الضغط (--glow في الحزمة)
+      glow = this.add
+        .image(0, 0, getGlowTexture(this, theme))
+        .setDisplaySize(size * 1.75, size * 1.75)
+        .setAlpha(0)
+        .setBlendMode(Phaser.BlendModes.ADD)
+      btn.add(glow)
+
+      // جسم الزر: نسيج مرسوم بالـ Canvas بنفس طبقات .gbtn::before و ::after و .ring
+      const skin = this.add
+        .image(0, skinOffsetY, getButtonSkinTexture(this, theme))
+        .setDisplaySize(skinSize, skinSize)
+      btn.add(skin)
+
+      // حلقة الموجة النقرية (@keyframes gbtn-pulse) — تنطلق من الزر عند كل ضغطة
+      pulse = this.add.graphics()
+      pulse.lineStyle(2.5, themeGlowColor(theme), 1)
+      pulse.strokeCircle(0, 0, radius)
+      pulse.setAlpha(0)
+      btn.add(pulse)
+    }
+
+    // الحاضنة الدائرية المجسّمة (Game-Style Circle Container) للأيقونات المجرّدة:
+    // قرص أزرق بتدرّج شعاعي + حدّ ذهبي 2px + ظل سفلي ولمعة داخلية علوية.
+    // الغرض: حماية حواف الصورة ومنع "انحسار" الأيقونة على خلفية التطبيق.
+    if (bare) {
+      const cradleR = SIDE_CRADLE_SIZE / 2
+      const cradle = this.add.graphics()
+      // ظل أسفل القرص (box-shadow: 0 4px 6px rgba(0,0,0,.4))
+      cradle.fillStyle(0x000000, 0.4)
+      cradle.fillCircle(0, 4, cradleR)
+      // تدرّج شعاعي محاكى: مركز فاتح (#3b82f6 عند 30%/30%) ← حافة غامقة (#1d4ed8)
+      const STEPS = 14
+      for (let i = STEPS; i >= 1; i--) {
+        const t = i / STEPS
+        const rr = cradleR * t
+        const c = Phaser.Display.Color.Interpolate.ColorWithColor(
+          Phaser.Display.Color.ValueToColor(0x3b82f6),
+          Phaser.Display.Color.ValueToColor(0x1d4ed8),
+          100,
+          Math.round(t * 100),
+        )
+        cradle.fillStyle(Phaser.Display.Color.GetColor(c.r, c.g, c.b), 1)
+        cradle.fillCircle(0, 0, rr)
+      }
+      // لمعة داخلية علوية (inset 0 2px 2px rgba(255,255,255,.5)) — بيضاوية فاتحة
+      cradle.fillStyle(0xffffff, 0.5)
+      cradle.fillEllipse(-cradleR * 0.18, -cradleR * 0.42, cradleR * 0.95, cradleR * 0.42)
+      cradle.fillStyle(0xffffff, 0.22)
+      cradle.fillEllipse(0, -cradleR * 0.1, cradleR * 1.3, cradleR * 1.1)
+      // حدّ ذهبي بارز 2px (border: 2px solid #fbbf24)
+      cradle.lineStyle(2, 0xfbbf24, 1)
+      cradle.strokeCircle(0, 0, cradleR)
+      btn.add(cradle)
+    }
+
+    // الأيقونة: صورة PNG ثلاثية الأبعاد (38px) داخل الحاضنة، أو SVG للإطارات القديمة
+    const displayIconSize = bare ? SIDE_ICON_SIZE : iconSize
+    const svgIcon = this.add
+      .image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran', arrow: 'hud-arrow' } as const)[icon])
+      .setOrigin(0.5)
+      // object-fit: contain مكافئ — العرض والارتفاع بنفس القياس ⇒ بلا تشويه
+      .setDisplaySize(displayIconSize, displayIconSize)
+    btn.add(svgIcon)
+    // بطاقة الاسم أسفل الأيقونة (Label Badge): مستطيل موحّد الأبعاد لكل الأيقونات،
+    // بتدرّج ذهبي/برتقالي دافئ عالي التباين، وحدّ أبيض سميك، ونص أبيض عريض مظلّل.
+    if (opts.label) {
+      // بطاقة الاسم تتداخل مع أسفل الحاضنة (-8px) لتبدو كقطعة واحدة متماسكة
+      const badgeTop = (bare ? SIDE_CRADLE_SIZE / 2 : radius) + SIDE_BADGE_GAP
+      const badge = this.add.graphics()
+      // ظل أسفل البطاقة (box-shadow: 0 2px 4px rgba(0,0,0,.3))
+      badge.fillStyle(0x000000, 0.3)
+      badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop + 2, SIDE_BADGE_W, SIDE_BADGE_H, 6)
+      // تدرّج عمودي محاكى: الجزء العلوي أفتح (#f59e0b) والسفلي أغمق (#d97706)
+      badge.fillStyle(0xf59e0b, 1)
+      badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop, SIDE_BADGE_W, SIDE_BADGE_H / 2, 6)
+      badge.fillStyle(0xd97706, 1)
+      badge.fillRect(-SIDE_BADGE_W / 2, badgeTop + SIDE_BADGE_H / 2 - 1, SIDE_BADGE_W, SIDE_BADGE_H / 2 + 1)
+      badge.fillStyle(0xd97706, 1)
+      badge.fillRoundedRect(-SIDE_BADGE_W / 2, badgeTop + SIDE_BADGE_H - 8, SIDE_BADGE_W, 8, 4)
+      // حدّ أبيض سميك (1.5px) يرفع التباين ويصل بين الدالة والبطاقة كقطعة واحدة
+      badge.lineStyle(1.5, 0xffffff, 1)
+      badge.strokeRoundedRect(-SIDE_BADGE_W / 2, badgeTop, SIDE_BADGE_W, SIDE_BADGE_H, 6)
+      btn.add(badge)
+
+      const badgeText = this.add
+        .text(0, badgeTop + SIDE_BADGE_H / 2, opts.label, {
+          fontFamily: '"Segoe UI", Tahoma, sans-serif',
+          fontSize: '12px',
+          fontStyle: '900',
+          color: '#ffffff',
+        })
+        .setOrigin(0.5)
+      // ظل نصّي أسود (text-shadow: 0 1px 2px rgba(0,0,0,.8)) لضمان الوضوح
+      badgeText.setShadow(0, 1, 'rgba(0,0,0,0.8)', 2, false, true)
+      btn.add(badgeText)
+    }
+
+    if (icon === 'pause') {
+      this.pauseIcon = svgIcon
+    }
+    if (icon === 'arrow') {
+      this.arrowIcon = svgIcon
+    }
+    // منطقة النقر تغطي كامل الدائرة 100%: الحجم = قطر الجسم المرئي، والتوسيط
+    // على مركز اللمس الحقيقي عبر setCircleHitArea (يُصحّح إزاحة displayOrigin
+    // التي كانت تُزيح الدائرة (0,0) للأعلى فلا يستجيب إلا الجزء العلوي).
+    // ملاحظة Phaser/Canvas: لا توجد عناصر <button>/SVG/DOM هنا، فلا حاجة لـ
+    // pointer-events — أطفال الحاوية لا يعترضون اللمس أبداً، والقرار كله لمنطقة
+    // اللمس هذه. لا توجد أي طبقة Overlay فوق الأزرار بعمق 2000.
+    btn.setSize(size, bare ? SIDE_CRADLE_SIZE : size)
+    // الأيقونات المجرّدة داخل حاضنة دائرية ⇒ منطقة لمس دائرية تغطّي القرص كاملاً
+    if (bare) {
+      setCircleHitArea(btn, SIDE_CRADLE_SIZE / 2 + BTN_TOUCH_PADDING, true)
+    } else {
+      setCircleHitArea(btn, radius + BTN_TOUCH_PADDING, true)
+    }
+
+    const baseY = y
+    let hovering = false
+
+    /**
+     * إعادة الحالة البصرية إلى الوضع الطبيعي حتماً.
+     * السبب: عند فتح نافذة (النمط/التخصيص) أثناء الضغط، لا يصل PointerUp/Out
+     * إلى الزر ⇒ كان يبقى محتجزاً على تكبير Hover (1.08) أو تصغير الضغط (0.95)
+     * بشكل دائم. هذه الدالة تُستدعى عند الإفلات وعبر مؤقّت أمان بعد كل نقرة.
+     */
+    const normalize = (): void => {
+      this.tweens.killTweensOf(btn)
+      this.tweens.killTweensOf(svgIcon)
+      btn.setPosition(btn.x, baseY).setScale(1)
+      svgIcon.setScale(1)
+      if (glow) this.tweens.add({ targets: glow, alpha: hovering ? 1 : 0, duration: 220 })
+    }
+
+    // الضغط: نزول خفيف للزر + تقلّص لحظي (0.95) — تأثير لحظي فقط بلا أي بقاء
+    const press = (): void => {
+      this.tweens.killTweensOf(btn)
+      this.tweens.killTweensOf(svgIcon)
+      this.tweens.add({ targets: btn, y: baseY + 3, scale: 0.95, duration: 100, ease: 'Quad.easeOut' })
+      if (glow) this.tweens.add({ targets: glow, alpha: 1, duration: 140 })
+      if (pulse) {
+        this.tweens.killTweensOf(pulse)
+        pulse.setAlpha(0.65).setScale(0.85)
+        this.tweens.add({ targets: pulse, alpha: 0, scale: 1.55, duration: 550, ease: 'Sine.easeOut' })
+      } else {
+        // بلا حلقة نقرية (أيقونة مجرّدة): نومض الصورة نفسها عند الضغط
+        this.tweens.add({ targets: svgIcon, scale: 0.88, duration: 100, ease: 'Quad.easeOut' })
+      }
+    }
+
+    // الإفلات: إعادة فورية إلى الحجم الطبيعي بلا مرحلة bounce وسيطة (1.04)
+    // السبب: إن فتحت النافذةُ الجديدة قبل انتهاء التويين، كانت onComplete لا تُستدعى
+    // فيبقى الزر محتجزاً عند scale:1.04 — الحل: normalize() مباشرة بلا تأخير.
+    const release = (): void => {
+      this.tweens.killTweensOf(btn)
+      this.tweens.killTweensOf(svgIcon)
+      btn.setPosition(btn.x, baseY).setScale(1)
+      svgIcon.setScale(1)
+      if (glow) {
+        this.tweens.killTweensOf(glow)
+        this.tweens.add({ targets: glow, alpha: hovering ? 1 : 0, duration: 220 })
+      }
+    }
+
+    // النقر يُنفّذ نفس الوظيفة البرمجية السابقة لكل زر، من دون طبقات رسومية إضافية
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
+      press()
+      onTap()
+      // مؤقّت أمان: إن أخفت النافذةُ الجديدة الزر أو ابتلعت الحدث، نُعيد التطبيع سريعاً
+      this.time.delayedCall(180, normalize)
+    })
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, release)
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => {
+      hovering = false
+      release()
+    })
+    // المرور (Hover): لا يغيّر حجم الأيقونة أبداً — فقط الهالة الملوّنة، منعاً للالتصاق التكبير
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OVER, () => {
+      hovering = true
+      if (glow) {
+        this.tweens.killTweensOf(glow)
+        this.tweens.add({ targets: glow, alpha: 1, duration: 220 })
+      }
+    })
+    return btn
+  }
+
+  /** زر إيقاف/استئناف مؤقت أعلى اليمين (بنفس نمط الأزرار الجديدة). */
   private buildPauseButton(): void {
     this.pauseButton = this.buildRoundButton(
       this.scale.width - 56,
