@@ -8,7 +8,8 @@ import { playDhikrVoice, playZenTone } from '../../services/audio'
 import { vibrate } from '../../services/haptics'
 import { getIstighfarCount, incrementIstighfar } from '../../services/DhikrStorage'
 import { recordTodayDhikr } from '../../services/SettingsService'
-import { setZenMode } from '../../components/DashboardModal'
+import { setZenMode } from '../ui/SettingsModal'
+import { setSidebarWelcomeActive } from '../../components/Sidebar'
 import SkyLayer from '../objects/SkyLayer'
 import { getThemeFor } from '../../services/TimeThemeService'
 
@@ -24,9 +25,14 @@ export default class ZenScene extends Phaser.Scene {
   create(): void {
     const { width, height } = this.scale
 
-    // تعطيل شريط السرعة في لوحة التحكم أثناء نمط Zen
+    // تعطيل شريط السرعة في نافذة الإعدادات أثناء نمط Zen + إخفاء سهم القائمة الجانبية
     setZenMode(true)
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setZenMode(false))
+    setSidebarWelcomeActive(true)
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      setZenMode(false)
+      // العودة للمشهد الرئيسي: يُعاد إظهار سهم القائمة الجانبية.
+      setSidebarWelcomeActive(false)
+    })
 
     // 1) سماء ليلية دائمة (نجوم + قمر نابض من خدمة الوقت) للحفاظ على السكينة
     new SkyLayer(this, getThemeFor('night'))

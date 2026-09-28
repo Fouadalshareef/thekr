@@ -153,31 +153,16 @@ body {
   overflow: hidden;
 }
 
-/* ضمان أن modal الـ Dashboard لا يحجب canvas عند إخفائه */
-#dashboard-modal.hidden,
-#garden-modal.hidden,
+/* ضمان أن النوافذ المخفية لا تحجب اللمس عن قماش اللعبة.
+   ملاحظة: نافذتا «المزرعة» و«الإعدادات» أصبحتا Phaser Containers داخل المشهد
+   (game/ui/FarmModal.ts و game/ui/SettingsModal.ts) فلم تبقَ لهما عناصر DOM. */
 #advice-modal.hidden,
 #quran-modal.hidden,
 #pwa-install-banner.hidden {
   pointer-events: none !important;
 }
 
-/* إصلاح التمرير داخل نافذة الإعدادات على الجوال:
-   1. touch-action: pan-y  — تفعيل السحب العمودي فقط
-   2. -webkit-overflow-scrolling: touch — قصور ذاتي سلس على iOS
-   3. overscroll-behavior: contain — منع التمرير من الانتشار خارج النافذة */
-#dashboard-modal {
-  touch-action: pan-y;
-}
-
-#dashboard-modal #dash-scroll {
-  max-height: 85vh;
-  overflow-y: scroll;
-  touch-action: pan-y !important;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
-}
-/* عند فتح نافذة الإعدادات: تُضاف هذه الـ class على body مؤقتاً
+/* عند فتح أي نافذة DOM (النصائح/المصحف): تُضاف هذه الـ class على body مؤقتاً
    لإعادة تفعيل touch-action العمودي وتجاوز أي قيمة موروثة من الـ game canvas */
 body.modal-open {
   touch-action: pan-y !important;

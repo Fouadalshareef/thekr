@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { setSidebarWelcomeActive } from '../../components/Sidebar'
 
 /**
  * BootScene — شاشة بدء التجربة.
@@ -35,6 +36,9 @@ export default class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    // شاشة الترحيب: يُخفى سهم القائمة الجانبية تماماً (يُعاد إظهاره في MainScene).
+    setSidebarWelcomeActive(true)
+
     // منع أي انزياح في إحداثيات اللمس بين HTML والـ Canvas
     this.scale.refresh()
     const { width, height } = this.scale

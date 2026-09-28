@@ -1,7 +1,5 @@
 import './style.css'
 import { createGame } from './game/PhaserGame'
-import { initDashboard } from './components/DashboardModal'
-import { initGardenModal } from './components/GardenModal'
 import { initAdviceModal } from './components/AdviceModal'
 import { initQuranModal } from './components/QuranModal'
 import { initSidebar } from './components/Sidebar'
@@ -22,9 +20,9 @@ if (!hasPendingUpdate() && 'clearAppBadge' in navigator) {
   navigator.clearAppBadge().catch(() => {})
 }
 
-// تهيئة اللوحات فوق قماش اللعبة.
-initDashboard()
-initGardenModal()
+// تهيئة اللوحات الفاتحة المتبقية فوق قماش اللعبة.
+// ملاحظة: نافذتا «المزرعة» و«الإعدادات» أصبحتا Phaser Containers داخل المشهد
+// (game/ui/FarmModal.ts و game/ui/SettingsModal.ts) فلم تبقَ لهما نسخة DOM داكنة.
 initAdviceModal()
 initQuranModal()
 initSidebar()
@@ -43,12 +41,12 @@ window.addEventListener('orientationchange', refreshScale)
 // منع تداخل أحداث التمرير/السحب مع لمس اللعبة (Scroll blocking)
 // ------------------------------------------------------------------
 // نمنع التمرير/السحب على كامل الصفحة إلا إذا كان مصدر اللمس
-// داخل نافذة الإعدادات (#dashboard-modal) حيث نحتاج التمرير العمودي
+// داخل نافذة DOM تحتاج التمرير العمودي (النصائح أو المصحف)
 const blockScroll = (e: Event) => {
   const target = e.target as HTMLElement | null
   // السماح بالتمرير في أي نافذة منبثقة تحتاج إلى التمرير العمودي
-  // (بما فيها نافذة تخصيص الأذكار .focus-dom-modal)
-  if (target && target.closest('#dashboard-modal, #garden-modal, #advice-modal, #quran-modal, .focus-dom-modal, .mode-dom-modal')) return
+  // (النصائح، المصحف، ونافذتا الأنماط/التخصيص الفاتحتان).
+  if (target && target.closest('#advice-modal, #quran-modal, .focus-dom-modal, .mode-dom-modal')) return
   e.preventDefault()
 }
 document.addEventListener('touchmove', blockScroll, { passive: false })

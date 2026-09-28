@@ -1,5 +1,66 @@
 import { areIconsEnabled } from '../services/SettingsService'
 
+/**
+ * Sidebar — شريط الأيقونات الجانبي (DOM فوق قماش اللعبة) مع سهم فتح/طي القائمة.
+ *
+ * إصلاح العلّة: كان السهم ظاهراً في كل الحالات (بما فيها شاشة الترحيب والنوافذ
+ * المفتوحة: المزرعة، الإعدادات، المصحف، الأنماط، النصائح، التخصيص، الاحتفالات).
+ * الآن تُدار رؤية الشريط (وبالتالي السهم) من حالة مركزية واحدة:
+ *   visible = الأيقونات مفعّلة && !welcomeActive && لا توجد أي نافذة مفتوحة
+ *
+ * واجهة الاستخدام من المشاهد (Phaser):
+ *   setSidebarWelcomeActive(false)        → عند بدء MainScene
+ *   setSidebarModalOpen('farm', true)     → عند فتح نافذة المزرعة/الإعدادات
+ */
+let sidebarRoot: HTMLElement | null = null
+let arrowIconEl: HTMLElement | null = null
+/** طيّ القائمة فوراً (تُربط داخل initSidebar). */
+let collapseMenu: ((force?: boolean) => void) | null = null
+
+/** هل ما زالت شاشة الترحيب (أو نمط الاستغفار) معروضة؟ تبدأ true عند الإقلاع. */
+let welcomeActive = true
+/** معرّفات النوافذ المفتوحة حالياً (Set لمنع تداخل الفتح/الإغلاق). */
+const openModals = new Set<string>()
+
+/** إخفاء/إظهار الشريط مع شاشة الترحيب (تُستدعى من BootScene/MainScene/ZenScene). */
+export function setSidebarWelcomeActive(active: boolean): void {
+  welcomeActive = active
+  syncVisibility()
+}
+
+/** تسجيل فتح/إغلاق نافذة (تُستدعى من المشهد لكل نافذة يفتحها). */
+export function setSidebarModalOpen(id: string, open: boolean): void {
+  if (open) openModals.add(id)
+  else openModals.delete(id)
+  syncVisibility()
+}
+
+/** هل هناك نافذة مفتوحة حالياً؟ */
+export function isSidebarModalOpen(): boolean {
+  return openModals.size > 0
+}
+
+/** إعادة حساب الرؤية (تُستدعى بعد تغيّر إعدادات الأيقونات أو حالة المشهد). */
+export function refreshSidebarVisibility(): void {
+  syncVisibility()
+}
+
+/** هل السهم/الشريط معروض الآن؟ */
+export function isSidebarVisible(): boolean {
+  return areIconsEnabled() && !welcomeActive && openModals.size === 0
+}
+
+/** تطبيق قاعدة الرؤية على عناصر DOM فعلياً. */
+function syncVisibility(): void {
+  if (!sidebarRoot) return
+  const visible = isSidebarVisible()
+  // السهم (وزر الإعدادات والمصحف والأنماط) مخفي تماماً في شاشة الترحيب والنوافذ.
+  sidebarRoot.style.display = visible ? 'flex' : 'none'
+  if (arrowIconEl) arrowIconEl.style.display = visible ? 'block' : 'none'
+  // عند الإخفاء نطوي القائمة دائماً حتى لا تعود مفتوحة عند الإظهار التالي.
+  if (!visible) collapseMenu?.(false)
+}
+
 export function initSidebar(): void {
   if (document.getElementById('dom-sidebar')) return
 
@@ -78,6 +139,11 @@ export function initSidebar(): void {
     }
   }
 
+  // ربط مراجع الوحدة (تستخدمها دالة الرؤية المصدَّرة للمشاهد).
+  sidebarRoot = container
+  arrowIconEl = arrow
+  collapseMenu = (force?: boolean) => toggleMenu(force)
+
   document.getElementById('sidebar-toggle')?.addEventListener('click', (e) => {
     e.stopPropagation()
     toggleMenu()
@@ -106,23 +172,22 @@ export function initSidebar(): void {
     toggleMenu(false)
   })
   document.getElementById('btn-settings')?.addEventListener('click', () => {
-    window.dispatchEvent(new CustomEvent('open-dashboard'))
+    // نافذة الإعدادات الجديدة (Phaser Container فاتحة كاملة الشاشة).
+    window.dispatchEvent(new CustomEvent('open-settings'))
     toggleMenu(false)
   })
 
-  // إعدادات الإظهار / الإخفاء
-  const applySettings = () => {
-    const iconsEnabled = areIconsEnabled()
-    container.style.display = iconsEnabled ? 'flex' : 'none'
-    if (!iconsEnabled && isOpen) toggleMenu(false)
-  }
-
-  window.addEventListener('settings-changed', applySettings)
-  applySettings()
+  // إعدادات الإظهار / الإخفاء + قاعدة إخفاء السهم في شاشة الترحيب والنوافذ.
+  window.addEventListener('settings-changed', refreshSidebarVisibility)
+  // نوافذ DOM (النصائح/المصحف/الأنماط/التخصيص) تُعلن فتحها وإغلاقها بهذين الحدثين.
+  window.addEventListener('reader-opened', () => setSidebarModalOpen('dom-modal', true))
+  window.addEventListener('reader-closed', () => setSidebarModalOpen('dom-modal', false))
+  // يبدأ التطبيق على شاشة الترحيب: السهم مخفي حتى يُعلن المشهد الرئيسي بدء اللعب.
+  refreshSidebarVisibility()
 
   // شارة التحديث
   const updateBadge = document.getElementById('dom-update-badge')
   if (localStorage.getItem('has_update') === 'true') updateBadge?.classList.remove('hidden')
   window.addEventListener('app-update-available', () => updateBadge?.classList.remove('hidden'))
-  window.addEventListener('open-dashboard', () => updateBadge?.classList.add('hidden'))
+  window.addEventListener('open-settings', () => updateBadge?.classList.add('hidden'))
 }

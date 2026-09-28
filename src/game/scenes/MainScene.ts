@@ -37,14 +37,29 @@ import {
   type HudIcon,
 } from '../ui/GameButtonSkin'
 import { setCircleHitArea } from '../ui/hitArea'
+import { FarmModal } from '../ui/FarmModal'
+import { SettingsModal } from '../ui/SettingsModal'
+import {
+  refreshSidebarVisibility,
+  setSidebarModalOpen,
+  setSidebarWelcomeActive,
+} from '../../components/Sidebar'
 
 /** المدة التأخيرية قبل ظهور الجسم التالي بعد تفجير الحالي (بالمللي). */
 const NEXT_DELAY = 150
 
+/** اسم مشهد الترحيب — يُستخدم لإخفاء سهم القائمة الجانبية أثناء عرضه. */
+const WELCOME_SCENE = 'BootScene'
+/**
+ * قياس أيقونة زر الإيقاف/الاستئناف (التوقف/التشغيل).
+ * القياس يُفرض صراحةً عبر setDisplaySize عند كل تبديل للنيسج — لا نعتمد
+ * مطلقاً على الدقة الأصلية للملف (SVG محمّل بـ 256×256) لأن أي scale عالق
+ * يجعل الأيقونة تُرسم بحجم هائل وتتشوّه.
+ */
+const PAUSE_ICON_SIZE = BTN_ICON_SIZE
+
 /** موضع عمود الأزرار الجانبية أفقياً (كل الأزرار على نفس الخط الرأسي). */
 const SIDEBAR_X = 56
-/** أعلى نقطة في العمود الجانبي (زر الإعدادات). */
-const SIDEBAR_TOP = 62
 /** قطر الحاضنة/الحاوية الثابتة (46px) — width/height/flex-shrink/position/overflow. */
 const SIDE_CRADLE_SIZE = 46
 /**
@@ -53,13 +68,6 @@ const SIDE_CRADLE_SIZE = 46
  * (بلا تشويه وبلا مساحة فارغة داخل القرص).
  */
 const SIDE_ICON_SIZE = SIDE_CRADLE_SIZE
-/**
- * حجم أيقونات العمود الجانبي بعد التصغير — مقاس ألعاب الموبايل (46px بدل 74px).
- * جميع مقاييس الزر الداخلية (الظل/الهالة/النسيج/الأيقونة) تُشتق من هذا الرقم بنسبة ثابتة.
- */
-const SIDE_BTN_SIZE = 46
-/** المسافة الرأسية بين كل أيقونتين = قطر الحاضنة + فاصل يتسع لبطاقة الاسم. */
-const SIDEBAR_STEP = SIDE_CRADLE_SIZE + 34
 /** أبعاد بطاقة الاسم أسفل كل أيقونة — موحّدة تماماً لكل الأيقونات. */
 const SIDE_BADGE_W = 58
 const SIDE_BADGE_H = 18
@@ -175,6 +183,11 @@ export default class MainScene extends Phaser.Scene {
   /** نافذة "اختر النمط" الفاتحة كاملة الشاشة (DOM) — بديل اللوحة الداكنة داخل المشهد. */
   private modeDom?: HTMLElement
 
+  /** نافذة «مزرعة الحسنات» الفاتحة كاملة الشاشة (Phaser Container) — تُبنى عند أول فتح. */
+  private farmModal: FarmModal | null = null
+  /** نافذة «الإعدادات» الفاتحة كاملة الشاشة (Phaser Container) — تُبنى عند أول فتح. */
+  private settingsModal: SettingsModal | null = null
+
   // نظام الاستراحة (Rest Banner)
   private restTimerEvent: Phaser.Time.TimerEvent | null = null
   private restBanner: Phaser.GameObjects.Container | null = null
@@ -238,6 +251,78 @@ export default class MainScene extends Phaser.Scene {
     // النوافذ HTML لا توقف المشهد تلقائياً؛ نوقف الفيزياء والحركة لتقليل استهلاك الجهاز.
     window.addEventListener('reader-opened', this.pauseForModal)
     window.addEventListener('reader-closed', this.resumeFromModal)
+
+    // واجهة اللعبة جاهزة: يُعاد إظهار سهم القائمة الجانبية (كان مخفياً في شاشة الترحيب).
+    setSidebarWelcomeActive(false)
+
+    // أحداث فتح النوافذ من شريط الأيقونات (DOM → Phaser):
+    //   open-mode-panel → نافذة اختيار النمط (أيقونة «النمط»)
+    //   open-garden     → نافذة «مزرعة الحسنات» (أيقونة «المزرعة»)
+    //   open-settings   → نافذة «الإعدادات» (أيقونة الإعدادات)
+    window.addEventListener('open-mode-panel', this.onOpenModePanel)
+    window.addEventListener('open-garden', this.onOpenGarden)
+    window.addEventListener('open-settings', this.onOpenSettings)
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* فتح النوافذ من شريط الأيقونات الجانبي (DOM)                          */
+  /* ------------------------------------------------------------------ */
+
+  /** أيقونة «النمط»: تفتح نافذة اختيار النمط الفاتحة. */
+  private onOpenModePanel = (): void => {
+    console.log('[MainScene] الضغط على أيقونة النمط (Pattern) → فتح نافذة اختيار النمط')
+    this.openModePanel()
+  }
+
+  /** أيقونة «المزرعة»: تفتح نافذة مزرعة الحسنات (Phaser Container). */
+  private onOpenGarden = (): void => {
+    this.openFarmModal()
+  }
+
+  /** أيقونة «الإعدادات»: تفتح نافذة الإعدادات (Phaser Container). */
+  private onOpenSettings = (): void => {
+    this.openSettingsModal()
+  }
+
+  /**
+   * فتح نافذة «مزرعة الحسنات» الفاتحة كاملة الشاشة:
+   * تُبنى الحاوية عند أول استخدام فقط، ثم يُحدَّث محتواها وتُظهر،
+   * ويُخفى سهم القائمة الجانبية، وتُوقف اللعبة مؤقتاً (بلا أي DOM داكن).
+   */
+  private openFarmModal(): void {
+    if (!this.farmModal) this.farmModal = new FarmModal(this, () => this.closeFarmModal())
+    this.farmModal.show()
+    setSidebarModalOpen('farm', true)
+    this.pauseForModal()
+    this.applyUiSettings()
+  }
+
+  /** إغلاق نافذة المزرعة: إخفاء الحاوية + إعادة إظهار واجهة اللعبة. */
+  private closeFarmModal(): void {
+    this.farmModal?.setVisible(false)
+    setSidebarModalOpen('farm', false)
+    // إعادة تطبيق إعدادات الواجهة (يُعاد إظهار سهم القائمة عند غياب النوافذ).
+    this.applyUiSettings()
+    this.resumeFromModal()
+  }
+
+  /** فتح نافذة «الإعدادات» الفاتحة كاملة الشاشة (Phaser Container). */
+  private openSettingsModal(): void {
+    if (!this.settingsModal) {
+      this.settingsModal = new SettingsModal(this, () => this.closeSettingsModal())
+    }
+    this.settingsModal.show()
+    setSidebarModalOpen('settings', true)
+    this.pauseForModal()
+    this.applyUiSettings()
+  }
+
+  /** إغلاق نافذة الإعدادات: إخفاء الحاوية + إعادة إظهار واجهة اللعبة. */
+  private closeSettingsModal(): void {
+    this.settingsModal?.setVisible(false)
+    setSidebarModalOpen('settings', false)
+    this.applyUiSettings()
+    this.resumeFromModal()
   }
 
   // ------------------------------------------------------------------
@@ -487,6 +572,26 @@ export default class MainScene extends Phaser.Scene {
     this.sessionLabel?.setVisible(icons)
     this.sessionText?.setVisible(icons)
     this.comboText?.setVisible(icons)
+
+    // ------------------------------------------------------------------
+    // إصلاح «السهم الباقي ظاهراً»: رؤية سهم القائمة الجانبية (DOM)
+    // ------------------------------------------------------------------
+    // 1) يُخفى السهم تماماً أثناء شاشة الترحيب (WELCOME_SCENE).
+    // 2) يُخفى عند فتح أي نافذة: المزرعة، الإعدادات، الأنماط، التخصيص،
+    //    النصائح، المصحف، الاحتفالات، والاستراحة.
+    // نُعيد تثبيت حالة النوافذ من واقع الرؤية الفعلية للحاويات (idempotent)
+    // حتى تبقى الحالة صحيحة مهما تغيّر ترتيب الفتح/الإغلاق.
+    setSidebarWelcomeActive(this.scene.isActive(WELCOME_SCENE))
+    setSidebarModalOpen('farm', this.farmModal?.visible ?? false)
+    setSidebarModalOpen('settings', this.settingsModal?.visible ?? false)
+    setSidebarModalOpen('mode-panel', this.modeUIOpen)
+    setSidebarModalOpen(
+      'focus-panel',
+      this.focusDom ? !this.focusDom.classList.contains('hidden') : false,
+    )
+    setSidebarModalOpen('celebration', this.focusCelebrationOpen)
+    setSidebarModalOpen('rest', this.isResting)
+    refreshSidebarVisibility()
   }
 
   /** تشغيل/إيقاف اللعبة فوراً (توليد الأجسام والحركة). */
@@ -741,6 +846,20 @@ export default class MainScene extends Phaser.Scene {
     let hovering = false
 
     /**
+     * إعادة القياس الطبيعي لأيقونة الزر — بلا أي استدعاء لـ setScale إطلاقاً.
+     *
+     * سبب الخلل السابق: أيقونات SVG تُحمَّل بدقة 256×256 ثم تُعرض بقياس 38px
+     * عبر setDisplaySize (scale الفعلي ≈ 0.15). أي استدعاء لـ setScale(1) كان
+     * يُعيدها إلى حجم النسيج الأصلي (256px) فتبدو ضخمة ومشوّهة — وهو تحديداً
+     * سبب تشوّه أيقونة الإيقاف/التشغيل عند الضغط.
+     */
+    const resetIconSize = (): void => {
+      svgIcon.setDisplaySize(displayIconSize, displayIconSize)
+    }
+    // يُخزَّن القياس المستهدف على الحاوية لأي إعادة ضبط لاحقة (تبديل النيسج مثلاً).
+    btn.setData('iconDisplaySize', displayIconSize)
+
+    /**
      * إعادة الحالة البصرية إلى الوضع الطبيعي حتماً.
      * السبب: عند فتح نافذة (النمط/التخصيص) أثناء الضغط، لا يصل PointerUp/Out
      * إلى الزر ⇒ كان يبقى محتجزاً على تكبير Hover (1.08) أو تصغير الضغط (0.95)
@@ -750,7 +869,7 @@ export default class MainScene extends Phaser.Scene {
       this.tweens.killTweensOf(btn)
       this.tweens.killTweensOf(svgIcon)
       btn.setPosition(btn.x, baseY).setScale(1)
-      svgIcon.setScale(1)
+      resetIconSize()
       if (glow) this.tweens.add({ targets: glow, alpha: hovering ? 1 : 0, duration: 220 })
     }
 
@@ -765,8 +884,15 @@ export default class MainScene extends Phaser.Scene {
         pulse.setAlpha(0.65).setScale(0.85)
         this.tweens.add({ targets: pulse, alpha: 0, scale: 1.55, duration: 550, ease: 'Sine.easeOut' })
       } else {
-        // بلا حلقة نقرية (أيقونة مجرّدة): نومض الصورة نفسها عند الضغط
-        this.tweens.add({ targets: svgIcon, scale: 0.88, duration: 100, ease: 'Quad.easeOut' })
+        // بلا حلقة نقرية (أيقونة مجرّدة): نومض الصورة نفسها بالقياس الصريح
+        // (displayWidth/displayHeight) وليس بـ scale — لتبقى الأيقونة مضبوطة الحجم.
+        this.tweens.add({
+          targets: svgIcon,
+          displayWidth: displayIconSize * 0.88,
+          displayHeight: displayIconSize * 0.88,
+          duration: 100,
+          ease: 'Quad.easeOut',
+        })
       }
     }
 
@@ -777,7 +903,7 @@ export default class MainScene extends Phaser.Scene {
       this.tweens.killTweensOf(btn)
       this.tweens.killTweensOf(svgIcon)
       btn.setPosition(btn.x, baseY).setScale(1)
-      svgIcon.setScale(1)
+      resetIconSize()
       if (glow) {
         this.tweens.killTweensOf(glow)
         this.tweens.add({ targets: glow, alpha: hovering ? 1 : 0, duration: 220 })
@@ -822,8 +948,13 @@ export default class MainScene extends Phaser.Scene {
   /** تحديث ايقونة الايقاف مع الحفاظ على الحجم بعد التبديل. */
   private refreshPauseIcon(): void {
     if (!this.pauseIcon) return
+    // 1) تبديل النيسج (إيقاف/تشغيل).
     this.pauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
-    this.pauseIcon.setDisplaySize(BTN_ICON_SIZE, BTN_ICON_SIZE)
+    // 2) فرض القياس الصريح بعد كل تبديل: setTexture تُعيد أبعاد الإطار الأصلي
+    //    (256×256) مع الاحتفاظ بالـ scale القديم ⇒ قد تُرسم الأيقونة بحجم هائل
+    //    ومشوّه. لذلك نُثبّت القياس دائماً على PAUSE_ICON_SIZE (لا اعتماد على
+    //    دقة النيسج إطلاقاً، ولا أي setScale).
+    this.pauseIcon.setDisplaySize(PAUSE_ICON_SIZE, PAUSE_ICON_SIZE)
   }
 
   /** عداد الجلسة الحالية أسفل زر الإيقاف — مُدمج وأنيق مع إطار ذهبي رفيع. */
@@ -1238,7 +1369,10 @@ export default class MainScene extends Phaser.Scene {
     this.modeUIOpen = true
     this.modeDom?.classList.remove('hidden')
     this.refreshModeSelection()
+    // إخفاء سهم القائمة الجانبية + إيقاف اللعب مؤقتاً أثناء عرض النافذة.
+    setSidebarModalOpen('mode-panel', true)
     this.pauseForModal()
+    this.applyUiSettings()
   }
 
   /** يطبّق النمط النشط الحالي على بطاقات النافذة الفاتحة. */
@@ -1258,6 +1392,9 @@ export default class MainScene extends Phaser.Scene {
     this.modeUIOpen = false
     this.modeDom?.classList.add('hidden')
     this.modePanel.setVisible(false)
+    // إغلاق نافذة الأنماط: إعادة إظهار سهم القائمة الجانبية (إن لم تبقَ نافذة أخرى).
+    setSidebarModalOpen('mode-panel', false)
+    this.applyUiSettings()
     if (this.focusPanel.visible) return
     if (!this.paused) {
       this.resumeFromModal()
@@ -1432,11 +1569,14 @@ export default class MainScene extends Phaser.Scene {
   private toggleFocusPanel(show: boolean): void {
     this.focusDom?.classList.toggle('hidden', !show)
     this.focusPanel?.setVisible(false)
+    // إخفاء سهم القائمة الجانبية أثناء عرض نافذة تخصيص الذكر.
+    setSidebarModalOpen('focus-panel', show)
     if (show) {
       this.focusDom?.classList.remove('hidden')
       if (!this.focusDom?.querySelector('.virtue-card')) this.buildFocusDomView(this.focusDom!)
       this.refreshFocusSelection()
     } else if (!this.modeUIOpen) this.spawnIfEmpty()
+    this.applyUiSettings()
   }
 
   private refreshFocusSelection(): void {
@@ -1661,6 +1801,9 @@ export default class MainScene extends Phaser.Scene {
     this.setFocusBarVisible(false)
     this.physics.pause()
     this.toggleSideMenu(false)
+    // نافذة احتفال كاملة الشاشة: يُخفى سهم القائمة الجانبية أثناءها.
+    setSidebarModalOpen('celebration', true)
+    this.applyUiSettings()
 
     const blocker = this.add
       .rectangle(0, 0, width, height, 0x022c22, 0.78)
@@ -1796,8 +1939,10 @@ export default class MainScene extends Phaser.Scene {
     card.destroy()
     this.data.remove('celebrationCard')
     this.focusCelebrationOpen = false
+    setSidebarModalOpen('celebration', false)
     this.physics.resume()
     this.spawnIfEmpty()
+    this.applyUiSettings()
   }
 
   private showAzkarCompleteMessage(mode: string): void {
@@ -1855,6 +2000,18 @@ export default class MainScene extends Phaser.Scene {
     window.removeEventListener('reader-opened', this.pauseForModal)
     window.removeEventListener('reader-closed', this.resumeFromModal)
     window.removeEventListener('settings-changed', this.onSettingsChanged)
+    // إزالة مستمعات فتح النوافذ من شريط الأيقونات (DOM).
+    window.removeEventListener('open-mode-panel', this.onOpenModePanel)
+    window.removeEventListener('open-garden', this.onOpenGarden)
+    window.removeEventListener('open-settings', this.onOpenSettings)
+    // تدمير النوافذ الفاتحة (مزرعة/إعدادات) وإفراغ حالتها في لوحة المفاتيح الجانبية.
+    this.farmModal?.destroy()
+    this.farmModal = null
+    this.settingsModal?.destroy()
+    this.settingsModal = null
+    setSidebarModalOpen('farm', false)
+    setSidebarModalOpen('settings', false)
+    refreshSidebarVisibility()
     for (const b of this.alive) b.destroy()
     this.alive = []
     this.events.off(Events.DHIKR_COLLECTED, this.onDhikrCollected, this)
@@ -1962,6 +2119,9 @@ export default class MainScene extends Phaser.Scene {
 
     this.isResting = true
     this.data.set('restActive', true)
+    // بطاقة استراحة معلّقة كاملة الشاشة: يُخفى سهم القائمة الجانبية أثناءها.
+    setSidebarModalOpen('rest', true)
+    this.applyUiSettings()
 
     if (!this.restBanner) this.buildRestBanner()
     // إظهار الحاوية كاملة (البطاقة وخيوطها معاً) بعد إخفائها عند الإغلاق
@@ -2015,6 +2175,9 @@ export default class MainScene extends Phaser.Scene {
         this.data.set('restActive', false)
         // استعادة حالة الإيقاف الأصلية للعبة
         this.data.set('paused', this.paused)
+        // إعادة إظهار سهم القائمة الجانبية (إن لم تبقَ نافذة أخرى مفتوحة)
+        setSidebarModalOpen('rest', false)
+        this.applyUiSettings()
         // بدء المؤقت من جديد
         this.startRestTimer()
       }
