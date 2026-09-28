@@ -206,6 +206,13 @@ export default class MainScene extends Phaser.Scene {
     })
 
     this.buildHud()
+    // ضبط فلتر النسيج على NEAREST للأيقونات PNG (hud-theme / hud-farm / hud-quran)
+    // السبب: الفلتر الافتراضي LINEAR يُضبّب الصور الصغيرة على شاشات Retina/High-DPI.
+    // NEAREST يحفظ حواف البكسل حادّةً ويعطي وضوح 3D الأصلي للصور.
+    ;(['hud-theme', 'hud-farm', 'hud-quran'] as const).forEach((k) => {
+      if (this.textures.exists(k))
+        this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST)
+    })
     this.buildModePanel()
     this.buildFocusPanel()
     this.buildUpdateBadge()
@@ -771,23 +778,17 @@ export default class MainScene extends Phaser.Scene {
       }
     }
 
-    // الإفلات: نابضة مرنة قصيرة ثم عودة كاملة ومؤكدة إلى الحجم الأصلي
+    // الإفلات: إعادة فورية إلى الحجم الطبيعي بلا مرحلة bounce وسيطة (1.04)
+    // السبب: إن فتحت النافذةُ الجديدة قبل انتهاء التويين، كانت onComplete لا تُستدعى
+    // فيبقى الزر محتجزاً عند scale:1.04 — الحل: normalize() مباشرة بلا تأخير.
     const release = (): void => {
       this.tweens.killTweensOf(btn)
-      this.tweens.add({
-        targets: btn,
-        y: baseY - 4,
-        scale: 1.04,
-        duration: 140,
-        ease: 'Quad.easeOut',
-        onComplete: normalize,
-      })
+      this.tweens.killTweensOf(svgIcon)
+      btn.setPosition(btn.x, baseY).setScale(1)
+      svgIcon.setScale(1)
       if (glow) {
         this.tweens.killTweensOf(glow)
         this.tweens.add({ targets: glow, alpha: hovering ? 1 : 0, duration: 220 })
-      }
-      if (bare) {
-        this.tweens.add({ targets: svgIcon, scale: 1, duration: 140, ease: 'Back.easeOut' })
       }
     }
 
@@ -795,8 +796,8 @@ export default class MainScene extends Phaser.Scene {
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
       press()
       onTap()
-      // مؤقّت أمان: إن أخفت النافذةُ الجديدة الزر أو ابتلعت الحدث، نُعيد التطبيع
-      this.time.delayedCall(360, normalize)
+      // مؤقّت أمان: إن أخفت النافذةُ الجديدة الزر أو ابتلعت الحدث، نُعيد التطبيع سريعاً
+      this.time.delayedCall(180, normalize)
     })
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_UP, release)
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_OUT, () => {
