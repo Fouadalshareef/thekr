@@ -3,6 +3,9 @@ import { createGame } from './game/PhaserGame'
 import { initAdviceModal } from './components/AdviceModal'
 import { initQuranModal } from './components/QuranModal'
 import { initSidebar } from './components/Sidebar'
+import { initFarmModal } from './components/FarmModal'
+import { initSettingsPanel } from './components/SettingsPanel'
+import { initTopHeader } from './components/TopHeader'
 import { APP_VERSION, hasPendingUpdate } from './services/AppVersion'
 
 // ملاحظة مهمة: لا نحذف الكاشات هنا مطلقاً — كانت سابقاً تحذف التخزين المسبق
@@ -20,11 +23,15 @@ if (!hasPendingUpdate() && 'clearAppBadge' in navigator) {
   navigator.clearAppBadge().catch(() => {})
 }
 
-// تهيئة اللوحات الفاتحة المتبقية فوق قماش اللعبة.
-// ملاحظة: نافذتا «المزرعة» و«الإعدادات» أصبحتا Phaser Containers داخل المشهد
-// (game/ui/FarmModal.ts و game/ui/SettingsModal.ts) فلم تبقَ لهما نسخة DOM داكنة.
+// تهيئة اللوحات الفاتحة فوق قماش اللعبة.
+// نوافذ «المزرعة» و«الإعدادات» أصبحت الآن DOM خفيفاً (components/FarmModal.ts
+// و components/SettingsPanel.ts) بدل حاويات Phaser، و«الشريط العلوي»
+// (components/TopHeader.ts) يُبنى فوق القماش ويعرض الاسم والإجمالي وزر الإيقاف.
 initAdviceModal()
 initQuranModal()
+initFarmModal()
+initSettingsPanel()
+initTopHeader()
 initSidebar()
 
 // تشغيل محرك اللعبة داخل الحاوية #game-container
@@ -46,7 +53,7 @@ const blockScroll = (e: Event) => {
   const target = e.target as HTMLElement | null
   // السماح بالتمرير في أي نافذة منبثقة تحتاج إلى التمرير العمودي
   // (النصائح، المصحف، ونافذتا الأنماط/التخصيص الفاتحتان).
-  if (target && target.closest('#advice-modal, #quran-modal, .focus-dom-modal, .mode-dom-modal')) return
+  if (target && target.closest('#advice-modal, #quran-modal, #farm-modal, #settings-panel, .focus-dom-modal, .mode-dom-modal')) return
   e.preventDefault()
 }
 document.addEventListener('touchmove', blockScroll, { passive: false })

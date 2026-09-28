@@ -1,5 +1,3 @@
-import { areIconsEnabled } from '../services/SettingsService'
-
 /**
  * Sidebar — شريط الأيقونات الجانبي (DOM فوق قماش اللعبة) مع سهم فتح/طي القائمة.
  *
@@ -13,9 +11,6 @@ import { areIconsEnabled } from '../services/SettingsService'
  *   setSidebarModalOpen('farm', true)     → عند فتح نافذة المزرعة/الإعدادات
  */
 let sidebarRoot: HTMLElement | null = null
-let arrowIconEl: HTMLElement | null = null
-/** طيّ القائمة فوراً (تُربط داخل initSidebar). */
-let collapseMenu: ((force?: boolean) => void) | null = null
 
 /** هل ما زالت شاشة الترحيب (أو نمط الاستغفار) معروضة؟ تبدأ true عند الإقلاع. */
 let welcomeActive = true
@@ -45,20 +40,16 @@ export function refreshSidebarVisibility(): void {
   syncVisibility()
 }
 
-/** هل السهم/الشريط معروض الآن؟ */
+/** هل الشريط معروض الآن؟ (شاشة الترحيب والنوافذ المفتوحة تخفيه) */
 export function isSidebarVisible(): boolean {
-  return areIconsEnabled() && !welcomeActive && openModals.size === 0
+  return !welcomeActive && openModals.size === 0
 }
 
 /** تطبيق قاعدة الرؤية على عناصر DOM فعلياً. */
 function syncVisibility(): void {
   if (!sidebarRoot) return
   const visible = isSidebarVisible()
-  // السهم (وزر الإعدادات والمصحف والأنماط) مخفي تماماً في شاشة الترحيب والنوافذ.
   sidebarRoot.style.display = visible ? 'flex' : 'none'
-  if (arrowIconEl) arrowIconEl.style.display = visible ? 'block' : 'none'
-  // عند الإخفاء نطوي القائمة دائماً حتى لا تعود مفتوحة عند الإظهار التالي.
-  if (!visible) collapseMenu?.(false)
 }
 
 export function initSidebar(): void {
@@ -71,16 +62,9 @@ export function initSidebar(): void {
   container.style.direction = 'ltr' // Ensure left positioning is physical
 
   container.innerHTML = `
-    <!-- زر التوسيع / الطي -->
-    <div class="flex flex-col items-center">
-      <button id="sidebar-toggle" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
-        <img src="game/icons/arrow-gbtn.svg" id="sidebar-arrow-icon" class="w-[46px] h-[46px] object-contain pointer-events-none transition-transform duration-300" />
-      </button>
-    </div>
+    <!-- القائمة: أيقونات ثابتة الظاهرة دائماً (لا سهم طي/فتح) -->
+    <div id="sidebar-menu" class="flex flex-col gap-[20px] opacity-100 translate-x-0" style="direction: rtl;">
 
-    <!-- القائمة القابلة للطي -->
-    <div id="sidebar-menu" class="flex flex-col gap-[20px] transition-all duration-300 opacity-0 -translate-x-full pointer-events-none" style="direction: rtl;">
-      
       <!-- النمط -->
       <div class="flex flex-col items-center">
         <button id="btn-pattern" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
@@ -122,59 +106,24 @@ export function initSidebar(): void {
 
   document.body.appendChild(container)
 
-  let isOpen = false
-  const menu = document.getElementById('sidebar-menu')!
-  const arrow = document.getElementById('sidebar-arrow-icon')!
-
-  const toggleMenu = (force?: boolean) => {
-    isOpen = force ?? !isOpen
-    if (isOpen) {
-      menu.classList.remove('opacity-0', '-translate-x-full', 'pointer-events-none')
-      menu.classList.add('opacity-100', 'translate-x-0')
-      arrow.style.transform = 'rotate(180deg)'
-    } else {
-      menu.classList.add('opacity-0', '-translate-x-full', 'pointer-events-none')
-      menu.classList.remove('opacity-100', 'translate-x-0')
-      arrow.style.transform = 'rotate(0deg)'
-    }
-  }
-
-  // ربط مراجع الوحدة (تستخدمها دالة الرؤية المصدَّرة للمشاهد).
+  // القائمة ثابتة الظهور: لا حالة طي ولا سهم.
   sidebarRoot = container
-  arrowIconEl = arrow
-  collapseMenu = (force?: boolean) => toggleMenu(force)
 
-  document.getElementById('sidebar-toggle')?.addEventListener('click', (e) => {
-    e.stopPropagation()
-    toggleMenu()
-  })
-  
-  // إغلاق عند النقر في الخارج
-  document.addEventListener('click', (e) => {
-    if (!isOpen) return
-    const target = e.target as HTMLElement
-    if (!container.contains(target)) {
-      toggleMenu(false)
-    }
-  })
+  // لا مستمع للنقر في الخارج anymore: القائمة ثابتة الظهور فلا تُطوى.
 
   // الأحداث للأزرار
   document.getElementById('btn-pattern')?.addEventListener('click', () => {
     window.dispatchEvent(new CustomEvent('open-mode-panel'))
-    toggleMenu(false)
   })
   document.getElementById('btn-farm')?.addEventListener('click', () => {
     window.dispatchEvent(new CustomEvent('open-garden'))
-    toggleMenu(false)
   })
   document.getElementById('btn-quran')?.addEventListener('click', () => {
     window.dispatchEvent(new CustomEvent('open-quran'))
-    toggleMenu(false)
   })
   document.getElementById('btn-settings')?.addEventListener('click', () => {
-    // نافذة الإعدادات الجديدة (Phaser Container فاتحة كاملة الشاشة).
+    // نافذة الإعدادات الفاتحة (DOM في components/SettingsPanel).
     window.dispatchEvent(new CustomEvent('open-settings'))
-    toggleMenu(false)
   })
 
   // إعدادات الإظهار / الإخفاء + قاعدة إخفاء السهم في شاشة الترحيب والنوافذ.

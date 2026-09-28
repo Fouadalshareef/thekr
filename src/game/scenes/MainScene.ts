@@ -20,7 +20,7 @@ import SkyLayer from '../objects/SkyLayer'
 import { Events } from '../events'
 import { incrementDhikr } from '../../services/DhikrStorage'
 import { SEQUENCE_DHIKRS, FOCUS_OPTIONS, DHIKR_VIRTUES, gameMode, type GameMode } from '../../services/gameMode'
-import { recordTodayDhikr, isGameEnabled, areIconsEnabled, markAzkarDone } from '../../services/SettingsService'
+import { recordTodayDhikr, isGameEnabled, markAzkarDone } from '../../services/SettingsService'
 import { hasPendingUpdate } from '../../services/AppVersion'
 import { getNextQuote } from '../../services/QuotesDB'
 import {
@@ -37,13 +37,14 @@ import {
   type HudIcon,
 } from '../ui/GameButtonSkin'
 import { setCircleHitArea } from '../ui/hitArea'
-import { FarmModal } from '../ui/FarmModal'
-import { SettingsModal } from '../ui/SettingsModal'
 import {
   refreshSidebarVisibility,
   setSidebarModalOpen,
   setSidebarWelcomeActive,
 } from '../../components/Sidebar'
+import { setTopHeaderPaused } from '../../components/TopHeader'
+import { isFarmModalOpen } from '../../components/FarmModal'
+import { isSettingsPanelOpen } from '../../components/SettingsPanel'
 
 /** المدة التأخيرية قبل ظهور الجسم التالي بعد تفجير الحالي (بالمللي). */
 const NEXT_DELAY = 150
@@ -138,13 +139,10 @@ export default class MainScene extends Phaser.Scene {
   private btnSliders!: Phaser.GameObjects.Container
   private btnLeaf!: Phaser.GameObjects.Container
   private btnQuran!: Phaser.GameObjects.Container
-  /** زر السهم لطي/فتح القائمة الجانبية — يبقى ظاهراً دائماً. */
-  private btnArrow!: Phaser.GameObjects.Container
-  private arrowIcon!: Phaser.GameObjects.Image
-  /** هل القائمة الجانبية مفتوحة؟ (تبدأ مطوية: مخفية ويظهر السهم فقط). */
-  private sideMenuOpen = false
-  /** حركة فتح/إغلاق جارية (لمنع التداخل عند النقر السريع). */
-  private sideMenuAnimating = false
+  /**
+   * القائمة الجانبية ثابتة الظاهرة دائماً: لا سهم طي/فتح ولا زر يخفيها.
+   * (حُذف حقل sideMenuOpen لأن الرؤية صارت دائمة بلا حالة.)
+   */
   private sessionPill!: Phaser.GameObjects.Graphics
   /** شريط تقدم الورد في النمط المخصص (0/33 … 33/33). */
   private focusBarBg!: Phaser.GameObjects.Graphics
@@ -183,10 +181,9 @@ export default class MainScene extends Phaser.Scene {
   /** نافذة "اختر النمط" الفاتحة كاملة الشاشة (DOM) — بديل اللوحة الداكنة داخل المشهد. */
   private modeDom?: HTMLElement
 
-  /** نافذة «مزرعة الحسنات» الفاتحة كاملة الشاشة (Phaser Container) — تُبنى عند أول فتح. */
-  private farmModal: FarmModal | null = null
-  /** نافذة «الإعدادات» الفاتحة كاملة الشاشة (Phaser Container) — تُبنى عند أول فتح. */
-  private settingsModal: SettingsModal | null = null
+  // نافذتا «المزرعة» و«الإعدادات» الفاتحتان أصبحتا مكوّنين DOM
+  // (components/FarmModal.ts و components/SettingsPanel.ts) يستمعان إلى
+  // 'open-garden' و 'open-settings' مباشرة، فلا حاويات Phaser لهما.
 
   // نظام الاستراحة (Rest Banner)
   private restTimerEvent: Phaser.Time.TimerEvent | null = null
@@ -262,6 +259,14 @@ export default class MainScene extends Phaser.Scene {
     window.addEventListener('open-mode-panel', this.onOpenModePanel)
     window.addEventListener('open-garden', this.onOpenGarden)
     window.addEventListener('open-settings', this.onOpenSettings)
+    // زر الإيقاف في TopHeader: المشهد هو مصدر الحقيقة، فنتولى التبديل ونحدّث الشريط.
+    window.addEventListener('header-pause-toggle', this.onHeaderPauseToggle)
+  }
+
+  /** زر الإيقاف في الشريط العلوي: نفس منطق togglePause لكن مع مزامنة الشريط. */
+  private onHeaderPauseToggle = (): void => {
+    this.togglePause()
+    setTopHeaderPaused(this.paused)
   }
 
   /* ------------------------------------------------------------------ */
@@ -274,55 +279,22 @@ export default class MainScene extends Phaser.Scene {
     this.openModePanel()
   }
 
-  /** أيقونة «المزرعة»: تفتح نافذة مزرعة الحسنات (Phaser Container). */
-  private onOpenGarden = (): void => {
-    this.openFarmModal()
-  }
-
-  /** أيقونة «الإعدادات»: تفتح نافذة الإعدادات (Phaser Container). */
-  private onOpenSettings = (): void => {
-    this.openSettingsModal()
-  }
-
   /**
-   * فتح نافذة «مزرعة الحسنات» الفاتحة كاملة الشاشة:
-   * تُبنى الحاوية عند أول استخدام فقط، ثم يُحدَّث محتواها وتُظهر،
-   * ويُخفى سهم القائمة الجانبية، وتُوقف اللعبة مؤقتاً (بلا أي DOM داكن).
+   * أيقونة «المزرعة»: تفتح نافذة مزرعة الحسنات (DOM في components/FarmModal).
+   * المكوّن نفسه يستمع للحدث 'open-garden'؛ هنا نكتفئ بإغلاق أي نافذة أخرى
+   * وإيقاف الفيزياء عبر pauseForModal (النافذة تُطلق reader-closed عند إغلاقها).
    */
-  private openFarmModal(): void {
-    if (!this.farmModal) this.farmModal = new FarmModal(this, () => this.closeFarmModal())
-    this.farmModal.show()
+  private onOpenGarden = (): void => {
     setSidebarModalOpen('farm', true)
     this.pauseForModal()
     this.applyUiSettings()
   }
 
-  /** إغلاق نافذة المزرعة: إخفاء الحاوية + إعادة إظهار واجهة اللعبة. */
-  private closeFarmModal(): void {
-    this.farmModal?.setVisible(false)
-    setSidebarModalOpen('farm', false)
-    // إعادة تطبيق إعدادات الواجهة (يُعاد إظهار سهم القائمة عند غياب النوافذ).
-    this.applyUiSettings()
-    this.resumeFromModal()
-  }
-
-  /** فتح نافذة «الإعدادات» الفاتحة كاملة الشاشة (Phaser Container). */
-  private openSettingsModal(): void {
-    if (!this.settingsModal) {
-      this.settingsModal = new SettingsModal(this, () => this.closeSettingsModal())
-    }
-    this.settingsModal.show()
+  /** أيقونة «الإعدادات»: تفتح نافذة الإعدادات (DOM في components/SettingsPanel). */
+  private onOpenSettings = (): void => {
     setSidebarModalOpen('settings', true)
     this.pauseForModal()
     this.applyUiSettings()
-  }
-
-  /** إغلاق نافذة الإعدادات: إخفاء الحاوية + إعادة إظهار واجهة اللعبة. */
-  private closeSettingsModal(): void {
-    this.settingsModal?.setVisible(false)
-    setSidebarModalOpen('settings', false)
-    this.applyUiSettings()
-    this.resumeFromModal()
   }
 
   // ------------------------------------------------------------------
@@ -332,10 +304,7 @@ export default class MainScene extends Phaser.Scene {
   private buildHud(): void {
     // العمود الجانبي بأيقونات مصغّرة (46px — مقاس ألعاب الموبايل) مع بطاقة اسم ثابتة
     // موحّدة الأبعاد أسفل كل أيقونة، والفاصل الرأسي يتسع لها (SIDEBAR_STEP = 78px).
-    //   y = ‏62‏، ‏148‏، ‏234‏، ‏320‏ (‏SIDEBAR_TOP + i × (BTN_SIZE + BTN_GAP)‏).
-    // زر السهم يتصدّر العمود (62)؛ الأزرار الأربعة تحته. عند الإقلاع تكون القائمة
-    // مطوية (مخفية) ويظهر السهم فقط؛ الضغط عليه يفتحها بحركة انزلاق/تلاشي ناعمة،
-    // والضغط في أي مكان آخر من الشاشة يطويها تلقائياً (Outside Click).
+    // الأيقونات ثابتة الظاهرة دائماً: لا سهم طي/فتح ولا حركة إخفاء.
     // تمت إزالة أزرار القائمة الجانبية من WebGL واستبدالها بواجهة DOM في Sidebar.ts
     // للحصول على دقة Retina فائقة وحل مشاكل تداخل الأنيمشن.
     
@@ -346,72 +315,24 @@ export default class MainScene extends Phaser.Scene {
     this.buildAzkarCounter()
     this.buildFocusBar()
 
-    // الحالة الابتدائية: القائمة مطوية — الأزرار مخفية والسهم ظاهر فقط.
-    this.setSideMenuVisible(false, true)
-
-    // الضغط في أي مكان آخر من الشاشة (خارج الأزرار) يطوي القائمة تلقائياً
-    // لعدم تشويش مساحة اللعب — من دون حجب نقرات الفقاعات (نستقبل الحدث فقط
-    // عندما لا يكون هدفه زراً تفاعلياً، ولا نضع أي طبقة Overlay فوق اللعب).
-    this.input.on(Phaser.Input.Events.POINTER_DOWN, (pointer: Phaser.Input.Pointer, targets: Phaser.GameObjects.GameObject[]) => {
-      if (!this.sideMenuOpen || this.sideMenuAnimating) return
-      const hitButton = (targets ?? []).some((t) => t === this.btnArrow || t === this.btnGear || t === this.btnSliders || t === this.btnLeaf || t === this.btnQuran || t === this.pauseButton)
-      void pointer
-      if (!hitButton) this.toggleSideMenu(false)
-    })
+    // أيقونات القائمة الجانبية ثابتة الظاهرة دائماً (بلا سهم طي/فتح).
+    this.setSideMenuVisible(true, true)
   }
 
-  /** فتح/طي القائمة الجانبية بحركة انزلاق + تلاشي ناعمة (Slide/Fade). */
-  private toggleSideMenu(force?: boolean): void {
-    const open = force ?? !this.sideMenuOpen
-    if (open === this.sideMenuOpen || this.sideMenuAnimating) return
-    this.sideMenuOpen = open
-    this.sideMenuAnimating = true
-    // زر اختيار النمط مستقل عن القائمة القابلة للطي، ويبقى متاحاً دائماً
-    // مباشرة أسفل السهم.
-    const menu = [this.btnLeaf, this.btnQuran, this.btnGear]
-    // دوران السهم 180°: يمين (مغلق) ⇄ يسار (مفتوح — ينطوي للجهة الأخرى).
-    this.tweens.add({ targets: this.arrowIcon, angle: open ? 180 : 0, duration: 260, ease: 'Quad.easeInOut' })
-    menu.forEach((btn, i) => {
-      const homeY: number = btn.getData('homeY')
-      this.tweens.killTweensOf(btn)
-      if (open) {
-        // الظهور: زر السهم مستقل في أعلى الحاوية (SIDEBAR_TOP) وباقي الأزرار
-        // تظهر أسفله مباشرة في حاوية منسدلة (flex column, gap:12px) — أي كل زر
-        // ينزلق من موضعه النهائي (homeY) بلا مرور فوق زر السهم إطلاقاً،
-        // فيستحيل أي تداخل في الإحداثيات أثناء الحركة.
-        btn.setVisible(true)
-        btn.setAlpha(0).setX(SIDEBAR_X - 26).setY(homeY)
-        btn.setScale(0.7)
-        this.tweens.add({ targets: btn, x: SIDEBAR_X, y: homeY, alpha: 1, scale: 1, duration: 300, delay: i * 55, ease: 'Back.easeOut' })
-      } else {
-        // الإخفاء: تلاشي وانزلاق جانبي في نفس الصف ثم إخفاء (دون العودة فوق السهم).
-        this.tweens.add({
-          targets: btn, x: SIDEBAR_X - 26, y: homeY, alpha: 0, scale: 0.7,
-          duration: 220, delay: (menu.length - 1 - i) * 35, ease: 'Quad.easeIn',
-          onComplete: () => btn.setVisible(false),
-        })
-      }
-    })
-    this.time.delayedCall(open ? 300 + menu.length * 55 : 220 + menu.length * 35, () => {
-      this.sideMenuAnimating = false
-    })
-    // إبقاء شارة التحديث ملتصقة بزر الإعدادات عند انتهاء الحركة.
-    this.time.delayedCall(open ? 320 + menu.length * 55 : 260, () => this.pinUpdateBadge())
-  }
-
-  /** إظهار/إخفاء فوري (بلا حركة) — يُستخدم عند الإقلاع وتطبيق الإعدادات. */
-  private setSideMenuVisible(open: boolean, instant = false): void {
-    this.sideMenuOpen = open
+  /**
+   * إظهار أيقونات القائمة الجانبية في مواضعها النهائية.
+   * القائمة ثابتة الظهور دائماً: الدالة لم تبقَ تُخفي شيئاً، وتبقى لتفادي
+   * تغيير المواضع أثناء فتح/إغلاق النوافذ (خاصة ثبات شارة التحديث).
+   */
+  private setSideMenuVisible(_open: boolean, instant = false): void {
     for (const btn of [this.btnLeaf, this.btnQuran, this.btnGear]) {
       if (!btn) continue
-      btn.setVisible(open)
-      if (instant && btn) {
-        btn.setAlpha(open ? 1 : 0)
+      btn.setVisible(true).setAlpha(1).setScale(1)
+      if (instant) {
         const homeY: number = btn.getData('homeY') ?? btn.y
-        btn.setPosition(SIDEBAR_X, homeY).setScale(1)
+        btn.setPosition(SIDEBAR_X, homeY)
       }
     }
-    this.arrowIcon?.setAngle(open ? 180 : 0)
     if (instant) this.pinUpdateBadge()
   }
 
@@ -552,26 +473,25 @@ export default class MainScene extends Phaser.Scene {
     this.spawnIfEmpty()
   }
 
-  /** تطبيق إعدادات إظهار/إخفاء الأيقونات فوراً (أيقونة المصحف ثابتة دائماً كعنصر رئيسي). */
+  /**
+   * تطبيق الإعدادات على عناصر الواجهة داخل المشهد.
+   *
+   * ملاحظة مهمة: أيقونات الشريط الجانبي ومفتاح المصحف أصبحا **ثابتين الظاهرة
+   * دائماً** (طلب المستخدم) — لا يوجد anymore مفتاح إخفائها، لأن لوحة الإعدادات
+   * الجديدة لا تعرض مفتاحاً للمصحف ولا للشريط. لذلك لا نقرأ areIconsEnabled
+   * ولا isQuranEnabled هنا anymore. مفتاح زر الإيقاف انتقل إلى TopHeader.
+   */
   private applyUiSettings(): void {
-    const icons = areIconsEnabled()
-    // زر السهم يبقى ظاهراً دائماً (هو بوابة القائمة) ما دامت الأيقونات مفعّلة.
-    this.btnArrow?.setVisible(icons)
-    // زر اختيار النمط ثابت دائماً، حتى حين تكون بقية القائمة مطوية.
     this.btnSliders?.setVisible(true).setAlpha(1).setScale(1)
-    // عناصر القائمة تُعرض فقط إذا كانت الأيقونات مفعّلة والقائمة مفتوحة.
-    const showMenu = icons && this.sideMenuOpen
     for (const b of [this.btnLeaf, this.btnQuran, this.btnGear]) {
-      b?.setVisible(showMenu)
+      b?.setVisible(true)
     }
-    // أيقونة المصحف الشريف ثابتة في الواجهة كعنصر رئيسي (بلا خيار إخفاء).
-    this.btnQuran?.setVisible(icons && this.sideMenuOpen)
-    // يمين الشاشة
-    this.pauseButton?.setVisible(icons)
-    this.sessionPill?.setVisible(icons)
-    this.sessionLabel?.setVisible(icons)
-    this.sessionText?.setVisible(icons)
-    this.comboText?.setVisible(icons)
+    // عناصر الجلسة تبقى ظاهرة كما هي.
+    this.pauseButton?.setVisible(false) // استُبدل بزر الإيقاف في TopHeader
+    this.sessionPill?.setVisible(true)
+    this.sessionLabel?.setVisible(true)
+    this.sessionText?.setVisible(true)
+    this.comboText?.setVisible(true)
 
     // ------------------------------------------------------------------
     // إصلاح «السهم الباقي ظاهراً»: رؤية سهم القائمة الجانبية (DOM)
@@ -582,8 +502,9 @@ export default class MainScene extends Phaser.Scene {
     // نُعيد تثبيت حالة النوافذ من واقع الرؤية الفعلية للحاويات (idempotent)
     // حتى تبقى الحالة صحيحة مهما تغيّر ترتيب الفتح/الإغلاق.
     setSidebarWelcomeActive(this.scene.isActive(WELCOME_SCENE))
-    setSidebarModalOpen('farm', this.farmModal?.visible ?? false)
-    setSidebarModalOpen('settings', this.settingsModal?.visible ?? false)
+    // نافذتا المزرعة/الإعدادات عناصر DOM الآن: نقرأ حالة الإخفاء من صنف hidden.
+    setSidebarModalOpen('farm', isFarmModalOpen())
+    setSidebarModalOpen('settings', isSettingsPanelOpen())
     setSidebarModalOpen('mode-panel', this.modeUIOpen)
     setSidebarModalOpen(
       'focus-panel',
@@ -825,9 +746,8 @@ export default class MainScene extends Phaser.Scene {
     if (icon === 'pause') {
       this.pauseIcon = svgIcon
     }
-    if (icon === 'arrow') {
-      this.arrowIcon = svgIcon
-    }
+    // لا يوجد فرع 'arrow' anymore: حُذف سهم طي/فتح القائمة الجانبية بالكامل،
+    // إذ أصبحت أيقونات الشريط الجانبية ظاهرة دائماً.
     // منطقة النقر تغطي كامل الدائرة 100%: الحجم = قطر الجسم المرئي، والتوسيط
     // على مركز اللمس الحقيقي عبر setCircleHitArea (يُصحّح إزاحة displayOrigin
     // التي كانت تُزيح الدائرة (0,0) للأعلى فلا يستجيب إلا الجزء العلوي).
@@ -1712,6 +1632,8 @@ export default class MainScene extends Phaser.Scene {
         markAzkarDone(mode)
         this.time.delayedCall(500, () => this.showAzkarCompleteMessage(mode))
       }
+      // الشريط العلوي: النمط الصباحي/المسائي يُنقص العدّاد المحلياً، فنحدّثه.
+      window.dispatchEvent(new CustomEvent('dhikr-counted'))
       return
     }
 
@@ -1734,6 +1656,8 @@ export default class MainScene extends Phaser.Scene {
     incrementDhikr(id, dhikr.name, dhikr.target)
     recordTodayDhikr(id)
     this.garden.refresh()
+    // الشريط العلوي: تحدّث العدّاد الإجمالي فور كل ذكر.
+    window.dispatchEvent(new CustomEvent('dhikr-counted'))
 
     // تقدم ورد الجلسة: النمط المترابط ينتقل للذكر التالي، ونمط التخصص يحتفل بالورد
     const { completed } = gameMode.onCollected(id)
@@ -1800,8 +1724,7 @@ export default class MainScene extends Phaser.Scene {
     this.focusCelebrationOpen = true
     this.setFocusBarVisible(false)
     this.physics.pause()
-    this.toggleSideMenu(false)
-    // نافذة احتفال كاملة الشاشة: يُخفى سهم القائمة الجانبية أثناءها.
+    // القائمة الجانبية ثابتة الظهور — لا داعي لإخفائها أثناء الاحتفال.
     setSidebarModalOpen('celebration', true)
     this.applyUiSettings()
 
@@ -2004,17 +1927,15 @@ export default class MainScene extends Phaser.Scene {
     window.removeEventListener('open-mode-panel', this.onOpenModePanel)
     window.removeEventListener('open-garden', this.onOpenGarden)
     window.removeEventListener('open-settings', this.onOpenSettings)
-    // تدمير النوافذ الفاتحة (مزرعة/إعدادات) وإفراغ حالتها في لوحة المفاتيح الجانبية.
-    this.farmModal?.destroy()
-    this.farmModal = null
-    this.settingsModal?.destroy()
-    this.settingsModal = null
+    // النوافذ الفاتحة صارت عناصر DOM في main.ts وتُخفى بنفسها عند الإغلاق،
+    // فكفاية تفريغ حالتها في لوحة المفاتيح الجانبية.
     setSidebarModalOpen('farm', false)
     setSidebarModalOpen('settings', false)
     refreshSidebarVisibility()
     for (const b of this.alive) b.destroy()
     this.alive = []
     this.events.off(Events.DHIKR_COLLECTED, this.onDhikrCollected, this)
+    window.removeEventListener('header-pause-toggle', this.onHeaderPauseToggle)
     this.modeDom?.remove()
     this.modeDom = undefined
     this.focusDom?.remove()

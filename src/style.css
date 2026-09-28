@@ -594,3 +594,365 @@ body.modal-open {
 .icon-frame:focus-visible,
 .icon-btn:focus,
 .icon-btn:focus-visible { outline: none; }
+
+/* ------------------------------------------------------------------ */
+/* الشريط العلوي الحديث (TopHeader) + النوافذ الفاتحة Crisp Modal      */
+/* ------------------------------------------------------------------ */
+
+/* الشريط العلوي: ثلاث مناطق (الاسم يساراً / الإجمالي وسطاً / إيقاف يميناً).
+   pointer-events:none على الحاوية حتى لا يحجب لمس الفقاعات، مع
+   pointer-events:auto على الأجزاء التفاعلية فقط. */
+.top-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  box-sizing: border-box;
+  padding: 8px 14px;
+  pointer-events: none;
+  direction: ltr; /* فيزيائي: الأيسر = الاسم فعلاً */
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.top-header > * { pointer-events: auto; }
+
+/* بطاقة الاسم (يسار) */
+.top-header-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 38vw;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 3px 10px rgba(2, 44, 34, 0.18);
+  color: #14532d;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+.top-header-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+}
+
+/* العدّاد الإجمالي (وسط) */
+.top-header-count {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 3px 12px rgba(2, 44, 34, 0.28);
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+.top-header-count b {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 1.05rem;
+
+/* ------------------------------------------------------------------ */
+/* النوافذ الفاتحة المشتركة: المزرعة + الإعدادات                       */
+/* ------------------------------------------------------------------ */
+.crisp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4fdf8;
+  color: #17352b;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  direction: rtl;
+  touch-action: pan-y;
+  pointer-events: auto;
+}
+.crisp-modal.hidden { display: none; }
+
+.crisp-content {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 720px);
+  max-height: 100%;
+  max-height: 100dvh;
+  min-height: 0;
+  padding: clamp(18px, 4vw, 40px);
+  overflow: hidden;
+}
+.crisp-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.crisp-eyebrow { margin: 0; color: #059669; font-weight: 700; font-size: 0.85rem; }
+.crisp-header h2 { margin: 4px 0 6px; color: #14532d; font-size: clamp(1.5rem, 4vw, 2.2rem); }
+.crisp-header p { margin: 0; color: #527267; font-size: 0.95rem; line-height: 1.6; }
+.crisp-close {
+  flex: 0 0 auto;
+  border: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #b91c1c;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(22, 101, 52, 0.12);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease;
+}
+.crisp-close:hover { filter: brightness(0.97); }
+.crisp-close:active { transform: scale(0.92); }
+
+/* منطقة التمرير الوحيدة داخل النافذة (لازم لتفعيل اللمس العمودي) */
+.crisp-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 2px 4px 24px 0;
+}
+
+/* بطاقات عامة داخل النوافذ */
+.crisp-card {
+  background: #ffffff;
+  border: 1px solid #d9ece1;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(2, 44, 34, 0.06);
+  padding: 16px;
+  color: #17352b;
+}
+.crisp-card h3 { margin: 0 0 10px; color: #14532d; font-size: 1.05rem; }
+
+/* صفّ إحصائي (المزرعة + إحصائيات اليوم) */
+.crisp-stats { display: flex; gap: 12px; }
+.crisp-stat {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: center;
+  background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+  border: 1.5px solid #a7f3d0;
+  border-radius: 16px;
+  padding: 14px 8px;
+  box-shadow: 0 2px 10px rgba(2, 44, 34, 0.06);
+}
+.crisp-stat b {
+  display: block;
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 1.5rem;
+  color: #047857;
+  direction: ltr;
+}
+.crisp-stat span { display: block; margin-top: 2px; color: #527267; font-size: 0.78rem; }
+
+/* شريط تقدّم العنصر القادم */
+.crisp-bar {
+
+/* ------------------------------------------------------------------ */
+/* عناصر لوحة الإعدادات                                                 */
+/* ------------------------------------------------------------------ */
+/* صف إعداد: تسمية + وصف على اليمين والعنصر التفاعلي على اليسار */
+.crisp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #d9ece1;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(2, 44, 34, 0.05);
+}
+.crisp-row .crisp-row-text { min-width: 0; }
+.crisp-row strong { display: block; color: #14532d; font-size: 1rem; }
+.crisp-row small { display: block; margin-top: 2px; color: #527267; font-size: 0.8rem; line-height: 1.6; }
+
+/* مفتاح تشغيل/إيقاف (CSS خالص — أدق من الرسم على Canvas) */
+.crisp-toggle {
+  flex: 0 0 auto;
+  position: relative;
+  width: 54px;
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.crisp-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px; /* RTL: المقبض يبدأ من اليمين */
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease;
+}
+.crisp-toggle[aria-checked='true'] { background: #10b981; }
+.crisp-toggle[aria-checked='true']::after { transform: translateX(-24px); }
+.crisp-toggle:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
+
+/* حقول الإدخال */
+.crisp-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 55%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #17352b;
+  font-family: inherit;
+  font-size: 1rem;
+  text-align: right;
+}
+.crisp-input:focus { outline: none; border-color: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18); }
+.crisp-select {
+  flex: 0 0 auto;
+  padding: 10px 12px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #17352b;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.crisp-select:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
+
+/* أزرار الإجراء (تحديث / تثبيت) */
+.crisp-action {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, filter 0.15s ease;
+}
+.crisp-action:hover { filter: brightness(1.07); }
+.crisp-action:active { transform: scale(0.96); }
+.crisp-action:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
+.crisp-action:focus-visible { outline: 2px solid #047857; outline-offset: 2px; }
+
+/* سطر رسالة حالة (نتيجة التحديث/التثبيت) */
+.crisp-status { margin: 0; font-size: 0.85rem; line-height: 1.6; color: #047857; font-weight: 700; }
+.crisp-status[data-tone='error'] { color: #b91c1c; }
+
+/* جدول إحصائيات اليوم */
+.crisp-stat-list { display: flex; flex-direction: column; gap: 8px; }
+.crisp-stat-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: #f6faf8;
+  border: 1px solid #e4efe9;
+}
+.crisp-stat-line span { color: #14532d; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crisp-stat-line b { color: #047857; font-family: Consolas, 'Courier New', monospace; font-size: 1rem; direction: ltr; }
+.crisp-empty { margin: 0; color: #6b7d75; font-size: 0.9rem; text-align: center; padding: 10px 0; }
+
+  height: 12px;
+  border-radius: 999px;
+  background: #e6f4ec;
+  overflow: hidden;
+  margin-top: 10px;
+}
+.crisp-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #34d399 0%, #059669 100%);
+  transition: width 0.35s ease;
+}
+
+/* شبكة عناصر المزرعة */
+.crisp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.crisp-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px;
+  border-radius: 16px;
+  text-align: center;
+  background: #ffffff;
+  border: 1.5px solid #d9ece1;
+}
+.crisp-item.open { background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%); border-color: #6ee7b7; }
+.crisp-item.locked { background: #f6f8f7; border-color: #e5e7eb; opacity: 0.75; }
+.crisp-ico { font-size: 2rem; line-height: 1.2; }
+.crisp-name { color: #14532d; font-weight: 700; font-size: 0.9rem; }
+.crisp-item.locked .crisp-name { color: #6b7d75; }
+.crisp-sub { color: #527267; font-size: 0.75rem; direction: ltr; }
+
+  direction: ltr;
+}
+.top-header-count small { font-size: 0.68rem; opacity: 0.92; direction: rtl; }
+
+/* زر الإيقاف/الاستئناف (يمين) */
+.top-header-pause {
+  border: 0;
+  padding: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 3px 12px rgba(2, 44, 34, 0.22);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, filter 0.15s ease;
+}
+.top-header-pause img { width: 30px; height: 30px; object-fit: contain; display: block; }
+.top-header-pause:hover { filter: brightness(1.06); }
+.top-header-pause:active { transform: scale(0.92); }
+.top-header-pause:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
+
