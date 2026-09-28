@@ -4,6 +4,7 @@ import { initDashboard } from './components/DashboardModal'
 import { initGardenModal } from './components/GardenModal'
 import { initAdviceModal } from './components/AdviceModal'
 import { initQuranModal } from './components/QuranModal'
+import { initSidebar } from './components/Sidebar'
 import { APP_VERSION, hasPendingUpdate } from './services/AppVersion'
 
 // ملاحظة مهمة: لا نحذف الكاشات هنا مطلقاً — كانت سابقاً تحذف التخزين المسبق
@@ -26,6 +27,7 @@ initDashboard()
 initGardenModal()
 initAdviceModal()
 initQuranModal()
+initSidebar()
 
 // تشغيل محرك اللعبة داخل الحاوية #game-container
 // مقاس ثابت موحّد (480×854) بدون devicePixelRatio — هو سبب انزياح اللمس.
