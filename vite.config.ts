@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { relative, resolve } from 'node:path'
 import tailwindcss from '@tailwindcss/vite'
 
 // ------------------------------------------------------------------
@@ -32,7 +32,11 @@ function injectPrecache() {
         for (const entry of readdirSync(dir, { withFileTypes: true })) {
           const full = resolve(dir, entry.name)
           if (entry.isDirectory()) walk(full)
-          else files.push('./' + full.replace(distDir + '\\', '').replaceAll('\\', '/'))
+          // path.relative يتعامل مع فاصل المسار الصحيح على كل المنصات.
+          // كان الكودpreviously يستبدل 'dist\\' حصراً، فينتج على Linux
+          // مسارات مطلقة مثل './home/runner/work/.../dist/assets/x.js'
+          // تفشل جميعها في cache.add ⇒Precaching معطّل فعلياً على CI.
+          else files.push('./' + relative(distDir, full).replaceAll('\\', '/'))
         }
       }
       walk(distDir)
