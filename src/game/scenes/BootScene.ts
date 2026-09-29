@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { setSidebarWelcomeActive } from '../../components/Sidebar'
+import { setTopHeaderVisible } from '../../components/TopHeader'
 
 /**
  * BootScene — شاشة بدء التجربة.
@@ -38,6 +39,8 @@ export default class BootScene extends Phaser.Scene {
   create(): void {
     // شاشة الترحيب: يُخفى سهم القائمة الجانبية تماماً (يُعاد إظهاره في MainScene).
     setSidebarWelcomeActive(true)
+    // إخفاء الشريط العلوي في شاشة الترحيب (يظهر فقط في MainScene).
+    setTopHeaderVisible(false)
 
     // منع أي انزياح في إحداثيات اللمس بين HTML والـ Canvas
     this.scale.refresh()

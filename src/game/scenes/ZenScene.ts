@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ZenScene — مشهد الاستغفار التأملي الهادئ:
  * خلفية ليلية داكنة مع نجوم خافتة، هالة زجاجية مركزية نورية،
  * عدّاد استغفار مستقل، وزر "رجوع" للعودة للمشهد الرئيسي.
@@ -10,6 +10,7 @@ import { getIstighfarCount, incrementIstighfar } from '../../services/DhikrStora
 import { recordTodayDhikr } from '../../services/SettingsService'
 import { setZenMode } from '../ui/SettingsModal'
 import { setSidebarWelcomeActive } from '../../components/Sidebar'
+import { setTopHeaderVisible } from '../../components/TopHeader'
 import SkyLayer from '../objects/SkyLayer'
 import { getThemeFor } from '../../services/TimeThemeService'
 
@@ -28,11 +29,14 @@ export default class ZenScene extends Phaser.Scene {
     // تعطيل شريط السرعة في نافذة الإعدادات أثناء نمط Zen + إخفاء سهم القائمة الجانبية
     setZenMode(true)
     setSidebarWelcomeActive(true)
+    // إخفاء الشريط العلوي في نمط Zen (يظهر فقط في المشهد الرئيسي)
+    setTopHeaderVisible(false)
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       setZenMode(false)
       // العودة للمشهد الرئيسي: يُعاد إظهار سهم القائمة الجانبية.
       setSidebarWelcomeActive(false)
     })
+
 
     // 1) سماء ليلية دائمة (نجوم + قمر نابض من خدمة الوقت) للحفاظ على السكينة
     new SkyLayer(this, getThemeFor('night'))

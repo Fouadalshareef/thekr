@@ -1,16 +1,15 @@
 /**
- * TopHeader — الشريط العلوي الحديث فوق قماش اللعبة (DOM ثلاثي المناطق).
+ * TopHeader — الشريط العلوي بتصميم Royal Kingdom فوق قماش اللعبة (DOM).
  *
- * الترتيب من اليسار إلى اليمين (فيزيائي، لأن الحاوية بـ direction: ltr):
- *   - الاسم: اسم المستخدم المحفوظ في SettingsService.
- *   - الوسط: إجمالي الأذكار التراكمي (يشمل الاستغفار) عبر GardenService.
- *   - اليمين: زر إيقاف/استئناف يُبلّغ MainScene عبر حدث 'header-pause-toggle'.
+ * التصميم: شريط عميق (كرمزي/نبيذي #7A1A2C) بحواف مستديرة + بريق 3D.
+ *   - يسار:  أيقونة أفاتار + اسم المستخدم داخل حلقة ذهبية.
+ *   - وسط:  عدّاد الأذكار الإجمالي داخل حبّة بيضاء مع أيقونة ذهبية.
+ *   - يمين: زر إيقاف/استئناف مطرّز.
  *
- * ملاحظات:
- *  - الحاوية pointer-events:none حتى لا تحجب لمس الفقاعات؛ الأجزاء التفاعلية فقط
- *    تأخذ pointer-events:auto.
- *  - المشهد هو مصدر الحقيقة لحالة الإيقاف: MainScene يستدعي setTopHeaderPaused
- *    بعد كل تبديل، ويحوّل ضغط الزر إلى نداء togglePause عبر الحدث.
+ * سلوك الرؤية:
+ *   - مخفيٌّ تلقائياً عند الإقلاع (شاشة الترحيب).
+ *   - يظهر فقط حين تستدعي MainScene setTopHeaderVisible(true).
+ *   - يختفي عند فتح أي نافذة فاتحة (المزرعة، الإعدادات، القرآن …).
  */
 import { getUsername } from '../services/SettingsService'
 import { getTotalGoodDeeds } from '../services/GardenService'
@@ -26,7 +25,7 @@ let paused = false
 
 /** أسماء ملفات أيقونات الإيقاف/التشغيل (SVG في public/game/icons). */
 const PAUSE_ICON = 'game/icons/pause-gbtn.svg'
-const PLAY_ICON = 'game/icons/play-gbtn.svg'
+const PLAY_ICON  = 'game/icons/play-gbtn.svg'
 
 /** تحديث اسم المستخدم المعروض. */
 function renderName(): void {
@@ -70,7 +69,7 @@ export function setTopHeaderPaused(next: boolean): void {
   renderPauseIcon()
 }
 
-/** إخفاء الشريط (شاشة الترحيب) أو إظهاره. */
+/** إخفاء الشريط (شاشة الترحيب / نوافذ فاتحة) أو إظهاره. */
 export function setTopHeaderVisible(visible: boolean): void {
   if (rootEl) rootEl.style.display = visible ? 'flex' : 'none'
 }
@@ -81,25 +80,50 @@ export function initTopHeader(): void {
 
   rootEl = document.createElement('header')
   rootEl.id = 'top-header'
-  rootEl.className = 'top-header'
+  rootEl.className = 'rk-header'
   rootEl.setAttribute('aria-label', 'الشريط العلوي')
+  // مخفي حتى تُفعّله MainScene
+  rootEl.style.display = 'none'
+
   rootEl.innerHTML = `
-    <div class="top-header-name"><span id="top-header-name"></span></div>
-    <div class="top-header-count">
-      <b id="top-header-total">0</b>
-      <small>ذكر</small>
+    <!-- يسار: أفاتار + اسم -->
+    <div class="rk-header-profile">
+      <div class="rk-avatar" aria-hidden="true">
+        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="20" cy="20" r="20" fill="url(#av-bg)"/>
+          <circle cx="20" cy="15" r="7" fill="#fff" opacity="0.9"/>
+          <ellipse cx="20" cy="34" rx="11" ry="8" fill="#fff" opacity="0.7"/>
+          <defs>
+            <radialGradient id="av-bg" cx="40%" cy="30%" r="70%">
+              <stop offset="0%" stop-color="#f59e0b"/>
+              <stop offset="100%" stop-color="#b45309"/>
+            </radialGradient>
+          </defs>
+        </svg>
+      </div>
+      <span id="top-header-name" class="rk-header-name"></span>
     </div>
-    <button id="top-header-pause" class="top-header-pause" type="button" aria-label="إيقاف مؤقت" aria-pressed="false">
+
+    <!-- وسط: عدّاد الأذكار -->
+    <div class="rk-header-count-wrap">
+      <span class="rk-coin-icon" aria-hidden="true">✨</span>
+      <span id="top-header-total" class="rk-header-count">0</span>
+    </div>
+
+    <!-- يمين: زر الإيقاف -->
+    <button id="top-header-pause" class="rk-pause-btn" type="button"
+            aria-label="إيقاف مؤقت" aria-pressed="false">
       <img src="${PAUSE_ICON}" alt="" aria-hidden="true" />
     </button>
   `
+
   document.body.appendChild(rootEl)
 
-  nameEl = rootEl.querySelector('#top-header-name')
-  countEl = rootEl.querySelector('#top-header-total')
+  nameEl   = rootEl.querySelector('#top-header-name')
+  countEl  = rootEl.querySelector('#top-header-total')
   pauseBtn = rootEl.querySelector('#top-header-pause')
 
-  // ضغط الزر: لا نبدّل الحالة هنا — نخبر المشهد ليتولى الإيقاف الفعلي.
+  // ضغط الزر: نخبر المشهد ليتولى الإيقاف الفعلي.
   pauseBtn?.addEventListener('click', () => {
     window.dispatchEvent(new CustomEvent('header-pause-toggle'))
   })
@@ -110,4 +134,3 @@ export function initTopHeader(): void {
   window.addEventListener('username-changed', renderName)
   window.addEventListener('dhikr-counted', renderCount)
 }
-

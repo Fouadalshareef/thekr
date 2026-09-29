@@ -42,7 +42,7 @@ import {
   setSidebarModalOpen,
   setSidebarWelcomeActive,
 } from '../../components/Sidebar'
-import { setTopHeaderPaused } from '../../components/TopHeader'
+import { setTopHeaderPaused, setTopHeaderVisible, refreshTopHeader } from '../../components/TopHeader'
 import { isFarmModalOpen } from '../../components/FarmModal'
 import { isSettingsPanelOpen } from '../../components/SettingsPanel'
 
@@ -152,6 +152,10 @@ export default class MainScene extends Phaser.Scene {
   private focusCelebrationOpen = false
   private sessionLabel!: Phaser.GameObjects.Text
 
+  /** مرجع مستمع reader-closed المُضاف في create() لإزالته في cleanup(). */
+  private _onReaderClosed?: () => void
+
+
   private sessionText!: Phaser.GameObjects.Text
   private pauseButton!: Phaser.GameObjects.Container
   private pauseIcon!: Phaser.GameObjects.Image
@@ -251,6 +255,21 @@ export default class MainScene extends Phaser.Scene {
 
     // واجهة اللعبة جاهزة: يُعاد إظهار سهم القائمة الجانبية (كان مخفياً في شاشة الترحيب).
     setSidebarWelcomeActive(false)
+    // إظهار الشريط العلوي (كان مخفياً في شاشة الترحيب).
+    setTopHeaderVisible(true)
+    refreshTopHeader()
+
+    // إصلاح: عند إغلاق نافذة المزرعة/الإعدادات نُزيل حالتها من الـ Sidebar
+    // حتى تعود الأيقونات الجانبية ظاهرة دون الحاجة لإعادة تشغيل المشهد.
+    const onReaderClosed = (): void => {
+      setSidebarModalOpen('farm', isFarmModalOpen())
+      setSidebarModalOpen('settings', isSettingsPanelOpen())
+      refreshSidebarVisibility()
+    }
+    window.addEventListener('reader-closed', onReaderClosed)
+    // نحتفظ بالمرجع لإزالته في cleanup()
+    this._onReaderClosed = onReaderClosed
+
 
     // أحداث فتح النوافذ من شريط الأيقونات (DOM → Phaser):
     //   open-mode-panel → نافذة اختيار النمط (أيقونة «النمط»)
@@ -428,20 +447,49 @@ export default class MainScene extends Phaser.Scene {
     const dhikr = gameMode.getMode() === 'focus' ? gameMode.getCurrentDhikr() : null
     if (!dhikr || this.focusCelebrationOpen) {
       this.setFocusBarVisible(false)
+      this.updateDomFocusBar(false)
       return
     }
-    this.setFocusBarVisible(true)
+    // الشريط ضمن Canvas الأصلي مخفي (y=34 يتعارض مع الهيدر الجديد)
+    this.setFocusBarVisible(false)
+    // نستخدم شريط DOM تحت الهيدر Royal Kingdom بدلاً منه
     const target = Math.max(1, dhikr.target)
     const count = Math.min(target, gameMode.getCount(dhikr.id))
-    this.focusBarText.setText(`${count} / ${target}`)
-    this.tweens.killTweensOf(this.focusBarFill)
-    this.tweens.add({
-      targets: this.focusBarFill,
-      displayWidth: (count / target) * 204,
-      duration: animate ? 280 : 0,
-      ease: 'Quad.easeOut',
-    })
+    this.updateDomFocusBar(true, count, target, animate)
   }
+
+  /**
+   * شريط تقدم DOM يظهر مباشرة تحت هيدر Royal Kingdom (position:fixed top:70px).
+   * يُنشأ مرة واحدة ويُحدَّث بـ CSS width بدل Phaser tweens.
+   */
+  private updateDomFocusBar(visible: boolean, count = 0, target = 1, animate = true): void {
+    let bar = document.getElementById('rk-focus-bar-dom')
+    if (!bar) {
+      bar = document.createElement('div')
+      bar.id = 'rk-focus-bar-dom'
+      bar.innerHTML = `
+        <div class="rk-focus-bar-track">
+          <div class="rk-focus-bar-fill" id="rk-focus-bar-fill" style="width:0%;transition:${animate ? 'width 0.28s cubic-bezier(0.25,0.8,0.25,1)' : 'none'}"></div>
+          <div class="rk-focus-bar-label" id="rk-focus-bar-label">0 / 0</div>
+        </div>
+      `
+      document.body.appendChild(bar)
+    }
+    if (!visible) {
+      bar.classList.remove('visible')
+      return
+    }
+    bar.classList.add('visible')
+    const fill = document.getElementById('rk-focus-bar-fill')
+    const label = document.getElementById('rk-focus-bar-label')
+    if (fill) {
+      if (!animate) fill.style.transition = 'none'
+      else fill.style.transition = 'width 0.28s cubic-bezier(0.25,0.8,0.25,1)'
+      fill.style.width = `${(count / target) * 100}%`
+    }
+    if (label) label.textContent = `${count} / ${target}`
+  }
+
 
   private updateAzkarCounter(): void {
     const mode = gameMode.getMode()
@@ -1922,6 +1970,7 @@ export default class MainScene extends Phaser.Scene {
     this.data.remove('restBlocker')
     window.removeEventListener('reader-opened', this.pauseForModal)
     window.removeEventListener('reader-closed', this.resumeFromModal)
+    if (this._onReaderClosed) window.removeEventListener('reader-closed', this._onReaderClosed)
     window.removeEventListener('settings-changed', this.onSettingsChanged)
     // إزالة مستمعات فتح النوافذ من شريط الأيقونات (DOM).
     window.removeEventListener('open-mode-panel', this.onOpenModePanel)
@@ -1932,6 +1981,11 @@ export default class MainScene extends Phaser.Scene {
     setSidebarModalOpen('farm', false)
     setSidebarModalOpen('settings', false)
     refreshSidebarVisibility()
+    // إخفاء الشريط العلوي عند مغادرة المشهد الرئيسي.
+    setTopHeaderVisible(false)
+    // إخفاء شريط تقدم الورد DOM عند مغادرة المشهد.
+    document.getElementById('rk-focus-bar-dom')?.classList.remove('visible')
+
     for (const b of this.alive) b.destroy()
     this.alive = []
     this.events.off(Events.DHIKR_COLLECTED, this.onDhikrCollected, this)
@@ -1941,6 +1995,7 @@ export default class MainScene extends Phaser.Scene {
     this.focusDom?.remove()
     this.focusDom = undefined
   }
+
 
   // ------------------------------------------------------------------
   // نظام لوحة الاستراحة (5 دقائق)

@@ -662,6 +662,8 @@ body.modal-open {
 .top-header-count b {
   font-family: Consolas, 'Courier New', monospace;
   font-size: 1.05rem;
+  direction: ltr;
+}
 
 /* ------------------------------------------------------------------ */
 /* النوافذ الفاتحة المشتركة: المزرعة + الإعدادات                       */
@@ -931,23 +933,192 @@ body.modal-open {
 .crisp-item.locked .crisp-name { color: #6b7d75; }
 .crisp-sub { color: #527267; font-size: 0.75rem; direction: ltr; }
 
+/* ------------------------------------------------------------------ */
+/* Royal Kingdom Top Header (rk-header)                                */
+/* ------------------------------------------------------------------ */
+
+.rk-header {
+  position: fixed;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1900;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: min(94vw, 460px);
+  box-sizing: border-box;
+  padding: 6px 8px 6px 6px;
+  pointer-events: none;
+  direction: ltr;
+  font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+  background: linear-gradient(135deg, #8B1A2E 0%, #6B1222 50%, #8B1A2E 100%);
+  border-radius: 28px;
+  border: 2.5px solid #c8955a;
+  box-shadow:
+    0 4px 0 #4a0c18,
+    0 6px 18px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,210,120,0.35),
+    inset 0 -1px 0 rgba(0,0,0,0.25);
+}
+.rk-header::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 18px;
+  right: 18px;
+  height: 40%;
+  border-radius: 20px 20px 50% 50%;
+  background: linear-gradient(180deg, rgba(255,230,160,0.22) 0%, transparent 100%);
+  pointer-events: none;
+}
+.rk-header > * { pointer-events: auto; }
+
+.rk-header-profile {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0,0,0,0.28);
+  border: 1.5px solid rgba(200,149,90,0.55);
+  border-radius: 999px;
+  padding: 3px 10px 3px 3px;
+  min-width: 0;
+  max-width: 40vw;
+  flex-shrink: 1;
+}
+.rk-avatar {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 2px solid #fbbf24;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.rk-avatar svg { width: 100%; height: 100%; display: block; }
+.rk-header-name {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #fef3c7;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;
+}
+
+.rk-header-count-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #ffffff;
+  border: 2px solid #fbbf24;
+  border-radius: 999px;
+  padding: 4px 14px 4px 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8);
+  flex-shrink: 0;
+}
+.rk-coin-icon { font-size: 1rem; line-height: 1; flex-shrink: 0; }
+.rk-header-count {
+  font-family: Consolas, 'Courier New', monospace;
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #7c2d12;
   direction: ltr;
 }
-.top-header-count small { font-size: 0.68rem; opacity: 0.92; direction: rtl; }
 
-/* زر الإيقاف/الاستئناف (يمين) */
-.top-header-pause {
+.rk-pause-btn {
   border: 0;
   padding: 0;
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 3px 12px rgba(2, 44, 34, 0.22);
+  background: radial-gradient(circle at 35% 30%, #fde68a, #f59e0b 55%, #b45309);
+  border: 2.5px solid #fbbf24;
+  box-shadow:
+    0 3px 0 #92400e,
+    0 5px 12px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.5);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.rk-pause-btn img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+}
+.rk-pause-btn:hover { filter: brightness(1.08); }
+.rk-pause-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #92400e, 0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.rk-pause-btn:focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
+
+/* شريط تقدم الأذكار (Focus Bar) — DOM تحت الهيدر */
+#rk-focus-bar-dom {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1890;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: min(88vw, 280px);
+  pointer-events: none;
+}
+#rk-focus-bar-dom.visible { display: flex; }
+.rk-focus-bar-track {
+  flex: 1;
+  height: 22px;
+  border-radius: 11px;
+  background: rgba(2,44,34,0.88);
+  border: 1.5px solid #34d399;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+.rk-focus-bar-fill {
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 11px;
+  transition: width 0.28s cubic-bezier(0.25,0.8,0.25,1);
+}
+.rk-focus-bar-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #ecfdf5;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* legacy .top-header-count small + .top-header-pause (compat) */
+.top-header-count small { font-size: 0.68rem; opacity: 0.92; direction: rtl; }
+.top-header-pause {
+  border: 0; padding: 0;
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  box-shadow: 0 3px 12px rgba(2,44,34,0.22);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center; justify-content: center;
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.1s ease, filter 0.15s ease;
 }
@@ -955,4 +1126,3 @@ body.modal-open {
 .top-header-pause:hover { filter: brightness(1.06); }
 .top-header-pause:active { transform: scale(0.92); }
 .top-header-pause:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }
-
