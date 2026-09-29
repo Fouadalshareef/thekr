@@ -3,8 +3,9 @@
  *
  * إصلاح العلّة: كان السهم ظاهراً في كل الحالات (بما فيها شاشة الترحيب والنوافذ
  * المفتوحة: المزرعة، الإعدادات، المصحف، الأنماط، النصائح، التخصيص، الاحتفالات).
- * الآن تُدار رؤية الشريط (وبالتالي السهم) من حالة مركزية واحدة:
- *   visible = الأيقونات مفعّلة && !welcomeActive && لا توجد أي نافذة مفتوحة
+ * الآن تُدار رؤية الشريط من حالة مركزية واحدة:
+ *   visible = !welcomeActive
+ * الأيقونات تبقى ثابتة أثناء اللعب، بما في ذلك عند فتح نافذة فوق القماش.
  *
  * واجهة الاستخدام من المشاهد (Phaser):
  *   setSidebarWelcomeActive(false)        → عند بدء MainScene
@@ -40,9 +41,9 @@ export function refreshSidebarVisibility(): void {
   syncVisibility()
 }
 
-/** هل الشريط معروض الآن؟ (شاشة الترحيب والنوافذ المفتوحة تخفيه) */
+/** هل الشريط معروض الآن؟ (يُخفى فقط خارج اللعب) */
 export function isSidebarVisible(): boolean {
-  return !welcomeActive && openModals.size === 0
+  return !welcomeActive
 }
 
 /** تطبيق قاعدة الرؤية على عناصر DOM فعلياً. */
@@ -126,9 +127,9 @@ export function initSidebar(): void {
     window.dispatchEvent(new CustomEvent('open-settings'))
   })
 
-  // إعدادات الإظهار / الإخفاء + قاعدة إخفاء السهم في شاشة الترحيب والنوافذ.
+  // الأيقونات ثابتة أثناء اللعب؛ شاشة الترحيب هي الحالة الوحيدة التي تخفيها.
   window.addEventListener('settings-changed', refreshSidebarVisibility)
-  // نوافذ DOM (النصائح/المصحف/الأنماط/التخصيص) تُعلن فتحها وإغلاقها بهذين الحدثين.
+  // نوافذ DOM تعلن حالتها للمشهد، دون إخفاء الشريط الجانبي.
   window.addEventListener('reader-opened', () => setSidebarModalOpen('dom-modal', true))
   window.addEventListener('reader-closed', () => setSidebarModalOpen('dom-modal', false))
   // يبدأ التطبيق على شاشة الترحيب: السهم مخفي حتى يُعلن المشهد الرئيسي بدء اللعب.

@@ -158,6 +158,8 @@ body {
    (game/ui/FarmModal.ts و game/ui/SettingsModal.ts) فلم تبقَ لهما عناصر DOM. */
 #advice-modal.hidden,
 #quran-modal.hidden,
+#farm-modal.hidden,
+#settings-panel.hidden,
 #pwa-install-banner.hidden {
   pointer-events: none !important;
 }
@@ -1067,16 +1069,27 @@ body.modal-open {
 /* شريط تقدم الأذكار (Focus Bar) — DOM تحت الهيدر */
 #rk-focus-bar-dom {
   position: fixed;
-  top: 70px;
+  top: 74px;
   left: 50%;
   transform: translateX(-50%);
+  width: min(94vw, 460px);
   z-index: 1890;
   display: none;
   align-items: center;
   justify-content: center;
-  width: min(88vw, 280px);
   pointer-events: none;
+  direction: ltr;
+  box-sizing: border-box;
+  padding: 3px 8px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #1e2f6b 0%, #16215a 100%);
+  border: 2px solid #4f7dff;
+  box-shadow:
+    0 3px 0 #0d1436,
+    0 5px 14px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.28);
 }
+
 #rk-focus-bar-dom.visible { display: flex; }
 .rk-focus-bar-track {
   flex: 1;

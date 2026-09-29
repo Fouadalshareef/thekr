@@ -129,9 +129,8 @@ export function initFarmModal(): void {
     if (e.target === root) hideFarmModal()
   })
 
-  window.addEventListener('open-garden', showFarmModal)
-
-  //Shutdown: إغلاق النافذة إن كانت مفتوحة عند تفكيك التطبيق.
+  // يفتحها MainScene بعد التحقق من أن المشهد الرئيسي نشط.
+  // Shutdown: إغلاق النافذة إن كانت مفتوحة عند تفكيك التطبيق.
   window.addEventListener('pagehide', () => {
     if (open) hideFarmModal()
   })

@@ -360,5 +360,5 @@ export function initSettingsPanel(): void {
     setStatus('✅ التطبيق مثبَّت ويعمل الآن دون إنترنت')
   })
 
-  window.addEventListener('open-settings', showSettingsPanel)
+  // يفتحها MainScene بعد التحقق من أن المشهد الرئيسي نشط.
 }

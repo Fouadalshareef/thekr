@@ -43,8 +43,8 @@ import {
   setSidebarWelcomeActive,
 } from '../../components/Sidebar'
 import { setTopHeaderPaused, setTopHeaderVisible, refreshTopHeader } from '../../components/TopHeader'
-import { isFarmModalOpen } from '../../components/FarmModal'
-import { isSettingsPanelOpen } from '../../components/SettingsPanel'
+import { isFarmModalOpen, showFarmModal } from '../../components/FarmModal'
+import { isSettingsPanelOpen, showSettingsPanel } from '../../components/SettingsPanel'
 
 /** المدة التأخيرية قبل ظهور الجسم التالي بعد تفجير الحالي (بالمللي). */
 const NEXT_DELAY = 150
@@ -249,8 +249,8 @@ export default class MainScene extends Phaser.Scene {
     // بدء مؤقت الاستراحة
     this.startRestTimer()
 
-    // النوافذ HTML لا توقف المشهد تلقائياً؛ نوقف الفيزياء والحركة لتقليل استهلاك الجهاز.
-    window.addEventListener('reader-opened', this.pauseForModal)
+    // النوافذ HTML لا توقف المشهد تلقائياً؛ نوقف الفيزياء والحركة ونخفي HUD DOM.
+    window.addEventListener('reader-opened', this.onReaderOpened)
     window.addEventListener('reader-closed', this.resumeFromModal)
 
     // واجهة اللعبة جاهزة: يُعاد إظهار سهم القائمة الجانبية (كان مخفياً في شاشة الترحيب).
@@ -265,6 +265,11 @@ export default class MainScene extends Phaser.Scene {
       setSidebarModalOpen('farm', isFarmModalOpen())
       setSidebarModalOpen('settings', isSettingsPanelOpen())
       refreshSidebarVisibility()
+      // لا يظهر الهيدر إلا بعد إغلاق النافذة والعودة إلى اللعب.
+      if (this.scene.isActive('MainScene') && !isFarmModalOpen() && !isSettingsPanelOpen()) {
+        setTopHeaderVisible(true)
+        refreshTopHeader()
+      }
     }
     window.addEventListener('reader-closed', onReaderClosed)
     // نحتفظ بالمرجع لإزالته في cleanup()
@@ -294,7 +299,7 @@ export default class MainScene extends Phaser.Scene {
 
   /** أيقونة «النمط»: تفتح نافذة اختيار النمط الفاتحة. */
   private onOpenModePanel = (): void => {
-    console.log('[MainScene] الضغط على أيقونة النمط (Pattern) → فتح نافذة اختيار النمط')
+    setTopHeaderVisible(false)
     this.openModePanel()
   }
 
@@ -304,14 +309,20 @@ export default class MainScene extends Phaser.Scene {
    * وإيقاف الفيزياء عبر pauseForModal (النافذة تُطلق reader-closed عند إغلاقها).
    */
   private onOpenGarden = (): void => {
+    // الفتح يتم صراحةً من MainScene لضمان أن مكوّن DOM موجود فوق الـ canvas.
+    showFarmModal()
     setSidebarModalOpen('farm', true)
+    setTopHeaderVisible(false)
     this.pauseForModal()
     this.applyUiSettings()
   }
 
   /** أيقونة «الإعدادات»: تفتح نافذة الإعدادات (DOM في components/SettingsPanel). */
   private onOpenSettings = (): void => {
+    // الفتح يتم صراحةً من MainScene لضمان أن مكوّن DOM موجود فوق الـ canvas.
+    showSettingsPanel()
     setSidebarModalOpen('settings', true)
+    setTopHeaderVisible(false)
     this.pauseForModal()
     this.applyUiSettings()
   }
@@ -326,7 +337,7 @@ export default class MainScene extends Phaser.Scene {
     // الأيقونات ثابتة الظاهرة دائماً: لا سهم طي/فتح ولا حركة إخفاء.
     // تمت إزالة أزرار القائمة الجانبية من WebGL واستبدالها بواجهة DOM في Sidebar.ts
     // للحصول على دقة Retina فائقة وحل مشاكل تداخل الأنيمشن.
-    
+
     // أقصى اليمين العلوي: الإيقاف أعلى عداد الجلسة بفاصل رأسي 25px على الأقل.
     this.buildPauseButton()
     this.buildSessionCounter()
@@ -365,14 +376,15 @@ export default class MainScene extends Phaser.Scene {
   private buildAzkarCounter(): void {
     const { width } = this.scale
     this.azkarCounterBg = this.add.graphics().setDepth(2000).setAlpha(0)
-    // خلفية بسيطة معتمة في أعلى المنتصف
+    // خلفية بسيطة معتمة أسفل الشريط العلوي (y=15 كان يتعارض مع هيدر Royal Kingdom)
+    const AZKAR_TOP = 118
     this.azkarCounterBg.fillStyle(0x000000, 0.4)
-    this.azkarCounterBg.fillRoundedRect(width / 2 - 90, 15, 180, 40, 20)
+    this.azkarCounterBg.fillRoundedRect(width / 2 - 90, AZKAR_TOP, 180, 40, 20)
     this.azkarCounterBg.lineStyle(2, 0xfcd34d, 0.8)
-    this.azkarCounterBg.strokeRoundedRect(width / 2 - 90, 15, 180, 40, 20)
+    this.azkarCounterBg.strokeRoundedRect(width / 2 - 90, AZKAR_TOP, 180, 40, 20)
 
     this.azkarCounterText = this.add
-      .text(width / 2, 35, '', {
+      .text(width / 2, AZKAR_TOP + 20, '', {
         fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
         fontSize: '18px',
         fontStyle: 'bold',
@@ -382,7 +394,7 @@ export default class MainScene extends Phaser.Scene {
       .setDepth(2001)
       .setAlpha(0)
 
-    this.azkarCloseButton = this.add.container(width / 2, 84).setDepth(2002).setVisible(false)
+    this.azkarCloseButton = this.add.container(width / 2, 187).setDepth(2002).setVisible(false)
     const closeBg = this.add.graphics()
     closeBg.fillStyle(0x1e293b, 1)
     closeBg.fillRoundedRect(-78, -20, 156, 40, 8)
@@ -998,6 +1010,12 @@ export default class MainScene extends Phaser.Scene {
     this.sessionText.setShadow(0, 2, 'rgba(0,0,0,0.7)', 5, true, true)
   }
 
+  private onReaderOpened = (): void => {
+    setTopHeaderVisible(false)
+    this.updateDomFocusBar(false)
+    this.pauseForModal()
+  }
+
   private pauseForModal = (): void => {
     // إيقاف مؤقت للنوافذ فقط؛ لا نغيّر حالة الزر اليدوية حتى لا تبقى اللعبة عالقة.
     this.physics.pause()
@@ -1362,6 +1380,7 @@ export default class MainScene extends Phaser.Scene {
     this.modePanel.setVisible(false)
     // إغلاق نافذة الأنماط: إعادة إظهار سهم القائمة الجانبية (إن لم تبقَ نافذة أخرى).
     setSidebarModalOpen('mode-panel', false)
+    setTopHeaderVisible(true)
     this.applyUiSettings()
     if (this.focusPanel.visible) return
     if (!this.paused) {
@@ -1599,7 +1618,7 @@ export default class MainScene extends Phaser.Scene {
 
       const bubble = new AzkarBubble(this, cx, cy, azkarItem)
       this.add.existing(bubble)
-      
+
       // نتتبعه مثل باقي الكائنات لكي نعرف متى ينتهي
       this.alive.push(bubble as unknown as FloatingObject)
       bubble.once(Phaser.GameObjects.Events.DESTROY, () => {
@@ -1665,16 +1684,16 @@ export default class MainScene extends Phaser.Scene {
 
   private onDhikrCollected(payload: CollectPayload): void {
     const mode = gameMode.getMode()
-    
+
     // إذا كان النمط صباح/مساء نعالجه بشكل منفصل:
     if (mode === 'morning' || mode === 'evening') {
       const { allDone } = gameMode.onAzkarTapped()
       this.updateAzkarCounter()
-      
+
       // المؤثرات
       this.sessionCount += 1
       this.sessionText.setText(`${this.sessionCount}`)
-      
+
       if (allDone) {
         // اكتملت جميع الأذكار — حفظ الإنجاز اليومي (علامة ✔ في لوحة التحكم) + رسالة التهنئة
         markAzkarDone(mode)
@@ -1920,38 +1939,38 @@ export default class MainScene extends Phaser.Scene {
     const { width, height } = this.scale
     const title = mode === 'morning' ? 'أذكار الصباح' : 'أذكار المساء'
     const msg = this.add.container(width / 2, height / 2).setDepth(4000).setAlpha(0)
-    
+
     const bg = this.add.graphics()
     bg.fillStyle(0x0f172a, 0.95)
     bg.fillRoundedRect(-160, -100, 320, 200, 24)
     bg.lineStyle(3, 0xfcd34d, 1)
     bg.strokeRoundedRect(-160, -100, 320, 200, 24)
-    
+
     const txt1 = this.add.text(0, -30, `اكتملت ${title}`, {
       fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
       fontSize: '28px',
       fontStyle: 'bold',
       color: '#34d399'
     }).setOrigin(0.5)
-    
+
     const txt2 = this.add.text(0, 20, 'تقبل الله طاعتكم', {
       fontFamily: '"Segoe UI", Tahoma, sans-serif',
       fontSize: '22px',
       color: '#fef3c7'
     }).setOrigin(0.5)
-    
+
     const hint = this.add.text(0, 70, '« اضغط للعودة »', {
       fontFamily: '"Segoe UI", Tahoma, sans-serif',
       fontSize: '15px',
       color: '#94a3b8'
     }).setOrigin(0.5)
-    
+
     msg.add([bg, txt1, txt2, hint])
-    
+
     confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } })
-    
+
     this.tweens.add({ targets: msg, alpha: 1, scale: { from: 0.8, to: 1 }, duration: 400, ease: 'Back.easeOut' })
-    
+
     const blocker = this.add.rectangle(0, 0, width, height, 0x000000, 0.6).setOrigin(0).setDepth(3999).setInteractive()
     blocker.once('pointerdown', () => {
       msg.destroy()
@@ -1968,7 +1987,7 @@ export default class MainScene extends Phaser.Scene {
     const restBlocker = this.data.get('restBlocker') as Phaser.GameObjects.Rectangle | undefined
     restBlocker?.destroy()
     this.data.remove('restBlocker')
-    window.removeEventListener('reader-opened', this.pauseForModal)
+    window.removeEventListener('reader-opened', this.onReaderOpened)
     window.removeEventListener('reader-closed', this.resumeFromModal)
     if (this._onReaderClosed) window.removeEventListener('reader-closed', this._onReaderClosed)
     window.removeEventListener('settings-changed', this.onSettingsChanged)
