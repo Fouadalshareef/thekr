@@ -34,6 +34,8 @@ export default class BootScene extends Phaser.Scene {
     // أيقونات النوافذ (تبقى بتصميمها الذهبي السابق)
     this.load.svg('modal-close',  'game/icons/close.svg',    { width: 112, height: 112 })
     this.load.svg('modal-index',  'game/icons/index.svg',    { width: 240, height:  90 })
+    // إطار عدّاد الجلسة (لوحة ذهبية + مربّع كريمي داخلي) — pi/session.png
+    this.load.image('session-frame', 'pi/session.png')
   }
 
   create(): void {

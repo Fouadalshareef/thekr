@@ -41,9 +41,19 @@ export function refreshSidebarVisibility(): void {
   syncVisibility()
 }
 
-/** هل الشريط معروض الآن؟ (يُخفى فقط خارج اللعب) */
+/**
+ * هل الشريط معروض الآن؟
+ *
+ * يظهر فقط أثناء اللعب الفعلي في MainScene:
+ *   - لا في شاشة الترحيب (welcomeActive).
+ *   - لا فوق أي نافذة كاملة: المصحف، النصائح، المزرعة، الإعدادات، الأنماط…
+ *     وتصل عبر 'reader-opened'/'reader-closed' ⇒ المفتاح 'dom-modal'.
+ *
+ * ملاحظة z-index: الشريط كان z-[2000] والمصحف/النصائح z-[70]، فكانت الأيقونات
+ * تظهر فوق النوافذ فعلياً. خفّضنا الشريط إلى z-[60] ليجري النصائح والمصحف فوقه.
+ */
 export function isSidebarVisible(): boolean {
-  return !welcomeActive
+  return !welcomeActive && openModals.size === 0
 }
 
 /** تطبيق قاعدة الرؤية على عناصر DOM فعلياً. */
@@ -58,7 +68,10 @@ export function initSidebar(): void {
 
   const container = document.createElement('div')
   container.id = 'dom-sidebar'
-  container.className = 'fixed left-[16px] top-[62px] flex flex-col gap-[20px] z-[2000] pointer-events-none'
+  // z-[60] لا z-[2000]: يجب أن تمرّ النوافذ فوق الشريط دائماً، والنوافذ
+  // (النصائح/المصحف z-[70]، والمزارع/الإعدادات z-[5000]) أعلى منه.
+  // top يأتي من CSS عبر المتغير --rk-sidebar-top (يتحرك مع شريط التخصيص).
+  container.className = 'fixed left-[16px] flex flex-col gap-[20px] z-[60] pointer-events-none'
   // style to ensure RTL does not break left positioning
   container.style.direction = 'ltr' // Ensure left positioning is physical
 

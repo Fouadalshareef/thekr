@@ -143,15 +143,14 @@ export default class MainScene extends Phaser.Scene {
    * القائمة الجانبية ثابتة الظاهرة دائماً: لا سهم طي/فتح ولا زر يخفيها.
    * (حُذف حقل sideMenuOpen لأن الرؤية صارت دائمة بلا حالة.)
    */
-  private sessionPill!: Phaser.GameObjects.Graphics
+  /** إطار عدّاد الجلسة: صورة `session-frame`، أو Graphics كبديل احتياطي. */
+  private sessionPill!: Phaser.GameObjects.Image | Phaser.GameObjects.Graphics
   /** شريط تقدم الورد في النمط المخصص (0/33 … 33/33). */
   private focusBarBg!: Phaser.GameObjects.Graphics
   private focusBarFill!: Phaser.GameObjects.Rectangle
   private focusBarText!: Phaser.GameObjects.Text
   /** هل نافذة الاحتفال بالورد مفتوحة حالياً (منع التكرار أثناء العرض). */
   private focusCelebrationOpen = false
-  private sessionLabel!: Phaser.GameObjects.Text
-
   /** مرجع مستمع reader-closed المُضاف في create() لإزالته في cleanup(). */
   private _onReaderClosed?: () => void
 
@@ -487,6 +486,8 @@ export default class MainScene extends Phaser.Scene {
       `
       document.body.appendChild(bar)
     }
+    // صنف على <body> يدفع الشريط الجانبي للأسفل عند ظهور شريط التخصيص.
+    document.body.classList.toggle('rk-focus-bar-open', visible)
     if (!visible) {
       bar.classList.remove('visible')
       return
@@ -549,7 +550,6 @@ export default class MainScene extends Phaser.Scene {
     // عناصر الجلسة تبقى ظاهرة كما هي.
     this.pauseButton?.setVisible(false) // استُبدل بزر الإيقاف في TopHeader
     this.sessionPill?.setVisible(true)
-    this.sessionLabel?.setVisible(true)
     this.sessionText?.setVisible(true)
     this.comboText?.setVisible(true)
 
@@ -656,14 +656,6 @@ export default class MainScene extends Phaser.Scene {
     window.addEventListener('open-dashboard', () => {
       this.updateBadge?.setVisible(false)
     })
-  }
-
-  /** تغميق لون (يعيد صيغة 0xRRGGBB). */
-  private darker = (c: number, f = 0.6): number => {
-    const r = Math.min(255, Math.round(((c >> 16) & 0xff) * f))
-    const g = Math.min(255, Math.round(((c >> 8) & 0xff) * f))
-    const b = Math.min(255, Math.round((c & 0xff) * f))
-    return (r << 16) | (g << 8) | b
   }
 
   /**
@@ -959,55 +951,51 @@ export default class MainScene extends Phaser.Scene {
     this.tweens.add({ targets: this.comboText, scale: { from: 1.2, to: 1 }, duration: 220, ease: 'Back.easeOut' })
   }
 
-  /** عداد الجلسة الحالية — بطاقة كرتونية بارزة (3D Bevel). */
+  /**
+   * عدّاد الجلسة — إطار معدني جاهز (pi/session.png) بدل الرسم البرمجي.
+   *
+   * الأصل 1536×1024: لوحة «الجلسة» الذهبية علوياً، وتحتها المربّع الكريمي
+   * الفاتح الذي يُوضع فيه الرقم. نحجم الإطار إلى عرض 104px (مناسب للهاتف)،
+   * فنُعيد حساب الموضع الرأسي للرقم كنسبة من ارتفاع الإطار لا كإحداث ثابت،
+   * حتى يبقى داخل المربّع مهما تغيّر الحجم.
+   */
   private buildSessionCounter(): void {
-    const x = this.scale.width - 56
-    const w = 92
-    const h = 96
-    const topY = 129
-    const lift = 5
-    const base = 0x0ea5e9 // أزرق كريستالي
-    const sideCol = this.darker(base, 0.55)
+    const x = this.scale.width - 60
+    const topY = 120
+    const frameW = 104
+    const frameH = Math.round((frameW * 1024) / 1536) // الحفاظ على النسبة
+    // مركز المربّع الكريمي الداخلي كنسبة من أبعاد الأصل (≈ 0.66 من الارتفاع)
+    const innerY = 0.66
+    const hasFrame = this.textures.exists('session-frame')
 
-    // ظل أرضي ساقط
-    this.sessionPill = this.add.graphics()
-    this.sessionPill.fillStyle(0x000000, 0.3)
-    this.sessionPill.fillRoundedRect(x - w / 2, topY + lift + 3, w, h, 20)
-    // جسم الحافة (لون أغمق)
-    this.sessionPill.fillStyle(sideCol, 1)
-    this.sessionPill.fillRoundedRect(x - w / 2, topY + lift - 2, w, h, 20)
-    // الوجه الزاهي
-    this.sessionPill.fillStyle(base, 1)
-    this.sessionPill.fillRoundedRect(x - w / 2, topY, w, h, 20)
-    // لمعة علوية عريضة
-    this.sessionPill.fillStyle(0xffffff, 0.28)
-    this.sessionPill.fillRoundedRect(x - w / 2 + 7, topY + 5, w - 14, 26, 13)
-    // حد أبيض ناصع
-    this.sessionPill.lineStyle(3, 0xffffff, 0.92)
-    this.sessionPill.strokeRoundedRect(x - w / 2, topY, w, h, 20)
-    this.sessionPill.setDepth(1999)
+    if (hasFrame) {
+      this.sessionPill = this.add
+        .image(x, topY, 'session-frame')
+        .setOrigin(0.5, 0)
+        .setDisplaySize(frameW, frameH)
+        .setDepth(1999)
+    } else {
+      // بديل احتياطي: بطاقة زرقاء مرسومة، لو فشل تحميل الأصل.
+      this.sessionPill = this.add.graphics().setDepth(1999)
+      this.sessionPill.fillStyle(0x0ea5e9, 1)
+      this.sessionPill.fillRoundedRect(x - frameW / 2, topY, frameW, frameH, 16)
+      this.sessionPill.lineStyle(3, 0xffffff, 0.9)
+      this.sessionPill.strokeRoundedRect(x - frameW / 2, topY, frameW, frameH, 16)
+    }
 
-    this.sessionLabel = this.add
-      .text(x, topY + 22, 'الجلسة', {
-        fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
-        fontSize: '16px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-      })
-      .setOrigin(0.5)
-      .setDepth(2000)
-      .setShadow(0, 1, 'rgba(0,0,0,0.5)', 2, true, true)
+    // كلمة «الجلسة» مطبوعة داخل صورة الإطار نفسه، فلا ننشئ لها نصاً برمجياً.
 
+    // الرقم داخل المربّع الكريمي: بنّي داكن غامق + ظل خفيف لزيادة الوضوح.
     this.sessionText = this.add
-      .text(x, 193, '0', {
-        fontFamily: 'Consolas, monospace',
-        fontSize: '42px',
+      .text(x, topY + frameH * innerY, '0', {
+        fontFamily: '"Segoe UI", Tahoma, Arial, sans-serif',
+        fontSize: '30px',
         fontStyle: 'bold',
-        color: '#ffd166',
+        color: '#3E2723',
       })
       .setOrigin(0.5)
       .setDepth(2000)
-    this.sessionText.setShadow(0, 2, 'rgba(0,0,0,0.7)', 5, true, true)
+    this.sessionText.setShadow(0, 1, 'rgba(255,255,255,0.75)', 3, true, true)
   }
 
   private onReaderOpened = (): void => {
@@ -2004,6 +1992,8 @@ export default class MainScene extends Phaser.Scene {
     setTopHeaderVisible(false)
     // إخفاء شريط تقدم الورد DOM عند مغادرة المشهد.
     document.getElementById('rk-focus-bar-dom')?.classList.remove('visible')
+    // إزالة صنف الإزاحة من body وإلا تسرّب إلى المشاهد الأخرى (Zen/Boot).
+    document.body.classList.remove('rk-focus-bar-open')
 
     for (const b of this.alive) b.destroy()
     this.alive = []
