@@ -1,10 +1,10 @@
 /**
  * TopHeader — الشريط العلوي فوق قماش اللعبة (DOM) بتصميم اللوحة الخشبية.
  *
- * الأصل: `src/assets/rk-banner.png` (2172×724) لوحة ذهبية بثلاث فتحات:
- *   - يسار (11.97% عرض، 47.10% ارتفاع): دائرة كريمية ⇒ المستوى.
- *   - وسط (53.68% عرض، 48.83% ارتفاع): الفراغ الكريمي يمين النجمة ⇒ الإجمالي.
- *   - يمين (88.12% عرض، 46.89% ارتفاع): دائرة كريمية ⇒ زر الإيقاف/الاستئناف.
+ * الأصل: `src/assets/rk-banner.png` (2172×724) لوحة خشبية بثلاث فتحات:
+ *   - يسار (10.27% عرض، 30.66% ارتفاع): دائرة صغيرة ⇒ اسم المستخدم + المستوى.
+ *   - وسط (41.76% عرض، 27.21% ارتفاع): الحبة البيضاء يمين النجمة ⇒ الإجمالي.
+ *   - يمين (18.55% عرض، 56.08% ارتفاع): دائرة كبيرة ⇒ زر الإيقاف/الاستئناف.
  * كل عنصر يُموضَع بنسبة مئوية من أبعاد اللوحة، فيبقى مضبوطاً على أي مقاس.
  * عند استبدال الصورة: `node scripts/measure-banner.mjs src/assets/rk-banner.png`
  * ثم تُحدَّث النسب هنا وفي .rk-slot-* في style.css من مخرجات القياس.
@@ -121,20 +121,22 @@ export function initTopHeader(): void {
   rootEl.style.display = 'none'
 
   rootEl.innerHTML = `
-    <!-- يسار: المستوى (دائرة كريمية في اللوحة) -->
+    <!-- يسار: اسم المستخدم + المستوى (الدائرة الصغيرة) -->
     <div class="rk-slot rk-slot-left">
-      <span class="rk-slot-label">المستوى</span>
-      <span id="top-header-level" class="rk-level">1</span>
+      <span class="rk-level-line">
+        <span class="rk-slot-label">المستوى</span>
+        <span id="top-header-level" class="rk-level">1</span>
+      </span>
       <span id="top-header-name" class="rk-header-name"></span>
     </div>
 
-    <!-- وسط: إجمالي الأذكار (فتحة اللوحة المستطيلة) -->
+    <!-- وسط: إجمالي الأذكار (الحبة البيضاء يمين النجمة) -->
     <div class="rk-slot rk-slot-center">
       <span class="rk-slot-label">إجمالي الأذكار</span>
       <span id="top-header-total" class="rk-header-count">0</span>
     </div>
 
-    <!-- يمين: زر الإيقاف/الاستئناف -->
+    <!-- يمين: زر الإيقاف/الاستئناف (الدائرة الكبيرة) -->
     <button id="top-header-pause" class="rk-slot rk-slot-right rk-pause-btn" type="button"
             aria-label="إيقاف مؤقت" aria-pressed="false">
       <img src="${PAUSE_ICON}" alt="" aria-hidden="true" />
