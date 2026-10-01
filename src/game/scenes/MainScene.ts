@@ -964,30 +964,37 @@ export default class MainScene extends Phaser.Scene {
   }
 
   /**
-   * عدّاد الجلسة — إطار معدني جاهز (pi/session.png) بدل الرسم البرمجي.
+   * عدّاد الجلسة — إطار معدني جاهز (src/assets/session-frame.png) بدل الرسم البرمجي.
    *
-   * الأصل 1536×1024: لوحة «الجلسة» الذهبية علوياً، وتحتها المربّع الكريمي
-   * الفاتح الذي يُوضع فيه الرقم. نحجم الإطار إلى عرض 104px (مناسب للهاتف)،
-   * فنُعيد حساب الموضع الرأسي للرقم كنسبة من ارتفاع الإطار لا كإحداث ثابت،
-   * حتى يبقى داخل المربّع مهما تغيّر الحجم.
+   * الأصل 512×512 (مربّع، POT — أنظر أدناه): لوحة «الجلسة» الذهبية علوياً،
+   * وتحتها المربّع الكريمي الفاتح الذي يُوضع فيه الرقم. نُحجم الإطار إلى عرض
+   * 112..150px (مناسب للهاتف)، فنُعيد حساب موضع الرقم كنسبة من أبعاد الإطار
+   * لا كإحداث ثابت، حتى يبقى داخل المربّع مهما تغيّر الحجم.
    */
   private buildSessionCounter(): void {
+    // الأصل مربّع 512×512 ⇒ frameH = frameW.
     const frameW = Math.round(Math.min(150, Math.max(112, this.scale.width * 0.3)))
-    const frameH = Math.round((frameW * 1024) / 1536) // الحفاظ على النسبة
+    const frameH = frameW
     // البطاقة مثبّتة أعلى اليمين، أسفل الشريط العلوي مباشرة.
     // الشريط عرضه min(94vw, 520px) وارتفاعه = ثلثه ⇒ نحسب أسفله بدل ثابت.
     const bannerW = Math.min(window.innerWidth * 0.94, 520)
     const bannerBottom = 4 + bannerW / 3
     const x = this.scale.width - Math.round(frameW * 0.62)
     const topY = Math.round(bannerBottom + 10)
-    // مركز المربّع الكريمي الداخلي كنسبة من أبعاد الأصل (≈ 0.65 من الارتفاع)
-    const innerY = 0.65
+    // مركز المربّع الكريمي الداخلي كنسبة من ارتفاع الأصل (قِسته: 350/512 ≈ 0.684)
+    const innerY = 0.684
     const hasFrame = this.textures.exists('session-frame')
 
-    // أصل session.png ضخم (1536×1024) ويُعرض بحوالي 150px فقط، أي تصغير
-    // بنحو عشرة أضعاف. بلا ترشيح مناسب يظهر الإطار ضبابياً، خصوصاً حواف
-    // اللوحة الذهبية. نستخدم LINEAR (تنعيم) لا NEAREST (المستخدم لأيقونات
-    // HUD الصغيرة) لأن NEAREST عند هذا التصغير ينتج حواف مسنّنة.
+    // سبب الباهتان والدقة المنخفضة كان جذرين:
+    // 1) الأصل 1536*1024 ليس مضاعف للاثنين (non-POT) و Phaser يولد mipmaps
+    //    للأصول POT فقط (WebGLTexture.createTextureFromSource: isMip = IsSizePowerOfTwo)
+    // فلم تكن هناك سلم مدرجات اصلا فيصغر الملف دفعة واحدة فيظهر مهتجا.
+    //    الحل: قص الأصل إلى محتواه الفعلي (943x955) ثم صغر
+    //    إلى 512×512 (POT) ⇒ تصغير 3.4× فقط و mipmaps فعّالة.
+    // 2) القماش كان يُرسم بدقة CSS بلا devicePixelRatio ⇒ نصف دقة الشاشة.
+    //    الحل في PhaserGame: render.mipmapFilter + scale.zoom = 1/dpr.
+    // الترشيح يبقى LINEAR (نعومة) لا NEAREST (المستخدم لأيقونات HUD الصغيرة)،
+    // وتحته mipmapFilter من إعدادات المحرك يتولّى اختيار مستوى التصغير المناسب.
     if (hasFrame) {
       this.textures.get('session-frame').setFilter(Phaser.Textures.FilterMode.LINEAR)
     }

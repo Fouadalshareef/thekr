@@ -1,6 +1,9 @@
 import Phaser from 'phaser'
 import { setSidebarWelcomeActive } from '../../components/Sidebar'
 import { setTopHeaderVisible } from '../../components/TopHeader'
+// استيراد عبر Vite: يُصدر الصورة باسم مجزّأ ببصمة المحتوى، فلا يصيبها
+// كاش قديم من Service Worker عند استبدال الأصل، كما أنه يعمل مع base:'./'.
+import SESSION_FRAME_URL from '../../assets/session-frame.png'
 
 /**
  * BootScene — شاشة بدء التجربة.
@@ -34,8 +37,9 @@ export default class BootScene extends Phaser.Scene {
     // أيقونات النوافذ (تبقى بتصميمها الذهبي السابق)
     this.load.svg('modal-close',  'game/icons/close.svg',    { width: 112, height: 112 })
     this.load.svg('modal-index',  'game/icons/index.svg',    { width: 240, height:  90 })
-    // إطار عدّاد الجلسة (لوحة ذهبية + مربّع كريمي داخلي) — pi/session.png
-    this.load.image('session-frame', 'pi/session.png')
+    // إطار عدّاد الجلسة (لوحة ذهبية + مربّع كريمي داخلي) — src/assets/session-frame.png
+    // يُستورد بمسار Vite المجزّأ ليبقى خارج كاش Service Worker القديم.
+    this.load.image('session-frame', SESSION_FRAME_URL)
   }
 
   create(): void {

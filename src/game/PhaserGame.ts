@@ -8,16 +8,39 @@ import MainScene from './scenes/MainScene'
 import ZenScene from './scenes/ZenScene'
 import type { PhaserGameConfig } from './types'
 
+/** نسبة بكسل الجهاز إلى بكسل CSS، محدودة بسقف 3 لمنع تضخيم هائل للأداء. */
+export function getDevicePixelRatio(): number {
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+  return Math.min(Math.max(dpr, 1), 3)
+}
+
 /**
  * إنشاء وإعادة تشغيل لعبة Phaser كاملة.
  * نمط RESIZE: أبعاد Phaser مطابقة لأبعاد الشاشة الحقيقية بالبكسل —
  * لا يوجد أي تحويل هندسي (Scale Offset) بين موقع اللمس الحقيقي وعناصر اللعبة.
+ *
+ * دقة العرض (High-DPI):
+ * كان القماش يُرسم بمقاس CSS بالبكسل ثم يُكبَّر لعرضه على شاشة 2x/3x،
+ * فيخرج الرسم كله مهتّجاً — وهو سبب باهتان الدقة. الحل: zoom = 1/dpr يجعل
+ * مخزن بكسل القماش أكبر بعدد مرات devicePixelRatio، بينما يبقى المقاس
+ * المنطقي وإحداثيات اللمس كما هي (ScaleManager يضبط input من نفس المقياس).
  */
 export function createGame(config: PhaserGameConfig = { width: 480, height: 854 }): Phaser.Game {
   return new Phaser.Game({
     type: Phaser.AUTO,
     parent: config.parent ?? 'game-container',
     backgroundColor: '#0f172a',
+    render: {
+      // توليد سلّم مدرّجات (mipmaps) للنسيج + ترشيح lineare بين المستويات.
+      // ضروري للأصول الكبيرة المُصغَّرة كثيراً كإطار عدّاد الجلسة
+      // (1536×1024 يُعرض بحوالي 150px) بدونه تظهر الحواف مهتّجة.
+      mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
+      // antialias يرفع جودة النصوص والحدود المائلة على الدقة العالية.
+      antialias: true,
+      // roundPixels: نُبقيه false لأن بعض العناصر المتحركة تحتاج إحداثيات كسرية.
+      roundPixels: false,
+      powerPreference: 'high-performance',
+    },
     // نظام الفيزياء (Arcade): مطلوب لتوفّر this.physics داخل المشاهد.
     // بدون هذا الإعداد يكون this.physics === undefined، وأي نداء مثل
     // this.physics.pause() يرمي استثناءً (TypeError). وإذا وقع الاستثناء داخل
@@ -45,7 +68,18 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
       parent: config.parent ?? 'game-container',
       width: config.width,
       height: config.height,
+      // الرسم بدقة الجهاز: في وضع RESIZE يقسم ScaleManager المقاس المنطقي على
+      // zoom، فـ zoom = 1/dpr يعني مخزن بكسل أكبر dpr مرات (حادّة على 2x/3x).
+      zoom: 1 / getDevicePixelRatio(),
     },
     scene: [BootScene, MainScene, ZenScene],
   })
+}
+
+/**
+ * إعادة ضبط تكبير القماش عند تغيّر devicePixelRatio (نقل النافذة بين شاشات
+ * بمقاسات مختلفة الكثافة). بدونها يبقى القماش بالدقة القديمة.
+ */
+export function refreshGameZoom(game: Phaser.Game): void {
+  game.scale.setZoom(1 / getDevicePixelRatio())
 }

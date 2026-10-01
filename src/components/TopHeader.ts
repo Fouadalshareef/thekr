@@ -1,7 +1,7 @@
 /**
  * TopHeader — الشريط العلوي فوق قماش اللعبة (DOM) بتصميم اللوحة الخشبية.
  *
- * الأصل: `pi/Resource.png` (2172×724) لوحة ذهبية بثلاث فتحات:
+ * الأصل: `src/assets/rk-banner.png` (2172×724) لوحة ذهبية بثلاث فتحات:
  *   - يسار (≈19% عرض، ≈48% ارتفاع): دائرة كريمية ⇒ المستوى.
  *   - وسط (≈53% عرض، ≈48% ارتفاع): فتحة مستطيلة كريمية ⇒ إجمالي الأذكار.
  *   - يمين (≈81% عرض، ≈49% ارتفاع): دائرة كريمية ⇒ زر الإيقاف/الاستئناف.
@@ -14,6 +14,11 @@
 import { getUsername } from '../services/SettingsService'
 import { getTotalGoodDeeds, getGardenState } from '../services/GardenService'
 import { onGameUiVisibilityChange } from './Sidebar'
+// استيراد عبر Vite (وليس مساراً ثابتاً في public/):
+// Vite يُصدر الصورة باسم مجزّأ ببصمة المحتوى (rk-banner-<hash>.png)،
+// فأي استبدال للصورة ينتج عنواناً جديداً تماماً ولا يصيبه كاش قديم
+// من Service Worker ولا من HTTP cache — وهو ما كان يُبقي الشريط القديم ظاهراً.
+import BANNER_URL from '../assets/rk-banner.png'
 
 /** مراجع عناصر الشريط (بعد initTopHeader). */
 let rootEl: HTMLElement | null = null
@@ -29,8 +34,7 @@ let paused = false
 const PAUSE_ICON = 'game/icons/pause-gbtn.svg'
 const PLAY_ICON  = 'game/icons/play-gbtn.svg'
 
-/** مسار اللوحة الخشبية (نسخة داخل public ليعمل الترويسة من أي مسار نشر). */
-const BANNER = 'pi/Resource.png'
+
 
 /** تحديث اسم المستخدم المعروض. */
 function renderName(): void {
@@ -134,11 +138,10 @@ export function initTopHeader(): void {
       <img src="${PAUSE_ICON}" alt="" aria-hidden="true" />
     </button>
   `
-  // الصورة تُمرَّر عبر --rk-banner كمسار مطلق (new URL) لسببين:
-  //   1) المتغيّرات المخصّصة تُحلّ URLs النسبية نسبةً لملف CSS لا للصفحة،
-  //      فالمسار 'pi/Resource.png' صار يُطلب من /assets/ (404).
-  //   2) المسار المطلق يعمل مع base:'./' على GitHub Pages وأي مسار نشر.
-  rootEl.style.setProperty('--rk-banner', `url("${new URL(BANNER, document.baseURI).href}")`)
+  // الصورة تُمرَّر عبر --rk-banner. العنوان هنا ناتج عن استيراد Vite فيصير
+  // مساراً مطلقاً بالاسم المجزّأ، فيعمل مع base:'./' على GitHub Pages
+  // وأي مسار نشر، وبلا تحذير حل المسار في CSS.
+  rootEl.style.setProperty('--rk-banner', `url("${new URL(BANNER_URL, document.baseURI).href}")`)
 
   document.body.appendChild(rootEl)
 

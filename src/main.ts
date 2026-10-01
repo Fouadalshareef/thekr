@@ -1,5 +1,5 @@
 import './style.css'
-import { createGame } from './game/PhaserGame'
+import { createGame, refreshGameZoom } from './game/PhaserGame'
 import { initAdviceModal } from './components/AdviceModal'
 import { initQuranModal } from './components/QuranModal'
 import { initSidebar } from './components/Sidebar'
@@ -39,8 +39,13 @@ initSidebar()
 // Phaser بنمط FIT سيوسّع اللعبة تلقائياً مع بقاء إحداثيات اللمس متطابقة 100%.
 const game = createGame({ width: 480, height: 854, parent: 'game-container' })
 
-// تحديث ناعم عند تغيّر حجم النافذة أو تدوير الجهاز
-const refreshScale = () => game.scale.refresh()
+// تحديث ناعم عند تغيّر حجم النافذة أو تدوير الجهاز.
+// نعيد أيضاً ضبط التكبير (zoom) لأن devicePixelRatio قد يتغيّر عند النقل بين
+// شاشات بكثافة مختلفة (شاشات خارجية / تدوير الجهاز).
+const refreshScale = () => {
+  refreshGameZoom(game)
+  game.scale.refresh()
+}
 window.addEventListener('resize', refreshScale)
 window.addEventListener('orientationchange', refreshScale)
 
