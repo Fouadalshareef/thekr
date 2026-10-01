@@ -39,6 +39,7 @@ import {
 import { setCircleHitArea } from '../ui/hitArea'
 import {
   refreshSidebarVisibility,
+  resetSidebarModals,
   setSidebarModalOpen,
   setSidebarWelcomeActive,
 } from '../../components/Sidebar'
@@ -960,12 +961,16 @@ export default class MainScene extends Phaser.Scene {
    * حتى يبقى داخل المربّع مهما تغيّر الحجم.
    */
   private buildSessionCounter(): void {
-    const x = this.scale.width - 60
-    const topY = 120
-    const frameW = 104
+    const frameW = Math.round(Math.min(150, Math.max(112, this.scale.width * 0.3)))
     const frameH = Math.round((frameW * 1024) / 1536) // الحفاظ على النسبة
-    // مركز المربّع الكريمي الداخلي كنسبة من أبعاد الأصل (≈ 0.66 من الارتفاع)
-    const innerY = 0.66
+    // البطاقة مثبّتة أعلى اليمين، أسفل الشريط العلوي مباشرة.
+    // الشريط عرضه min(94vw, 520px) وارتفاعه = ثلثه ⇒ نحسب أسفله بدل ثابت.
+    const bannerW = Math.min(window.innerWidth * 0.94, 520)
+    const bannerBottom = 4 + bannerW / 3
+    const x = this.scale.width - Math.round(frameW * 0.62)
+    const topY = Math.round(bannerBottom + 10)
+    // مركز المربّع الكريمي الداخلي كنسبة من أبعاد الأصل (≈ 0.65 من الارتفاع)
+    const innerY = 0.65
     const hasFrame = this.textures.exists('session-frame')
 
     if (hasFrame) {
@@ -985,17 +990,19 @@ export default class MainScene extends Phaser.Scene {
 
     // كلمة «الجلسة» مطبوعة داخل صورة الإطار نفسه، فلا ننشئ لها نصاً برمجياً.
 
-    // الرقم داخل المربّع الكريمي: بنّي داكن غامق + ظل خفيف لزيادة الوضوح.
+    // الرقم داخل المربّع الكريمي، متمركز تماماً: حجم نسبي لحجم الإطار
+    // (يبقى مقروءاً من الهاتف إلى الحاسوب) + ظل فاتح يرفع التباين.
     this.sessionText = this.add
       .text(x, topY + frameH * innerY, '0', {
         fontFamily: '"Segoe UI", Tahoma, Arial, sans-serif',
-        fontSize: '30px',
+        fontSize: `${Math.round(frameH * 0.2)}px`,
         fontStyle: 'bold',
-        color: '#3E2723',
+        color: '#4A2C0A',
+        align: 'center',
       })
       .setOrigin(0.5)
       .setDepth(2000)
-    this.sessionText.setShadow(0, 1, 'rgba(255,255,255,0.75)', 3, true, true)
+    this.sessionText.setShadow(0, 1, 'rgba(255,255,255,0.9)', 4, true, true)
   }
 
   private onReaderOpened = (): void => {
@@ -1041,8 +1048,12 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildModePanel(): void {
+    // تصفير مراجع الأزرار قبل أي بناء: عند العودة من مشهد آخر (نمط الاستغفار)
+    // يبقى الحقل محفوظاً من التشغيل السابق ويشير إلى نصوص مُدمَّرة،
+    // فتنهار refreshModeSelection على canvas=null وتتعطّل create() بالكامل.
+    this.modeButtons = []
+
     // الواجهة الداكنة القديمة تُبقى احتياطاً، لكن المستخدم يرى الآن نافذة DOM الفاتحة.
-    this.buildModeDom()
     const { width, height } = this.scale
     this.modePanel = this.add.container(0, 0)
     this.modePanel.setDepth(2000)
@@ -1227,6 +1238,10 @@ export default class MainScene extends Phaser.Scene {
     this.input.on('pointermove', this.handleModeDragMove, this)
     this.input.on('pointerup', this.handleModeDragUp, this)
     this.modePanel.add(card)
+
+    // نافذة DOM تُبنى أخيراً: عندها تكون modeButtons مليئة بنصوص حية،
+    // فتعمل refreshModeSelection بدون أن تمسّ نصوصاً مُدمَّرة من تشغيل سابق.
+    this.buildModeDom()
   }
 
   /** هل بدأ السحب داخل منطقة قائمة الأنماط؟ */
@@ -1356,6 +1371,9 @@ export default class MainScene extends Phaser.Scene {
       card.classList.toggle('is-active', card.dataset.mode === activeMode)
     })
     this.modeButtons.forEach(({ mode, draw, label }) => {
+      // حماية: قد يكون النص مُدمَّراً إذا نُسِي تصفير الحقل — نتخطّاه بدل
+      // أن يرمي استثناءً داخل create() فتتوقف GameObjects خاصة بتحديث النمط.
+      if (!label || !label.scene) return
       const active = mode === activeMode
       draw(active, false)
       label.setColor(active ? '#ffffff' : '#e2e8f0')
@@ -1985,9 +2003,9 @@ export default class MainScene extends Phaser.Scene {
     window.removeEventListener('open-settings', this.onOpenSettings)
     // النوافذ الفاتحة صارت عناصر DOM في main.ts وتُخفى بنفسها عند الإغلاق،
     // فكفاية تفريغ حالتها في لوحة المفاتيح الجانبية.
-    setSidebarModalOpen('farm', false)
-    setSidebarModalOpen('settings', false)
-    refreshSidebarVisibility()
+    // تصفير كل حالات النوافذ: المشهد المُغلق قد يترك مفتاحاً معلّقاً
+    // (مثل «mode-panel» عند فتح نمط الاستغفار)، فيمنع ظهور واجهة اللعب لاحقاً.
+    resetSidebarModals()
     // إخفاء الشريط العلوي عند مغادرة المشهد الرئيسي.
     setTopHeaderVisible(false)
     // إخفاء شريط تقدم الورد DOM عند مغادرة المشهد.

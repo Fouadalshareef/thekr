@@ -17,6 +17,25 @@ let sidebarRoot: HTMLElement | null = null
 let welcomeActive = true
 /** معرّفات النوافذ المفتوحة حالياً (Set لمنع تداخل الفتح/الإغلاق). */
 const openModals = new Set<string>()
+/** مشتركون في تغيّر حالة الرؤية (يستخدمهم الشريط العلوي ليتبع نفس القاعدة). */
+type VisibilityListener = (visible: boolean) => void
+const visibilityListeners = new Set<VisibilityListener>()
+
+/**
+ * الاشتراك في تغيّر رؤية واجهة اللعب.
+ * يستعمله TopHeader ليخفي نفسه تلقائياً مع الشريط الجانبي
+ * (قاعدة واحدة مركزية: الواجهة تُعرض أثناء اللعب الفعلي فقط).
+ */
+export function onGameUiVisibilityChange(cb: VisibilityListener): () => void {
+  visibilityListeners.add(cb)
+  cb(isSidebarVisible())
+  return () => visibilityListeners.delete(cb)
+}
+
+/** هل الرؤية الآن (تُستخدم في التهيئة الأولى للمشتركين). */
+export function isGameUiVisible(): boolean {
+  return isSidebarVisible()
+}
 
 /** إخفاء/إظهار الشريط مع شاشة الترحيب (تُستدعى من BootScene/MainScene/ZenScene). */
 export function setSidebarWelcomeActive(active: boolean): void {
@@ -34,6 +53,17 @@ export function setSidebarModalOpen(id: string, open: boolean): void {
 /** هل هناك نافذة مفتوحة حالياً؟ */
 export function isSidebarModalOpen(): boolean {
   return openModals.size > 0
+}
+
+/**
+ * تصفير كل حالات النوافذ المفتوحة.
+ * لازم استدعاؤها عند إغلاق أي مشهد (MainScene/ZenScene)، لأن المشهد المُغلق
+ * قد يكون ترك مفتاحاً معلّقاً في openModals (مثل «mode-panel»)، فيبقى الشريط
+ * الجانبي والشريط العلوي مخفيّين بعد الرجوع إلى اللعب إلى الأبد.
+ */
+export function resetSidebarModals(): void {
+  openModals.clear()
+  syncVisibility()
 }
 
 /** إعادة حساب الرؤية (تُستدعى بعد تغيّر إعدادات الأيقونات أو حالة المشهد). */
@@ -58,9 +88,10 @@ export function isSidebarVisible(): boolean {
 
 /** تطبيق قاعدة الرؤية على عناصر DOM فعلياً. */
 function syncVisibility(): void {
-  if (!sidebarRoot) return
   const visible = isSidebarVisible()
-  sidebarRoot.style.display = visible ? 'flex' : 'none'
+  if (sidebarRoot) sidebarRoot.style.display = visible ? 'flex' : 'none'
+  // الشريط العلوي يتبع نفس القاعدة: يظهر أثناء اللعب فقط، ويختفي مع أي نافذة.
+  visibilityListeners.forEach((cb) => cb(visible))
 }
 
 export function initSidebar(): void {

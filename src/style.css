@@ -938,133 +938,116 @@ body.modal-open {
 /* ------------------------------------------------------------------ */
 /* Royal Kingdom Top Header (rk-header)                                */
 /* ------------------------------------------------------------------ */
-
+/* الأحجام بوحدة cqw فتتوسّع مع عرض اللوحة (container-type أسفله).      */
+/* الشريط = صورة واحدة (pi/Resource.png) بنسبة 3:1، والعناصر الثلاثة */
+/* مزروعة فوق فتحاتها بالنسب المقاسة من الأصل:                       */
+/*   يسار ≈19.3%/47.8% · وسط ≈53.3%/47.2% · يمين ≈81.4%/48.6%        */
 .rk-header {
   position: fixed;
-  top: 6px;
+  top: 4px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 1900;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: min(94vw, 460px);
+  width: min(94vw, 520px);
+  aspect-ratio: 3 / 1;
   box-sizing: border-box;
-  padding: 6px 8px 6px 6px;
   pointer-events: none;
   direction: ltr;
   font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
   user-select: none;
   -webkit-user-select: none;
-  background: linear-gradient(135deg, #8B1A2E 0%, #6B1222 50%, #8B1A2E 100%);
-  border-radius: 28px;
-  border: 2.5px solid #c8955a;
-  box-shadow:
-    0 4px 0 #4a0c18,
-    0 6px 18px rgba(0,0,0,0.55),
-    inset 0 1px 0 rgba(255,210,120,0.35),
-    inset 0 -1px 0 rgba(0,0,0,0.25);
+  /* حاوية أبعاد — تجعل أحجام العناصر الفرعية (cqw) تتوسّع مع عرض اللوحة. */
+  container-type: inline-size;
+  /* الصورة تُمرَّر من TopHeader عبر --rk-banner (لتجنّب تحذير حل المسار في Vite). */
+  background-image: var(--rk-banner, none);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
 }
-.rk-header::before {
-  content: '';
-  position: absolute;
-  top: 3px;
-  left: 18px;
-  right: 18px;
-  height: 40%;
-  border-radius: 20px 20px 50% 50%;
-  background: linear-gradient(180deg, rgba(255,230,160,0.22) 0%, transparent 100%);
-  pointer-events: none;
-}
-.rk-header > * { pointer-events: auto; }
 
-.rk-header-profile {
+/* فتحات اللوحة الثلاث — تموضع نسبي('% من أبعاد اللوحة) لا مرن. */
+.rk-slot {
+  position: absolute;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  background: rgba(0,0,0,0.28);
-  border: 1.5px solid rgba(200,149,90,0.55);
-  border-radius: 999px;
-  padding: 3px 10px 3px 3px;
-  min-width: 0;
-  max-width: 40vw;
-  flex-shrink: 1;
+  justify-content: center;
+  gap: 0.05em;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  line-height: 1;
+  text-align: center;
 }
-.rk-avatar {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  border: 2px solid #fbbf24;
-  overflow: hidden;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-}
-.rk-avatar svg { width: 100%; height: 100%; display: block; }
-.rk-header-name {
-  font-size: 0.78rem;
+.rk-slot-left   { left: 19.3%;  top: 47.8%; }
+.rk-slot-center { left: 53.3%;  top: 47.2%; flex-direction: row; gap: 0.35em; }
+.rk-slot-right  { left: 81.4%;  top: 48.6%; }
+
+/* تسمية صغيرة داخل الفتحة (لون بنّي داكن يقرأ على الخلفية الكريمية). */
+.rk-slot-label {
+  font-size: clamp(7px, 2.1cqw, 13px);
   font-weight: 800;
-  color: #fef3c7;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+  color: #8a5a2b;
+  letter-spacing: 0.02em;
+  opacity: 0.9;
+}
+.rk-slot-left .rk-slot-label,
+.rk-slot-center .rk-slot-label { white-space: nowrap; }
+
+/* رقم المستوى — يسار */
+.rk-level {
+  font-size: clamp(14px, 4.4cqw, 28px);
+  font-weight: 900;
+  color: #6b3f14;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+  direction: ltr;
+}
+/* اسم المستخدم تحت المستوى، مقصوص إن طال */
+.rk-header-name {
+  max-width: 12cqw;
+  font-size: clamp(6px, 1.7cqw, 11px);
+  font-weight: 700;
+  color: #a06a33;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   direction: rtl;
 }
 
-.rk-header-count-wrap {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: #ffffff;
-  border: 2px solid #fbbf24;
-  border-radius: 999px;
-  padding: 4px 14px 4px 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.8);
-  flex-shrink: 0;
-}
-.rk-coin-icon { font-size: 1rem; line-height: 1; flex-shrink: 0; }
+/* إجمالي الأذكار — وسط */
 .rk-header-count {
   font-family: Consolas, 'Courier New', monospace;
-  font-size: 1.05rem;
+  font-size: clamp(16px, 5cqw, 32px);
   font-weight: 900;
-  color: #7c2d12;
+  color: #6b3f14;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
   direction: ltr;
+  font-variant-numeric: tabular-nums;
 }
 
+/* زر الإيقاف/الاستئناف — يمين: أيقونة شفافة فوق الدائرة الكريمية */
 .rk-pause-btn {
   border: 0;
   padding: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #fde68a, #f59e0b 55%, #b45309);
-  border: 2.5px solid #fbbf24;
-  box-shadow:
-    0 3px 0 #92400e,
-    0 5px 12px rgba(0,0,0,0.4),
-    inset 0 1px 0 rgba(255,255,255,0.5);
+  background: none;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  transition: transform 0.1s ease;
 }
 .rk-pause-btn img {
-  width: 26px;
-  height: 26px;
+  width: clamp(16px, 4.6cqw, 30px);
+  height: clamp(16px, 4.6cqw, 30px);
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  filter: drop-shadow(0 1px 2px rgba(90, 50, 10, 0.45));
 }
 .rk-pause-btn:hover { filter: brightness(1.08); }
-.rk-pause-btn:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 #92400e, 0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
-}
+.rk-pause-btn:active { transform: translate(-50%, -50%) scale(0.9); }
 .rk-pause-btn:focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
+
+/* دعم container queries: تجعل أحجام العناصر تتوسّع مع عرض اللوحة. */
+@supports (container-type: inline-size) {
+  .rk-header { container-type: inline-size; }
+}
 
 /* ------------------------------------------------------------------ */
 /* الشريط الجانبي — موضعه العلوي مرتبط بظهور شريط التخصيص             */
@@ -1072,19 +1055,20 @@ body.modal-open {
 /* نستخدم متغيراً بدل قيمة ثابتة: عند ظهور شريط «تخصيص» أسفل الهيدر    */
 /* تُزاح الأيقونات تلقائياً إلى أسفله بدل أن تتداخل معه.               */
 #dom-sidebar {
-  --rk-sidebar-top: 112px;
+  /* أسفل الشريط العلوي (اللوحة بنسبة 3:1 ⇒ ارتفاعها = عرضها/3 ≈ 175px) */
+  --rk-sidebar-top: 196px;
   top: var(--rk-sidebar-top);
   transition: top 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 /* وضع التخصيص: شريط التقدّم ظاهر ⇒ ندفع الأيقونات تحته بمسافة مريحة. */
 body.rk-focus-bar-open #dom-sidebar {
-  --rk-sidebar-top: 132px;
+  --rk-sidebar-top: 216px;
 }
 
 /* شريط تقدم الأذكار (Focus Bar) — DOM تحت الهيدر */
 #rk-focus-bar-dom {
   position: fixed;
-  top: 74px;
+  top: 182px;
   left: 50%;
   transform: translateX(-50%);
   width: min(94vw, 460px);

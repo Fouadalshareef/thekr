@@ -9,7 +9,7 @@ import { vibrate } from '../../services/haptics'
 import { getIstighfarCount, incrementIstighfar } from '../../services/DhikrStorage'
 import { recordTodayDhikr } from '../../services/SettingsService'
 import { setZenMode } from '../ui/SettingsModal'
-import { setSidebarWelcomeActive } from '../../components/Sidebar'
+import { setSidebarWelcomeActive, resetSidebarModals } from '../../components/Sidebar'
 import { setTopHeaderVisible } from '../../components/TopHeader'
 import SkyLayer from '../objects/SkyLayer'
 import { getThemeFor } from '../../services/TimeThemeService'
@@ -33,8 +33,12 @@ export default class ZenScene extends Phaser.Scene {
     setTopHeaderVisible(false)
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       setZenMode(false)
-      // العودة للمشهد الرئيسي: يُعاد إظهار سهم القائمة الجانبية.
+      // العودة للمشهد الرئيسي: يُعاد إظهار الشريطين.
+      // تصفير النوافذ إجباري — وإلا بقي مفتاح «mode-panel» معلّقاً من فتح
+      // نمط الاستغفار، فاختفت واجهة اللعب كلها بعد الرجوع.
+      resetSidebarModals()
       setSidebarWelcomeActive(false)
+      setTopHeaderVisible(true)
     })
 
 

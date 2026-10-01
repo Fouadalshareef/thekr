@@ -72,7 +72,16 @@ export function initAdviceModal(): void {
 
   closeBtn?.addEventListener('click', hide)
 
-  window.addEventListener('show-advice', () => show())
+  // نافذة النصائح تظهر مرة واحدة فقط في عمر الصفحة (الجلسة).
+  // السبب: MainScene.create() يطلق «show-advice» في كل تشغيل، والرجوع
+  // من نمط الاستغفار (ZenScene) يعيد تشغيله ⇒ كانت النصائح تطفو مجدداً
+  // وتمنع رؤية واجهة اللعب مباشرة بعد الرجوع.
+  let adviceShown = false
+  window.addEventListener('show-advice', () => {
+    if (adviceShown) return
+    adviceShown = true
+    show()
+  })
 }
 
 function show(): void {
