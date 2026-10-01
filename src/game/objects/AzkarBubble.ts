@@ -10,6 +10,7 @@ import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
 import type { AzkarItem } from '../../services/AzkarDB'
+import { DEPTH_GAMEPLAY } from '../ui/depths'
 
 export default class AzkarBubble extends Phaser.GameObjects.Container {
   private popped = false
@@ -23,8 +24,9 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
     super(scene, x, y)
     this.item = item
     this.countRemaining = item.count
-    // في المقدمة فوق الأزرار الجانبية (HUD depth ≈ 2000) — مكافئ z-index: 1000+
-    this.setDepth(2500)
+    // بطاقة أذكار الصباح/المساء: عنصر لعب، فيبقى تحت طبقة الواجهة (HUD).
+    // كانت 2500 فترسم فوق عدّاد الجلسة (1999) — وهي سبب تراكب مرئي.
+    this.setDepth(DEPTH_GAMEPLAY)
     // بطاقة أكبر: 90% من عرض الشاشة بحد أقصى 420px (لافتة الأذكار مكبّرة وواضحة)
     const { width, height } = scene.scale
     this.cardW = Math.min(420, width * 0.9)

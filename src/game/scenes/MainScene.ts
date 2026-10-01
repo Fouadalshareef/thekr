@@ -38,6 +38,13 @@ import {
 } from '../ui/GameButtonSkin'
 import { setCircleHitArea } from '../ui/hitArea'
 import {
+  DEPTH_HUD,
+  DEPTH_MODAL,
+  DEPTH_MODAL_BLOCKER,
+  DEPTH_CARD,
+  DEPTH_SESSION_COUNTER,
+} from '../ui/depths'
+import {
   refreshSidebarVisibility,
   resetSidebarModals,
   setSidebarModalOpen,
@@ -487,8 +494,12 @@ export default class MainScene extends Phaser.Scene {
       `
       document.body.appendChild(bar)
     }
-    // صنف على <body> يدفع الشريط الجانبي للأسفل عند ظهور شريط التخصيص.
+    // صنف على<body> يقود تبديل الشريط العلوي وإزاحة الشريط الجانبي.
+    // عند تفعيله: يختفي شريط Resource.png ويُحلّ محلّه شريط التقدّم.
     document.body.classList.toggle('rk-focus-bar-open', visible)
+    // الشريط العلوي (Resource.png) يتولّى الإخفاء بنفسه عبر CSS، فلا نحتاج هنا
+    // أي نداء لـsetTopHeaderVisible — لأن ذلك يمرّ عبر قاعدة الرؤية المشتركة
+    // التي قد تُخفيه أصلاً أثناء فتح نافذة.
     if (!visible) {
       bar.classList.remove('visible')
       return
@@ -939,7 +950,7 @@ export default class MainScene extends Phaser.Scene {
       color: '#fde68a',
       stroke: '#172554',
       strokeThickness: 4,
-    }).setOrigin(0.5).setDepth(2000).setAlpha(0)
+    }).setOrigin(0.5).setDepth(DEPTH_HUD).setAlpha(0)
   }
 
   private updateCombo(): void {
@@ -973,15 +984,23 @@ export default class MainScene extends Phaser.Scene {
     const innerY = 0.65
     const hasFrame = this.textures.exists('session-frame')
 
+    // أصل session.png ضخم (1536×1024) ويُعرض بحوالي 150px فقط، أي تصغير
+    // بنحو عشرة أضعاف. بلا ترشيح مناسب يظهر الإطار ضبابياً، خصوصاً حواف
+    // اللوحة الذهبية. نستخدم LINEAR (تنعيم) لا NEAREST (المستخدم لأيقونات
+    // HUD الصغيرة) لأن NEAREST عند هذا التصغير ينتج حواف مسنّنة.
+    if (hasFrame) {
+      this.textures.get('session-frame').setFilter(Phaser.Textures.FilterMode.LINEAR)
+    }
+
     if (hasFrame) {
       this.sessionPill = this.add
         .image(x, topY, 'session-frame')
         .setOrigin(0.5, 0)
         .setDisplaySize(frameW, frameH)
-        .setDepth(1999)
+        .setDepth(DEPTH_SESSION_COUNTER)
     } else {
       // بديل احتياطي: بطاقة زرقاء مرسومة، لو فشل تحميل الأصل.
-      this.sessionPill = this.add.graphics().setDepth(1999)
+      this.sessionPill = this.add.graphics().setDepth(DEPTH_SESSION_COUNTER)
       this.sessionPill.fillStyle(0x0ea5e9, 1)
       this.sessionPill.fillRoundedRect(x - frameW / 2, topY, frameW, frameH, 16)
       this.sessionPill.lineStyle(3, 0xffffff, 0.9)
@@ -1001,7 +1020,7 @@ export default class MainScene extends Phaser.Scene {
         align: 'center',
       })
       .setOrigin(0.5)
-      .setDepth(2000)
+      .setDepth(DEPTH_SESSION_COUNTER + 1)
     this.sessionText.setShadow(0, 1, 'rgba(255,255,255,0.9)', 4, true, true)
   }
 
@@ -1056,7 +1075,7 @@ export default class MainScene extends Phaser.Scene {
     // الواجهة الداكنة القديمة تُبقى احتياطاً، لكن المستخدم يرى الآن نافذة DOM الفاتحة.
     const { width, height } = this.scale
     this.modePanel = this.add.container(0, 0)
-    this.modePanel.setDepth(2000)
+    this.modePanel.setDepth(DEPTH_MODAL)
     this.modePanel.setVisible(false)
 
     const dim = this.add.rectangle(0, 0, width, height, 0x020617, 0.72)
@@ -1405,7 +1424,7 @@ export default class MainScene extends Phaser.Scene {
   private buildFocusPanel(): void {
     this.buildFocusDom()
     this.focusPanel = this.add.container(this.scale.width / 2, this.scale.height / 2)
-    this.focusPanel.setDepth(3000)
+    this.focusPanel.setDepth(DEPTH_MODAL)
     this.focusPanel.setVisible(false)
 
     // خلفية معتمة
@@ -1804,9 +1823,9 @@ export default class MainScene extends Phaser.Scene {
     const blocker = this.add
       .rectangle(0, 0, width, height, 0x022c22, 0.78)
       .setOrigin(0)
-      .setDepth(3999)
+      .setDepth(DEPTH_MODAL_BLOCKER)
       .setInteractive()
-    const card = this.add.container(width / 2, height / 2).setDepth(4000).setAlpha(0)
+    const card = this.add.container(width / 2, height / 2).setDepth(DEPTH_CARD).setAlpha(0)
 
     const bg = this.add.graphics()
     bg.fillStyle(0x0f2a1e, 0.97)
@@ -1873,7 +1892,7 @@ export default class MainScene extends Phaser.Scene {
     blocker: Phaser.GameObjects.Rectangle,
   ): void {
     const { width, height } = this.scale
-    const card = this.add.container(width / 2, height / 2).setDepth(4000).setAlpha(0)
+    const card = this.add.container(width / 2, height / 2).setDepth(DEPTH_CARD).setAlpha(0)
 
     const bg = this.add.graphics()
     bg.fillStyle(0x0f2a1e, 0.97)
@@ -1944,7 +1963,7 @@ export default class MainScene extends Phaser.Scene {
   private showAzkarCompleteMessage(mode: string): void {
     const { width, height } = this.scale
     const title = mode === 'morning' ? 'أذكار الصباح' : 'أذكار المساء'
-    const msg = this.add.container(width / 2, height / 2).setDepth(4000).setAlpha(0)
+    const msg = this.add.container(width / 2, height / 2).setDepth(DEPTH_CARD).setAlpha(0)
 
     const bg = this.add.graphics()
     bg.fillStyle(0x0f172a, 0.95)
@@ -1977,7 +1996,7 @@ export default class MainScene extends Phaser.Scene {
 
     this.tweens.add({ targets: msg, alpha: 1, scale: { from: 0.8, to: 1 }, duration: 400, ease: 'Back.easeOut' })
 
-    const blocker = this.add.rectangle(0, 0, width, height, 0x000000, 0.6).setOrigin(0).setDepth(3999).setInteractive()
+    const blocker = this.add.rectangle(0, 0, width, height, 0x000000, 0.6).setOrigin(0).setDepth(DEPTH_MODAL_BLOCKER).setInteractive()
     blocker.once('pointerdown', () => {
       msg.destroy()
       blocker.destroy()
@@ -2040,7 +2059,7 @@ export default class MainScene extends Phaser.Scene {
   private buildRestBanner(): void {
     const { width, height } = this.scale
     this.restBanner = this.add.container(width / 2, height + 300)
-    this.restBanner.setDepth(4000) // في المقدمة فوق كل العناصر (z-index: 1000+)
+    this.restBanner.setDepth(DEPTH_CARD) // في المقدمة فوق كل العناصر (فوق DEPTH_MODAL)
 
     // بطاقة الاستراحة: عرض 90% من الشاشة بحد أقصى 420px وارتفاع مريح
     const cardW = Math.min(420, width * 0.9)
@@ -2139,7 +2158,7 @@ export default class MainScene extends Phaser.Scene {
     // طبقة شفافة تغطي الشاشة لمنع تفجير الفقاعات واصطياد اللمسة للإخفاء
     if (!this.data.get('restBlocker')) {
       const blocker = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 0.4)
-      blocker.setOrigin(0).setDepth(3999).setInteractive()
+      blocker.setOrigin(0).setDepth(DEPTH_MODAL_BLOCKER).setInteractive()
       blocker.on('pointerdown', () => this.hideRestBanner())
       this.data.set('restBlocker', blocker)
     } else {

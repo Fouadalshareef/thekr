@@ -10,6 +10,7 @@ import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
 import { getSpeed } from '../../services/SettingsService'
 import { setCircleHitArea } from '../ui/hitArea'
+import { DEPTH_GAMEPLAY, DEPTH_GAMEPLAY_PARTICLE } from '../ui/depths'
 
 /** معامل تكبير الأجسام العائمة — 2.0 يعطي حجماً مريحاً للمس دون طغيان على الشاشة. */
 const BODY_SCALE = 2.25
@@ -55,8 +56,9 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     // تكبير واضح للجسم ليسهل لمسه
     this.setScale(BODY_SCALE)
 
-    // رفع العمق لضمان تلقي أحداث اللمس قبل الخلفيات والطبقات الزخرفية
-    this.setDepth(1500)
+    // كل عناصر اللعب تحت طبقة الواجهة (DEPTH_HUD=1000)، فلا تستطيع الفقاعات
+    // أن تطفو فوق الشريط العلوي/الجلسة مهما بلغ عمقها.
+    this.setDepth(DEPTH_GAMEPLAY)
 
     // بيانات التعريف (تُستخدم للفحص الآلي والتنظيف)
     this.setData('dhikrId', options.dhikrId)
@@ -162,7 +164,7 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     glow.strokeCircle(0, 0, this.opts.hitRadius * 1.22)
     this.addAt(glow, 0)
     this.scene.tweens.add({ targets: glow, alpha: { from: 0.45, to: 1 }, scale: { from: 0.92, to: 1.12 }, yoyo: true, repeat: -1, duration: 480, ease: 'Sine.easeInOut' })
-    this.scene.add.particles(this.x, this.y, 'pixel-glow', { speed: { min: 30, max: 85 }, angle: { min: 0, max: 360 }, lifespan: 650, scale: { start: 0.28, end: 0 }, tint: color, quantity: 1, frequency: 180, blendMode: 'ADD' }).setDepth(1499)
+    this.scene.add.particles(this.x, this.y, 'pixel-glow', { speed: { min: 30, max: 85 }, angle: { min: 0, max: 360 }, lifespan: 650, scale: { start: 0.28, end: 0 }, tint: color, quantity: 1, frequency: 180, blendMode: 'ADD' }).setDepth(DEPTH_GAMEPLAY_PARTICLE)
   }
 
   /** هالة توهج ناعمة خلف الجسم لإبرازه بصرياً — تُرسم بعد buildBody. */
