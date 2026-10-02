@@ -5,66 +5,44 @@ export function initAdviceModal(): void {
   modal.id = 'advice-modal'
   modal.className = 'fixed inset-0 z-[11000] hidden items-center justify-center p-4 touch-pan-y'
   modal.innerHTML = `
-    <div id="advice-backdrop" class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
-    <div id="advice-scroll" class="juicy-panel relative w-[95%] max-w-[480px] max-h-[85vh] overflow-y-auto p-6 space-y-6" style="touch-action: pan-y !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">
+    <div id="advice-backdrop" aria-hidden="true"></div>
+    <main id="advice-scroll" dir="rtl" aria-labelledby="advice-title">
+      <header class="welcome-header">
+        <span class="welcome-mark" aria-hidden="true">✦</span>
+        <p class="welcome-kicker">الباقيات الصالحات</p>
+        <h1 id="advice-title">نصائح الذكر والاستغفار</h1>
+        <p class="welcome-subtitle">طمأنينة القلب تبدأ بذكر الله</p>
+        <span class="welcome-divider" aria-hidden="true"><i></i></span>
+      </header>
 
-      <div class="flex flex-col items-center gap-3 text-center mb-2">
-        <div class="w-14 h-14 bg-teal-900/50 rounded-full flex items-center justify-center border border-teal-500/50 shadow-[0_0_15px_rgba(20,184,166,0.3)]">
-          <span class="text-xl text-teal-400">💡</span>
-        </div>
-        <h2 class="text-2xl font-bold text-teal-100 font-['Amiri']">نصائح الذكر والاستغفار</h2>
-      </div>
+      <section class="welcome-section" aria-labelledby="dhikr-ranks-title">
+        <h2 id="dhikr-ranks-title"><span class="welcome-section-mark">01</span> مراتب الذكر</h2>
+        <ol class="welcome-ranks">
+          <li><span class="rank-number">١</span><p><strong>الأولى (الأفضل)</strong>بالقلب واللسان معاً مع حضور الذهن واستشعار المعنى.</p></li>
+          <li><span class="rank-number">٢</span><p><strong>الثانية</strong>بالقلب فقط (يُثاب عليه، ومناسب للأوقات والأماكن الخاصة).</p></li>
+          <li><span class="rank-number">٣</span><p><strong>الثالثة</strong>باللسان فقط (يُثاب عليه، وهو أقل مراتب الذكر).</p></li>
+        </ol>
+      </section>
 
-      <div class="space-y-5 text-right font-['Segoe_UI']" dir="rtl">
+      <section class="welcome-section welcome-istighfar" aria-labelledby="istighfar-title">
+        <h2 id="istighfar-title"><span class="welcome-section-mark">02</span> الطريقة الأفضل للاستغفار</h2>
+        <p class="welcome-copy">الجمع بين الإقرار بالذنب والانكسار مع حضور القلب.</p>
+        <blockquote class="welcome-quote">
+          <span>من أفضل الصيغ المختصرة</span>
+          <strong>«أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ»</strong>
+        </blockquote>
+        <blockquote class="welcome-quote welcome-quote-long">
+          <span>سيد الاستغفار</span>
+          <strong>«اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ...»</strong>
+        </blockquote>
+      </section>
 
-        <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
-          <h3 class="text-lg font-bold text-amber-300 mb-2 flex items-center gap-2">
-            <span>📌</span> مراتب الذكر:
-          </h3>
-          <ul class="space-y-3 text-slate-200 text-sm leading-relaxed pr-2">
-            <li class="flex items-start gap-2">
-              <span class="text-teal-400 mt-1">•</span>
-              <span><strong class="text-teal-200">الأولى (الأفضل):</strong> بالقلب واللسان معاً مع حضور الذهن واستشعار المعنى.</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-teal-400 mt-1">•</span>
-              <span><strong class="text-teal-200">الثانية:</strong> بالقلب فقط (يُثاب عليه، ومناسب للأوقات والأماكن الخاصة).</span>
-            </li>
-            <li class="flex items-start gap-2">
-              <span class="text-teal-400 mt-1">•</span>
-              <span><strong class="text-teal-200">الثالثة:</strong> باللسان فقط (يُثاب عليه، وهو أقل مراتب الذكر).</span>
-            </li>
-          </ul>
-        </div>
-
-        <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
-          <h3 class="text-lg font-bold text-amber-300 mb-2 flex items-center gap-2">
-            <span>✨</span> الطريقة الأفضل للاستغفار:
-          </h3>
-          <p class="text-slate-200 text-sm leading-relaxed mb-3">
-            الجمع بين الإقرار بالذنب والانكسار مع حضور القلب.
-          </p>
-          <div class="space-y-3 pr-2">
-            <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700/30">
-              <p class="text-xs text-slate-400 mb-1">من أفضل الصيغ المختصرة:</p>
-              <p class="text-teal-100 font-['Amiri'] text-lg font-bold">«أَسْتَغْفِرُ اللَّهَ وَأَتُوبُ إِلَيْهِ»</p>
-            </div>
-            <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700/30">
-              <p class="text-xs text-slate-400 mb-1">سيد الاستغفار:</p>
-              <p class="text-teal-100 font-['Amiri'] text-lg font-bold leading-loose">«اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ...»</p>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <button id="advice-close" type="button"
-        class="advice-start-btn cursor-pointer">
-        <span class="advice-start-icon">🌿</span>
+      <button id="advice-close" type="button" class="advice-start-btn">
+        <span class="advice-start-icon" aria-hidden="true">✦</span>
         <span>ابدأ الأذكار</span>
+        <span class="advice-start-arrow" aria-hidden="true">←</span>
       </button>
-
-    </div>
+    </main>
   `
   document.body.appendChild(modal)
 

@@ -60,14 +60,6 @@ const NEXT_DELAY = 150
 
 /** اسم مشهد الترحيب — يُستخدم لإخفاء سهم القائمة الجانبية أثناء عرضه. */
 const WELCOME_SCENE = 'BootScene'
-/**
- * قياس أيقونة زر الإيقاف/الاستئناف (التوقف/التشغيل).
- * القياس يُفرض صراحةً عبر setDisplaySize عند كل تبديل للنيسج — لا نعتمد
- * مطلقاً على الدقة الأصلية للملف (SVG محمّل بـ 256×256) لأن أي scale عالق
- * يجعل الأيقونة تُرسم بحجم هائل وتتشوّه.
- */
-const PAUSE_ICON_SIZE = BTN_ICON_SIZE
-
 /** موضع عمود الأزرار الجانبية أفقياً (كل الأزرار على نفس الخط الرأسي). */
 const SIDEBAR_X = 42
 /** قطر الحاضنة/الحاوية الثابتة (46px) — width/height/flex-shrink/position/overflow. */
@@ -144,7 +136,6 @@ export default class MainScene extends Phaser.Scene {
   private gameEnabled = true
 
   // مراجع أيقونات شريط الأدوات (لتطبيق إظهار/إخفاء فوري حسب الإعدادات).
-  private btnGear!: Phaser.GameObjects.Container
   private btnSliders!: Phaser.GameObjects.Container
   private btnLeaf!: Phaser.GameObjects.Container
   private btnQuran!: Phaser.GameObjects.Container
@@ -165,8 +156,10 @@ export default class MainScene extends Phaser.Scene {
 
 
   private sessionText!: Phaser.GameObjects.Text
-  private pauseButton!: Phaser.GameObjects.Container
-  private pauseIcon!: Phaser.GameObjects.Image
+  private headerSettingsButton!: Phaser.GameObjects.Container
+  private headerSettingsIcon!: Phaser.GameObjects.Image
+  private sidebarPauseButton!: Phaser.GameObjects.Container
+  private sidebarPauseIcon!: Phaser.GameObjects.Image
   private topBanner!: Phaser.GameObjects.Image
   private headerLevelText!: Phaser.GameObjects.Text
   private headerLevelValueText!: Phaser.GameObjects.Text
@@ -350,7 +343,7 @@ export default class MainScene extends Phaser.Scene {
 
   private buildHud(): void {
     this.buildTopBanner()
-    this.buildPauseButton()
+    this.buildHeaderSettingsButton()
     this.layoutTopHud()
     this.buildSessionCounter()
     this.buildComboCounter()
@@ -391,15 +384,15 @@ export default class MainScene extends Phaser.Scene {
 
     const leftCenterX = bannerLeft + bannerWidth * 0.1252
     const leftCenterY = bannerTop + bannerHeight * 0.4744
-    this.headerLevelText.setPosition(leftCenterX, leftCenterY - 10)
-    this.headerLevelValueText.setPosition(leftCenterX, leftCenterY)
+    this.headerLevelText.setPosition(leftCenterX, leftCenterY - 12)
+    this.headerLevelValueText.setPosition(leftCenterX, leftCenterY + 9)
     this.layoutHeaderCount(bannerLeft, bannerWidth, bannerTop + bannerHeight * 0.4993)
 
     const pauseSize = Math.min(48, bannerWidth * 0.105)
-    this.pauseButton.setPosition(bannerLeft + bannerWidth * 0.9006, bannerTop + bannerHeight * 0.4896)
-    this.pauseButton.setSize(pauseSize * 1.5, pauseSize * 1.5)
-    this.pauseIcon.setDisplaySize(pauseSize, pauseSize)
-    this.pauseButton.input!.hitArea.setTo(-pauseSize * 0.75, -pauseSize * 0.75, pauseSize * 1.5, pauseSize * 1.5)
+    this.headerSettingsButton.setPosition(bannerLeft + bannerWidth * 0.9006, bannerTop + bannerHeight * 0.4896)
+    this.headerSettingsButton.setSize(pauseSize * 1.5, pauseSize * 1.5)
+    this.headerSettingsIcon.setDisplaySize(pauseSize, pauseSize)
+    this.headerSettingsButton.input!.hitArea.setTo(-pauseSize * 0.75, -pauseSize * 0.75, pauseSize * 1.5, pauseSize * 1.5)
     this.layoutCanvasSidebar(bannerTop + bannerHeight + 38)
   }
 
@@ -420,7 +413,7 @@ export default class MainScene extends Phaser.Scene {
 
   private layoutCanvasSidebar(top: number): void {
     const step = Math.max(82, Math.min(98, this.scale.height * 0.105))
-    for (const [index, button] of [this.btnSliders, this.btnLeaf, this.btnQuran, this.btnGear].entries()) {
+    for (const [index, button] of [this.btnSliders, this.btnLeaf, this.btnQuran, this.sidebarPauseButton].entries()) {
       button?.setPosition(42, top + index * step)
       button?.setData('homeY', top + index * step)
     }
@@ -444,9 +437,16 @@ export default class MainScene extends Phaser.Scene {
   private buildCanvasSidebar(): void {
     const top = 4 + Math.min(window.innerWidth * 0.94, 520) / 3 + 38
     const step = Math.max(82, Math.min(98, this.scale.height * 0.105))
-    const sideButton = (texture: string, label: string, y: number, action: () => void): Phaser.GameObjects.Container => {
+    const sideButton = (
+      texture: string,
+      label: string,
+      y: number,
+      action: () => void,
+      onIconCreated?: (icon: Phaser.GameObjects.Image) => void,
+    ): Phaser.GameObjects.Container => {
       const button = this.add.container(42, y).setDepth(DEPTH_HUD + 2)
       const image = this.add.image(0, 0, texture).setDisplaySize(54, 54)
+      onIconCreated?.(image)
       const badge = this.add.graphics()
       badge.fillStyle(0xd97706, 1)
       badge.fillRoundedRect(-39, 30, 78, 28, 7)
@@ -469,7 +469,14 @@ export default class MainScene extends Phaser.Scene {
     this.btnSliders = sideButton('hud-theme', 'النمط', top, () => this.onOpenModePanel())
     this.btnLeaf = sideButton('hud-farm', 'المزرعة', top + step, () => this.onOpenGarden())
     this.btnQuran = sideButton('hud-quran', 'المصحف', top + step * 2, () => window.dispatchEvent(new CustomEvent('open-quran')))
-    this.btnGear = sideButton('hud-settings', 'الإعدادات', top + step * 3, () => this.onOpenSettings())
+    this.sidebarPauseButton = sideButton(
+      'hud-pause',
+      'إيقاف',
+      top + step * 3,
+      this.onHeaderPauseToggle,
+      (icon) => { this.sidebarPauseIcon = icon },
+    )
+    this.refreshPauseIcon()
     this.setSideMenuVisible(true, true)
   }
 
@@ -479,7 +486,7 @@ export default class MainScene extends Phaser.Scene {
    * تغيير المواضع أثناء فتح/إغلاق النوافذ (خاصة ثبات شارة التحديث).
    */
   private setSideMenuVisible(_open: boolean, instant = false): void {
-    for (const btn of [this.btnLeaf, this.btnQuran, this.btnGear]) {
+    for (const btn of [this.btnLeaf, this.btnQuran, this.sidebarPauseButton]) {
       if (!btn) continue
       btn.setVisible(true).setAlpha(1).setScale(1)
       if (instant) {
@@ -492,9 +499,8 @@ export default class MainScene extends Phaser.Scene {
 
   /** تثبيت شارة التحديث على زاوية زر الإعدادات (تتحرك مع القائمة). */
   private pinUpdateBadge(): void {
-    if (!this.updateBadge || !this.btnGear) return
-    const homeY: number = this.btnGear.getData('homeY') ?? this.btnGear.y
-    this.updateBadge.setPosition(this.btnGear.x + 26, (this.btnGear.visible ? this.btnGear.y : homeY) - 26)
+    if (!this.updateBadge || !this.headerSettingsButton) return
+    this.updateBadge.setPosition(this.headerSettingsButton.x + 26, this.headerSettingsButton.y - 26)
   }
 
   private buildAzkarCounter(): void {
@@ -673,11 +679,11 @@ export default class MainScene extends Phaser.Scene {
    */
   private applyUiSettings(): void {
     this.btnSliders?.setVisible(true).setAlpha(1).setScale(1)
-    for (const b of [this.btnLeaf, this.btnQuran, this.btnGear]) {
+    for (const b of [this.btnLeaf, this.btnQuran, this.sidebarPauseButton]) {
       b?.setVisible(true)
     }
     // عناصر الجلسة تبقى ظاهرة كما هي.
-    this.pauseButton?.setVisible(true)
+    this.headerSettingsButton?.setVisible(true)
     this.sessionPill?.setVisible(true)
     this.sessionText?.setVisible(true)
     this.comboText?.setVisible(true)
@@ -732,11 +738,9 @@ export default class MainScene extends Phaser.Scene {
    * وتختفي عند فتح لوحة التحكم (أين يوجد زر "تحديث النسخة الآن").
    */
   private buildUpdateBadge(): void {
-    if (!this.btnGear) return;
-    // موضع زر الإعدادات الجديد (أول عناصر القائمة تحت السهم): y = ‏148‏ —
-    // الشارة في زاويته العلوية اليمنى، وتُثبَّت عبر pinUpdateBadge مع كل حركة.
-    const bx = this.btnGear.x + 26
-    const by = this.btnGear.y - 26
+    if (!this.headerSettingsButton) return;
+    const bx = this.headerSettingsButton.x + 26
+    const by = this.headerSettingsButton.y - 26
 
     this.updateBadge = this.add.container(bx, by)
     this.updateBadge.setDepth(2200)
@@ -924,9 +928,6 @@ export default class MainScene extends Phaser.Scene {
       btn.add(badgeText)
     }
 
-    if (icon === 'pause') {
-      this.pauseIcon = svgIcon
-    }
     // لا يوجد فرع 'arrow' anymore: حُذف سهم طي/فتح القائمة الجانبية بالكامل،
     // إذ أصبحت أيقونات الشريط الجانبية ظاهرة دائماً.
     // منطقة النقر تغطي كامل الدائرة 100%: الحجم = قطر الجسم المرئي، والتوسيط
@@ -1034,29 +1035,24 @@ export default class MainScene extends Phaser.Scene {
     return btn
   }
 
-  /** زر إيقاف/استئناف مؤقت أعلى اليمين (بنفس نمط الأزرار الجديدة). */
-  private buildPauseButton(): void {
-    this.pauseButton = this.add.container(0, 0).setDepth(DEPTH_HUD + 2)
-    this.pauseIcon = this.add.image(0, 0, 'hud-pause').setTint(0x4a2306)
-    this.pauseButton.add(this.pauseIcon)
-    this.pauseButton.setSize(56, 56)
-    this.pauseButton.setInteractive(new Phaser.Geom.Rectangle(-28, -28, 56, 56), Phaser.Geom.Rectangle.Contains)
-    this.pauseButton.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.onHeaderPauseToggle)
-    this.pauseButton.setScrollFactor(0)
-    this.refreshPauseIcon()
+  /** زر الإعدادات داخل الخانة اليمنى للشريط العلوي. */
+  private buildHeaderSettingsButton(): void {
+    this.headerSettingsButton = this.add.container(0, 0).setDepth(DEPTH_HUD + 2)
+    this.headerSettingsIcon = this.add.image(0, 0, 'hud-settings').setTint(0x23564e)
+    this.headerSettingsButton.add(this.headerSettingsIcon)
+    this.headerSettingsButton.setSize(56, 56)
+    this.headerSettingsButton.setInteractive(new Phaser.Geom.Rectangle(-28, -28, 56, 56), Phaser.Geom.Rectangle.Contains)
+    this.headerSettingsButton.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.onOpenSettings)
+    this.headerSettingsButton.setScrollFactor(0)
   }
 
-  /** تحديث ايقونة الايقاف مع الحفاظ على الحجم بعد التبديل. */
+  /** تبديل رمز الإيقاف والتشغيل في الموضع الجانبي. */
   private refreshPauseIcon(): void {
-    if (!this.pauseIcon) return
-    // 1) تبديل النيسج (إيقاف/تشغيل).
-    this.pauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
-    this.pauseIcon.setTint(0x4a2306)
-    // 2) فرض القياس الصريح بعد كل تبديل: setTexture تُعيد أبعاد الإطار الأصلي
-    //    (256×256) مع الاحتفاظ بالـ scale القديم ⇒ قد تُرسم الأيقونة بحجم هائل
-    //    ومشوّه. لذلك نُثبّت القياس دائماً على PAUSE_ICON_SIZE (لا اعتماد على
-    //    دقة النيسج إطلاقاً، ولا أي setScale).
-    this.pauseIcon.setDisplaySize(PAUSE_ICON_SIZE, PAUSE_ICON_SIZE)
+    if (!this.sidebarPauseIcon) return
+    this.sidebarPauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
+    this.sidebarPauseIcon.setDisplaySize(54, 54)
+    const label = this.sidebarPauseButton?.list[2] as Phaser.GameObjects.Text | undefined
+    label?.setText(this.paused ? 'استئناف' : 'إيقاف')
   }
 
   /** عداد الجلسة الحالية أسفل زر الإيقاف — مُدمج وأنيق مع إطار ذهبي رفيع. */

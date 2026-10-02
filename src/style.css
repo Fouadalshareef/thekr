@@ -179,6 +179,7 @@ body {
 #farm-modal.hidden,
 #settings-panel.hidden,
 #pwa-install-banner.hidden {
+  display: none !important;
   pointer-events: none !important;
 }
 
@@ -199,46 +200,136 @@ body.modal-open {
    ألواح بحدود سميكة وظل صلب + أزرار ثلاثية الأبعاد بحركة ضغط
    ============================================================ */
 
-/* شاشة الترحيب (النصائح) بملء الشاشة: خلفية خضراء ممتدة 100% بلا ظلال غامقة أو حواف تراكب */
+/* شاشة الترحيب: هوية ليلية وزخارف ذهبية مستوحاة من لوحة اللعبة. */
 #advice-modal {
   position: fixed;
   inset: 0;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
   min-height: 100dvh;
-  margin: 0;
   padding: 0 !important;
   overflow: hidden;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  isolation: isolate;
 }
 #advice-modal #advice-scroll {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  height: 100dvh;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  box-sizing: border-box;
+  width: min(100%, 680px);
+  min-height: 100%;
   max-height: 100vh;
   max-height: 100dvh;
-  margin: 0;
-  border-radius: 0;
+  margin: 0 auto;
+  padding: 30px 30px 24px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch;
+  color: #203149;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background: transparent;
   border: none;
   box-shadow: none;
-  background-size: cover;
-  background-position: center;
 }
-/* إزالة الظلال الغامقة وحواف التراكب الداكنة من شاشة الترحيب الخضراء */
 #advice-modal #advice-backdrop {
-  background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  background-color: #fbf5e7;
+  background-image:
+    linear-gradient(135deg, #fffaf0, #f6edd9 52%, #fff9ed),
+    repeating-linear-gradient(45deg, transparent 0 30px, rgba(177, 137, 57, 0.08) 31px 32px, transparent 33px 62px),
+    repeating-linear-gradient(-45deg, transparent 0 30px, rgba(177, 137, 57, 0.055) 31px 32px, transparent 33px 62px);
 }
+
+.welcome-header { text-align: center; padding: 4px 0 0; }
+.welcome-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 9px;
+  border: 1px solid #b68b3b;
+  border-radius: 50%;
+  color: #9a6e1e;
+  font-size: 23px;
+  background: linear-gradient(145deg, rgba(255, 249, 232, 0.82), rgba(239, 224, 183, 0.74));
+  box-shadow: inset 0 0 0 4px rgba(170, 125, 43, 0.08), 0 3px 12px rgba(78, 54, 14, 0.12);
+}
+.welcome-kicker {
+  margin: 0 0 4px;
+  color: #8b641e;
+  font-size: 13px;
+  font-weight: 700;
+}
+.welcome-header h1 {
+  margin: 0;
+  color: #18304a;
+  font-family: 'Amiri', 'Scheherazade New', 'Segoe UI', serif;
+  font-size: 30px;
+  line-height: 1.45;
+  font-weight: 800;
+}
+.welcome-subtitle { margin: 3px 0 0; color: #526174; font-size: 14px; }
+.welcome-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: min(230px, 60%);
+  margin: 17px auto 0;
+  color: #a57925;
+}
+.welcome-divider::before,
+.welcome-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(158, 116, 37, 0.65)); }
+.welcome-divider::after { transform: rotate(180deg); }
+.welcome-divider i { width: 6px; height: 6px; border: 1px solid #a57925; transform: rotate(45deg); }
+.welcome-section { padding-top: 18px; border-top: 1px solid rgba(159, 118, 42, 0.27); }
+.welcome-section h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: #174556;
+  font-family: 'Amiri', 'Scheherazade New', 'Segoe UI', serif;
+  font-size: 21px;
+  line-height: 1.4;
+}
+.welcome-section-mark {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 29px;
+  height: 25px;
+  border-left: 1px solid rgba(178, 136, 54, 0.7);
+  color: #9a6e1e;
+  font: 700 11px/1 'Segoe UI', sans-serif;
+  direction: ltr;
+}
+.welcome-ranks { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.welcome-ranks li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(230, 233, 240, 0.1); }
+.welcome-ranks li:last-child { border-bottom: 0; }
+.rank-number {
+  display: grid;
+  place-items: center;
+  flex: 0 0 27px;
+  height: 27px;
+  border: 1px solid rgba(171, 126, 39, 0.65);
+  border-radius: 50%;
+  color: #835d1c;
+  font-size: 13px;
+  font-weight: 700;
+}
+.welcome-ranks p { margin: 0; color: #3c4b60; font-size: 14px; line-height: 1.8; }
+.welcome-ranks strong { display: block; margin-bottom: 1px; color: #895f18; font-size: 15px; }
+.welcome-copy { margin: -2px 0 13px; color: #435269; font-size: 14px; line-height: 1.8; }
+.welcome-quote { margin: 10px 0 0; padding: 9px 13px 10px; border-right: 2px solid #b78a37; background: rgba(212, 184, 121, 0.16); }
+.welcome-quote span { display: block; margin-bottom: 4px; color: #786746; font-size: 12px; }
+.welcome-quote strong { display: block; color: #263c55; font-family: 'Amiri', 'Scheherazade New', 'Segoe UI', serif; font-size: 17px; line-height: 1.8; }
+.welcome-quote-long strong { font-size: 16px; }
 
 /* لوح كرتوني صلب (بديل الزجاج الباهت Glassmorphism) */
 .juicy-panel {
@@ -282,42 +373,73 @@ body.modal-open {
     inset 0 -3px 0 rgba(0, 0, 0, 0.18);
 }
 
-/* زر "ابدأ الأذكار" في نافذة النصائح — تصميم حديث راقٍ (تدرج زمردي + توهج) */
+/* زر بدء الأذكار في شاشة الترحيب. */
 .advice-start-btn {
-  display: flex;
+  display: grid;
+  grid-template-columns: 28px 1fr 28px;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 90%;
-  margin: 1.5rem auto 0;
-  padding: 14px 24px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
-  color: #ffffff;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
+  width: 100%;
+  margin: auto 0 0;
+  padding: 13px 16px;
+  border: 1px solid #f0d58f;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #24564e 0%, #1b443f 55%, #153733 100%);
+  box-shadow: 0 4px 0 #0d2928, inset 0 1px 0 rgba(255,255,255,.22), 0 9px 24px rgba(0,0,0,.2);
+  color: #fff5d9;
+  font-family: 'Amiri', 'Scheherazade New', 'Segoe UI', serif;
   font-weight: bold;
-  font-size: 1.1rem;
-  letter-spacing: 0.3px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  font-size: 20px;
+  text-align: center;
+  text-shadow: 0 1px 1px rgba(0,0,0,.24);
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.15s ease;
 }
 .advice-start-icon {
-  font-size: 1.3rem;
+  font-size: 18px;
   line-height: 1;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+  color: #fff7dc;
+  text-shadow: 0 1px 2px rgba(60, 38, 8, 0.5);
 }
 .advice-start-btn:hover {
   filter: brightness(1.08);
-  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.55);
+  box-shadow: 0 5px 0 #0d2928, inset 0 1px 0 rgba(255,255,255,.28), 0 11px 26px rgba(0,0,0,.24);
 }
 .advice-start-btn:active {
-  transform: scale(0.97);
-  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #0d2928, inset 0 1px 0 rgba(255,255,255,.25);
+}
+.advice-start-arrow { color: #f1d28a; font-family: 'Segoe UI', sans-serif; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+
+@media (max-width: 420px) {
+  #advice-modal #advice-scroll { gap: 12px; padding: 14px 18px 14px; }
+  .welcome-mark { width: 36px; height: 36px; margin-bottom: 5px; font-size: 20px; }
+  .welcome-kicker { font-size: 12px; }
+  .welcome-header h1 { font-size: 24px; line-height: 1.35; }
+  .welcome-subtitle { margin-top: 2px; font-size: 12px; }
+  .welcome-divider { margin-top: 9px; }
+  .welcome-section { padding-top: 10px; }
+  .welcome-section h2 { gap: 7px; margin-bottom: 7px; font-size: 18px; }
+  .welcome-section-mark { flex-basis: 25px; height: 22px; }
+  .welcome-ranks li { gap: 9px; padding: 6px 0; }
+  .rank-number { flex-basis: 24px; height: 24px; font-size: 12px; }
+  .welcome-ranks p, .welcome-copy { font-size: 12px; line-height: 1.65; }
+  .welcome-ranks strong { font-size: 13px; }
+  .welcome-copy { margin: -2px 0 8px; }
+  .welcome-quote { margin-top: 6px; padding: 7px 10px; }
+  .welcome-quote span { margin-bottom: 2px; font-size: 11px; }
+  .welcome-quote strong { font-size: 15px; line-height: 1.6; }
+  .welcome-quote-long strong { font-size: 14px; }
+  .advice-start-btn { padding: 10px 13px; font-size: 18px; }
+}
+
+@media (max-height: 700px) {
+  #advice-modal #advice-scroll { gap: 13px; padding-top: 15px; }
+  .welcome-mark { width: 36px; height: 36px; margin-bottom: 5px; }
+  .welcome-divider { margin-top: 10px; }
+  .welcome-section { padding-top: 12px; }
+  .welcome-ranks li { padding: 7px 0; }
 }
 
 
@@ -704,6 +826,22 @@ body.modal-open {
 }
 .crisp-modal.hidden { display: none; }
 
+#settings-panel {
+  background: rgba(26, 37, 52, 0.58);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+#settings-panel .crisp-content {
+  border: 1px solid #c9a04c;
+  background: linear-gradient(180deg, #fffaf0 0%, #f7efd9 100%);
+  box-shadow: 0 18px 54px rgba(28, 34, 42, 0.24), inset 0 0 0 4px rgba(196, 151, 57, 0.08);
+}
+#settings-panel .crisp-header { padding-bottom: 14px; border-bottom: 1px solid rgba(171, 128, 48, 0.3); }
+#settings-panel .crisp-eyebrow { color: #97702a; }
+#settings-panel .crisp-header h2 { color: #193a4d; }
+#settings-panel .crisp-header p { color: #5b6572; }
+#settings-panel .crisp-close { color: #23564e; border: 1px solid #dbc58f; box-shadow: none; }
+
 .crisp-content {
   box-sizing: border-box;
   display: flex;
@@ -804,14 +942,38 @@ body.modal-open {
   justify-content: space-between;
   gap: 14px;
   padding: 14px 16px;
-  background: #ffffff;
-  border: 1px solid #d9ece1;
-  border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(2, 44, 34, 0.05);
+  background: rgba(255, 253, 247, 0.9);
+  border: 1px solid #e3d4ae;
+  border-radius: 9px;
+  box-shadow: 0 2px 8px rgba(93, 69, 23, 0.045);
 }
 .crisp-row .crisp-row-text { min-width: 0; }
-.crisp-row strong { display: block; color: #14532d; font-size: 1rem; }
-.crisp-row small { display: block; margin-top: 2px; color: #527267; font-size: 0.8rem; line-height: 1.6; }
+.crisp-row strong { display: block; color: #1d4b49; font-size: 1rem; }
+.crisp-row small { display: block; margin-top: 2px; color: #5d6871; font-size: 0.8rem; line-height: 1.6; }
+
+.crisp-speed-row { display: block; }
+.crisp-speed-row .crisp-row-text { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.crisp-speed-row output { flex: 0 0 auto; padding: 4px 10px; border: 1px solid #d8c28b; border-radius: 6px; background: #f6edda; color: #72551b; font-size: 0.82rem; font-weight: 800; }
+.crisp-speed-control { margin-top: 10px; }
+.crisp-range {
+  display: block;
+  width: 100%;
+  height: 7px;
+  margin: 12px 0 9px;
+  border: 0;
+  border-radius: 99px;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  direction: rtl;
+  background: linear-gradient(to left, #b48a37 0%, #b48a37 var(--speed-progress, 33.333%), #e6dcc5 var(--speed-progress, 33.333%), #e6dcc5 100%);
+  cursor: pointer;
+  touch-action: pan-x;
+}
+.crisp-range::-webkit-slider-thumb { width: 21px; height: 21px; border: 3px solid #fff9e9; border-radius: 50%; appearance: none; -webkit-appearance: none; background: #23564e; box-shadow: 0 0 0 1px #98702a, 0 2px 6px rgba(22, 39, 45, .22); }
+.crisp-range::-moz-range-thumb { width: 15px; height: 15px; border: 3px solid #fff9e9; border-radius: 50%; background: #23564e; box-shadow: 0 0 0 1px #98702a, 0 2px 6px rgba(22, 39, 45, .22); }
+.crisp-range:focus-visible { outline: 2px solid #23564e; outline-offset: 6px; }
+.crisp-speed-labels { display: flex; justify-content: space-between; color: #72716a; font-size: 0.68rem; }
 
 /* مفتاح تشغيل/إيقاف (CSS خالص — أدق من الرسم على Canvas) */
 .crisp-toggle {
@@ -880,21 +1042,26 @@ body.modal-open {
   gap: 8px;
   padding: 11px 20px;
   border: 0;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 8px;
+  background: linear-gradient(180deg, #28645a 0%, #1b4e49 100%);
   color: #ffffff;
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+  box-shadow: 0 3px 0 #123935, 0 6px 14px rgba(24, 70, 63, 0.18);
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.1s ease, filter 0.15s ease;
 }
 .crisp-action:hover { filter: brightness(1.07); }
-.crisp-action:active { transform: scale(0.96); }
+.crisp-action:active { transform: translateY(2px); box-shadow: 0 1px 0 #123935; }
 .crisp-action:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
 .crisp-action:focus-visible { outline: 2px solid #047857; outline-offset: 2px; }
+.crisp-action-icon { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 248, 226, 0.16); color: #f1d38c; font: 700 19px/1 'Segoe UI', sans-serif; }
+.crisp-actions { display: grid; gap: 12px; }
+.crisp-action-update { justify-content: center; width: 100%; min-height: 48px; }
+.crisp-install-action { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 15px; border: 1px solid #e3d4ae; border-radius: 9px; background: rgba(255, 253, 247, 0.9); }
+.crisp-action-install { min-width: 112px; justify-content: center; }
 
 /* سطر رسالة حالة (نتيجة التحديث/التثبيت) */
 .crisp-status { margin: 0; font-size: 0.85rem; line-height: 1.6; color: #047857; font-weight: 700; }

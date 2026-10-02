@@ -1,29 +1,22 @@
 ﻿/**
  * SettingsPanel — نافذة «الإعدادات» الفاتحة (HTML/DOM بدل لوحة Phaser).
  *
- * تُفتح بالحدث 'open-settings' (الذي يرسله Sidebar). تحتوي على:
- *   1) اسم المستخدم (يُحفظ في localStorage عبر SettingsService).
- *   2) إحصائيات أذكار اليوم.
- *   3) زر «تحديث التطبيق» (Service Worker عبر AppUpdateActions).
- *   4) زر «تثبيت التطبيق» (PWA — يظهر فقط عند توفّر beforeinstallprompt).
- *   5) عناصر تحكم السرعة والصوت والاهتزاز.
+ * تُفتح بالحدث 'open-settings'. تحتوي على إحصائيات اليوم، منزلق السرعة،
+ * مفاتيح الصوت والاهتزاز، وأزرار تحديث التطبيق وتنزيله.
  *
  * لا يوجد مفتاح لإظهار/إخفاء المصحف أو الشريط الجانبي — كلاهما ظاهر دائماً
  * بقرار تصميمي: الشريط الجانبي элемصر الأول في التنقّل بين النوافذ، وإخفاؤه
  * كان يمنع الوصول إلى نفسه. وجود المفتاح يربك المستخدم بلا فائدة.
  *
- * كل تغيير يُطلق 'settings-changed' ليستجيب MainScene فوراً، وتغيير الاسم
- * يُطلق 'username-changed' ليُحدَّث الشريط العلوي بلا إعادة فتح النافذة.
+ * كل تغيير يُطلق 'settings-changed' ليستجيب MainScene فوراً.
  */
 import {
   getSpeed,
   getTodayStats,
-  getUsername,
   isSoundEnabled,
   isVibrationEnabled,
   setSoundEnabled,
   setSpeed,
-  setUsername,
   setVibrationEnabled,
 } from '../services/SettingsService'
 import { getTotalGoodDeeds } from '../services/GardenService'
@@ -41,9 +34,6 @@ const SPEED_OPTIONS: { value: number; label: string }[] = [
 /** قيم السرعة الصالحة (لمطابقة القيمة المخزّنة عند الإقلاع). */
 const SPEED_VALUES = SPEED_OPTIONS.map((o) => o.value)
 
-/** اسم افتراضي يظهر إن لم يُدخل المستخدم اسماً. */
-const DEFAULT_NAME = 'ضيف الكريم'
-
 /** حدث beforeinstallprompt (غير قياسي، لذا نعرّفه محلياً). */
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>
@@ -51,7 +41,6 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 let root: HTMLElement | null = null
-let nameInput: HTMLInputElement | null = null
 let statusEl: HTMLElement | null = null
 let installRow: HTMLElement | null = null
 let installBtn: HTMLButtonElement | null = null
@@ -121,32 +110,30 @@ function syncToggle(id: string, value: boolean): void {
   root?.querySelector(id)?.setAttribute('aria-checked', String(value))
 }
 
-/** حفظ الاسم في localStorage وتحديث الشريط العلوي فوراً. */
-function persistName(): void {
-  setUsername(nameInput?.value ?? '')
-  notifyChanged()
-  window.dispatchEvent(new CustomEvent('username-changed'))
-}
-
 /** مزامنة كل عناصر التحكم مع القيم المخزّنة (تُستدعى عند كل فتح). */
 function syncAll(): void {
-  // لا نكتب في الحقل أثناء كتابته (سلوك مزعج جداً)؛ نحدّثه فقط إن لم يكن نشطاً.
-  if (nameInput && document.activeElement !== nameInput) nameInput.value = getUsername()
-
   const speed = getSpeed()
-  const select = root?.querySelector<HTMLSelectElement>('#settings-speed')
-  if (select) select.value = String(SPEED_VALUES.includes(speed) ? speed : 1)
+  const normalizedSpeed = SPEED_VALUES.includes(speed) ? speed : 1
+  const slider = root?.querySelector<HTMLInputElement>('#settings-speed')
+  const speedValue = root?.querySelector<HTMLOutputElement>('#settings-speed-value')
+  if (slider) {
+    slider.value = String(normalizedSpeed)
+    slider.style.setProperty('--speed-progress', `${((normalizedSpeed - 0.5) / 1.5) * 100}%`)
+  }
+  if (speedValue) speedValue.textContent = SPEED_OPTIONS.find((option) => option.value === normalizedSpeed)?.label ?? 'عادي'
 
   syncToggle('#settings-sound', isSoundEnabled())
   syncToggle('#settings-vibrate', isVibrationEnabled())
 
-  // صفّ التثبيت: يظهر فقط إذا كان التثبيت متاحاً فعلاً ولم يكن مثبَّتاً بالفعل.
-  if (installRow) installRow.style.display = !isInstalled() && deferredPrompt ? 'flex' : 'none'
+  if (installRow) installRow.style.display = isInstalled() ? 'none' : 'flex'
+  if (installBtn) installBtn.disabled = !deferredPrompt
   const hint = root?.querySelector('#settings-install-hint')
   if (hint) {
     hint.textContent = isInstalled()
       ? 'التطبيق مثبَّت بالفعل ويعمل دون اتصال'
-      : 'ثبّت التطبيق على جهازك ليعمل دون إنترنت'
+      : deferredPrompt
+        ? 'نزّل التطبيق ليعمل من شاشتك الرئيسية'
+        : 'التنزيل المباشر غير متاح في هذا المتصفح'
   }
 
   renderTodayStats()
@@ -176,13 +163,9 @@ export function showSettingsPanel(): void {
   root.querySelector('.crisp-scroll')?.scrollTo({ top: 0 })
 }
 
-/** إغلاق النافذة (مع حفظ الاسم إن كان الحقل ما زال نشطاً). */
+/** إغلاق النافذة. */
 export function hideSettingsPanel(): void {
   if (!root || !open) return
-  if (document.activeElement === nameInput) {
-    persistName()
-    nameInput?.blur()
-  }
   root.classList.add('hidden')
   open = false
   document.body.classList.remove('modal-open')
@@ -202,10 +185,6 @@ export function isSettingsPanelOpen(): boolean {
 export function initSettingsPanel(): void {
   if (document.getElementById('settings-panel')) return
 
-  const speedOptions = SPEED_OPTIONS.map(
-    (o) => `<option value="${o.value}">${o.label}</option>`,
-  ).join('')
-
   root = document.createElement('section')
   root.id = 'settings-panel'
   root.className = 'crisp-modal hidden'
@@ -218,30 +197,24 @@ export function initSettingsPanel(): void {
         <div>
           <p class="crisp-eyebrow">⚙️ تخصيصك</p>
           <h2>الإعدادات</h2>
-          <p>اضبط اسمك وسرعتك وتابع إنجازك اليومي</p>
+          <p>تحكم بسرعة الذكر والصوت وتابع إنجازك اليومي</p>
         </div>
         <button class="crisp-close" type="button" aria-label="إغلاق">×</button>
       </header>
 
       <div class="crisp-scroll">
 
-        <div class="crisp-row">
-          <div class="crisp-row-text">
-            <strong>اسم المستخدم</strong>
-            <small id="settings-saved" style="color:#059669">يظهر في أعلى اللعبة</small>
-          </div>
-          <input id="settings-name" class="crisp-input" type="text" maxlength="24"
-                 placeholder="اسمك" autocomplete="name" aria-label="اسم المستخدم" />
-        </div>
-
         <div id="settings-today"></div>
 
-        <div class="crisp-row">
+        <div class="crisp-row crisp-speed-row">
           <div class="crisp-row-text">
             <strong>سرعة الأذكار</strong>
-            <small>سرعة تصاعد الفقاعات على الشاشة</small>
+            <output id="settings-speed-value" for="settings-speed">عادي</output>
           </div>
-          <select id="settings-speed" class="crisp-select" aria-label="سرعة الأذكار">${speedOptions}</select>
+          <div class="crisp-speed-control">
+            <input id="settings-speed" class="crisp-range" type="range" min="0.5" max="2" step="0.5" value="1" aria-label="سرعة الأذكار" />
+            <div class="crisp-speed-labels" aria-hidden="true"><span>هادئ</span><span>عادي</span><span>سريع</span><span>سريع جداً</span></div>
+          </div>
         </div>
 
         <div class="crisp-row">
@@ -262,20 +235,20 @@ export function initSettingsPanel(): void {
                   role="switch" aria-checked="false" aria-label="تشغيل الاهتزاز"></button>
         </div>
 
-        <div class="crisp-row">
-          <div class="crisp-row-text">
-            <strong>تحديث التطبيق</strong>
-            <small>تحميل أحدث إصدار من الخادم</small>
-          </div>
-          <button id="settings-update" class="crisp-action" type="button">🔄 تحديث</button>
-        </div>
+        <div class="crisp-actions">
+          <button id="settings-update" class="crisp-action crisp-action-update" type="button">
+            <span class="crisp-action-icon" aria-hidden="true">↻</span><span>تحديث التطبيق</span>
+          </button>
 
-        <div id="settings-install-row" class="crisp-row" style="display:none">
-          <div class="crisp-row-text">
-            <strong>تثبيت التطبيق</strong>
-            <small id="settings-install-hint">ثبّت التطبيق على جهازك ليعمل دون إنترنت</small>
+          <div id="settings-install-row" class="crisp-install-action" style="display:none">
+            <div class="crisp-row-text">
+              <strong>تنزيل التطبيق</strong>
+              <small id="settings-install-hint">نزّل التطبيق ليعمل من شاشتك الرئيسية</small>
+            </div>
+            <button id="settings-install" class="crisp-action crisp-action-install" type="button">
+              <span class="crisp-action-icon" aria-hidden="true">↓</span><span>تنزيل</span>
+            </button>
           </div>
-          <button id="settings-install" class="crisp-action" type="button">⬇️ تثبيت</button>
         </div>
 
         <p id="settings-status" class="crisp-status" role="status" aria-live="polite"></p>
@@ -285,7 +258,6 @@ export function initSettingsPanel(): void {
   const panel = root // نسخة محلية: تُبقي TS narrow حتى داخل الـ closures
   document.body.appendChild(panel)
 
-  nameInput = panel.querySelector('#settings-name')
   statusEl = panel.querySelector('#settings-status')
   installRow = panel.querySelector('#settings-install-row')
   installBtn = panel.querySelector('#settings-install')
@@ -296,25 +268,14 @@ export function initSettingsPanel(): void {
     if (e.target === panel) hideSettingsPanel()
   })
 
-  // حفظ الاسم عند مغادرة الحقل (لا نحفظ مع كل حرف) — وأيضاً عند الضغط على Enter.
-  nameInput?.addEventListener('blur', () => {
-    persistName()
-    const saved = root?.querySelector('#settings-saved')
-    const name = getUsername()
-    if (saved) {
-      saved.textContent =
-        name === DEFAULT_NAME ? 'يظهر في أعلى اللعبة' : `محفوظ باسم: ${name}`
-    }
-  })
-  nameInput?.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') nameInput?.blur()
-  })
-
-  root.querySelector('#settings-speed')?.addEventListener('change', (e) => {
-    const v = Number((e.target as HTMLSelectElement).value)
+  root.querySelector('#settings-speed')?.addEventListener('input', (e) => {
+    const slider = e.target as HTMLInputElement
+    const v = Number(slider.value)
     if (!Number.isFinite(v)) return
     setSpeed(v)
-    notifyChanged()
+    slider.style.setProperty('--speed-progress', `${((v - 0.5) / 1.5) * 100}%`)
+    const speedValue = root?.querySelector<HTMLOutputElement>('#settings-speed-value')
+    if (speedValue) speedValue.textContent = SPEED_OPTIONS.find((option) => option.value === v)?.label ?? 'عادي'
   })
 
   bindToggle('#settings-sound', setSoundEnabled)
@@ -352,6 +313,7 @@ export function initSettingsPanel(): void {
     e.preventDefault()
     deferredPrompt = e as BeforeInstallPromptEvent
     if (installRow) installRow.style.display = 'flex'
+    if (installBtn) installBtn.disabled = false
   })
 
   window.addEventListener('appinstalled', () => {

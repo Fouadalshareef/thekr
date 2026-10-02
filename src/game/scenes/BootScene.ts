@@ -60,14 +60,14 @@ export default class BootScene extends Phaser.Scene {
     const { width, height } = this.scale
     const cx = width / 2
 
-    // 1) خلفية فاخرة: تدرج عميق (أزرق ليلي → زمردي داكن) بدل الأخضر الصريح
+    // 1) خلفية مضيئة بتدرج عاجي وذهبي متناسق مع واجهة اللعبة.
     const background = this.add.graphics()
-    background.fillGradientStyle(0x02150f, 0x02150f, 0x062e22, 0x010a14, 1)
+    background.fillGradientStyle(0xfff8e8, 0xfff8e8, 0xf4dfad, 0xe9c36f, 1)
     background.fillRect(0, 0, width, height)
 
-    // 2) زخارف هندسية دقيقة (أقواس متحدة المركز شفافة جداً — إحساس فاخر هادئ)
+    // 2) زخارف هندسية ذهبية رقيقة في الخلفية.
     const decor = this.add.graphics()
-    decor.lineStyle(1, 0x34d399, 0.07)
+    decor.lineStyle(1, 0x98702d, 0.1)
     for (let i = 0; i < 12; i++) {
       decor.strokeCircle(cx, height * 0.42, 120 + i * 55)
     }
@@ -77,9 +77,9 @@ export default class BootScene extends Phaser.Scene {
 
     // 4) هالة ضوئية ذهبية ناعمة خلف البطاقة
     const glow = this.add.graphics()
-    glow.fillStyle(0xfacc15, 0.04)
+    glow.fillStyle(0xe4b64f, 0.08)
     glow.fillCircle(cx, height * 0.38, 210)
-    glow.fillStyle(0xfacc15, 0.08)
+    glow.fillStyle(0xfff6dd, 0.24)
     glow.fillCircle(cx, height * 0.38, 110)
 
     // 5) بطاقة ترحيب مركزية أنيقة بحواف مائلة (عرض أوسع لاحتواء العنوان)
@@ -88,11 +88,11 @@ export default class BootScene extends Phaser.Scene {
     const cardY = height * 0.38
     const cardPadding = 24
     const card = this.add.graphics()
-    card.fillStyle(0x0a1f18, 0.92)
+    card.fillStyle(0xfffcf3, 0.96)
     card.fillRoundedRect(cx - cardW / 2, cardY - cardH / 2, cardW, cardH, 24)
-    card.lineStyle(2, 0xfacc15, 0.55)
+    card.lineStyle(2.5, 0xb88a37, 0.9)
     card.strokeRoundedRect(cx - cardW / 2, cardY - cardH / 2, cardW, cardH, 24)
-    card.lineStyle(1, 0xffffff, 0.12)
+    card.lineStyle(1, 0xd8bd7a, 0.5)
     card.strokeRoundedRect(cx - cardW / 2 + 8, cardY - cardH / 2 + 8, cardW - 16, cardH - 16, 18)
 
     // 6) البسملة أعلى البطاقة
@@ -100,7 +100,7 @@ export default class BootScene extends Phaser.Scene {
       .text(cx, cardY - cardH / 2 + 40, 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', {
         fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Arial, sans-serif',
         fontSize: '24px',
-        color: '#d1fae5',
+        color: '#765a24',
       })
       .setOrigin(0.5)
       .setAlpha(0)
@@ -109,10 +109,10 @@ export default class BootScene extends Phaser.Scene {
     //    بهوامش رأسية مريحة (≥ 16px) وخطان أبعد عن النقطة المركزية لمنع التداخل
     const dividerY = cardY - 48
     const divider = this.add.graphics()
-    divider.lineStyle(1.5, 0xfacc15, 0.6)
+    divider.lineStyle(1.5, 0xb88a37, 0.72)
     divider.lineBetween(cx - 95, dividerY, cx - 20, dividerY)
     divider.lineBetween(cx + 20, dividerY, cx + 95, dividerY)
-    divider.fillStyle(0xfacc15, 0.9)
+    divider.fillStyle(0xc4953c, 0.95)
     divider.fillPoints(
       [
         { x: cx, y: dividerY - 7 },
@@ -130,32 +130,32 @@ export default class BootScene extends Phaser.Scene {
         fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Arial, sans-serif',
         fontSize: `${titleFontSize}px`,
         fontStyle: 'bold',
-        color: '#fef08a',
+        color: '#193b4e',
         align: 'center',
         wordWrap: { width: cardW - cardPadding * 2, useAdvancedWrap: true },
       })
       .setOrigin(0.5)
       .setAlpha(0)
-      .setShadow(0, 4, 'rgba(0,0,0,0.6)', 12, true, true)
-    title.setStroke('#713f12', 3)
+      .setShadow(0, 2, 'rgba(91,66,24,0.16)', 5, true, true)
+    title.setStroke('#fff7e4', 1.5)
 
     // 9) رسالة ترحيبية هادئة
     const subtitle = this.add
       .text(cx, cardY + cardH / 2 - 42, 'طمأنينة القلوب بذكر الله', {
         fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Arial, sans-serif',
         fontSize: '24px',
-        color: '#a7f3d0',
+        color: '#3e6268',
       })
       .setOrigin(0.5)
       .setAlpha(0)
-    subtitle.setShadow(0, 2, 'rgba(0,0,0,0.5)', 4, true, true)
+    subtitle.setShadow(0, 1, 'rgba(255,255,255,0.75)', 3, true, true)
 
     // 10) نص "اضغط للبدء" نابض أسفل الشاشة
     const startText = this.add
       .text(cx, height - 110, '« اضغط في أي مكان للبدء »', {
         fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
         fontSize: '22px',
-        color: '#6ee7b7',
+        color: '#28564d',
       })
       .setOrigin(0.5)
       .setAlpha(0)
@@ -176,14 +176,14 @@ export default class BootScene extends Phaser.Scene {
 
     // الانتقال إلى شاشة اللعب: بالضغط مع تأثير انتقال ناعم
     this.input.once('pointerdown', () => {
-      this.cameras.main.fadeOut(400, 2, 21, 15)
+      this.cameras.main.fadeOut(400, 231, 195, 119)
       this.time.delayedCall(400, () => this.scene.start('MainScene'))
     })
 
     // تلقائياً بعد 6 ثوانٍ
     this.time.delayedCall(6000, () => {
       if (this.scene.isActive()) {
-        this.cameras.main.fadeOut(400, 2, 21, 15)
+        this.cameras.main.fadeOut(400, 231, 195, 119)
         this.time.delayedCall(400, () => this.scene.start('MainScene'))
       }
     })
