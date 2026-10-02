@@ -227,12 +227,10 @@ export default class MainScene extends Phaser.Scene {
     })
 
     this.buildHud()
-    // ضبط فلتر النسيج على NEAREST للأيقونات PNG (hud-theme / hud-farm / hud-quran)
-    // السبب: الفلتر الافتراضي LINEAR يُضبّب الصور الصغيرة على شاشات Retina/High-DPI.
-    // NEAREST يحفظ حواف البكسل حادّةً ويعطي وضوح 3D الأصلي للصور.
-    ;(['hud-theme', 'hud-farm', 'hud-quran'] as const).forEach((k) => {
+    // أصول HUD ذات mipmaps حقيقية تُصغّر بترشيح خطي ناعم وواضح.
+    ;(['hud-theme-mipped', 'hud-farm-mipped', 'hud-quran-mipped'] as const).forEach((k) => {
       if (this.textures.exists(k))
-        this.textures.get(k).setFilter(Phaser.Textures.FilterMode.NEAREST)
+        this.textures.get(k).setFilter(Phaser.Textures.FilterMode.LINEAR)
     })
     this.buildModePanel()
     this.buildFocusPanel()
@@ -353,7 +351,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private buildTopBanner(): void {
-    this.topBanner = this.add.image(this.scale.width / 2, 4, 'hud-banner')
+    this.topBanner = this.add.image(this.scale.width / 2, 4, 'hud-banner-mipped', 'art')
       .setOrigin(0.5, 0)
       .setDepth(DEPTH_HUD)
 
@@ -362,6 +360,7 @@ export default class MainScene extends Phaser.Scene {
       fontStyle: 'bold',
       color: '#4a2306',
       align: 'center' as const,
+      resolution: Math.min(window.devicePixelRatio || 1, 3),
     }
     this.headerLevelText = this.add.text(0, 0, 'المستوى', { ...textStyle, fontSize: '15px' }).setOrigin(0.5).setDepth(DEPTH_HUD + 1)
     this.headerLevelValueText = this.add.text(0, 0, '', { ...textStyle, fontSize: '21px' }).setOrigin(0.5).setDepth(DEPTH_HUD + 1)
@@ -445,7 +444,7 @@ export default class MainScene extends Phaser.Scene {
       onIconCreated?: (icon: Phaser.GameObjects.Image) => void,
     ): Phaser.GameObjects.Container => {
       const button = this.add.container(42, y).setDepth(DEPTH_HUD + 2)
-      const image = this.add.image(0, 0, texture).setDisplaySize(54, 54)
+      const image = this.add.image(0, 0, `${texture}-mipped`).setDisplaySize(54, 54)
       onIconCreated?.(image)
       const badge = this.add.graphics()
       badge.fillStyle(0xd97706, 1)
@@ -457,6 +456,7 @@ export default class MainScene extends Phaser.Scene {
         fontSize: '14px',
         fontStyle: 'bold',
         color: '#ffffff',
+        resolution: Math.min(window.devicePixelRatio || 1, 3),
       }).setOrigin(0.5)
       caption.setShadow(0, 1, 'rgba(0,0,0,0.8)', 2, false, true)
       button.add([image, badge, caption])
@@ -1136,6 +1136,7 @@ export default class MainScene extends Phaser.Scene {
         fontStyle: 'bold',
         color: '#4A2C0A',
         align: 'center',
+        resolution: Math.min(window.devicePixelRatio || 1, 3),
       })
       .setOrigin(0.5)
       .setDepth(DEPTH_SESSION_COUNTER + 1)

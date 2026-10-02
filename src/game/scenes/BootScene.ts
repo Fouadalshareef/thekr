@@ -50,6 +50,8 @@ export default class BootScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.createHudTextures()
+
     // شاشة الترحيب: يُخفى سهم القائمة الجانبية تماماً (يُعاد إظهاره في MainScene).
     setSidebarWelcomeActive(true)
     // إخفاء الشريط العلوي في شاشة الترحيب (يظهر فقط في MainScene).
@@ -187,5 +189,36 @@ export default class BootScene extends Phaser.Scene {
         this.time.delayedCall(400, () => this.scene.start('MainScene'))
       }
     })
+  }
+
+  private createHudTextures(): void {
+    const bannerImage = this.textures.get('hud-banner').getSourceImage() as HTMLImageElement
+    const bannerWidth = 2048
+    const bannerHeight = 1024
+    const fittedHeight = Math.round(bannerWidth * (bannerImage.height / bannerImage.width))
+    const bannerY = Math.round((bannerHeight - fittedHeight) / 2)
+    const bannerTexture = this.textures.createCanvas('hud-banner-mipped', bannerWidth, bannerHeight)
+    if (bannerTexture) {
+      const context = bannerTexture.getContext()
+      context.imageSmoothingEnabled = true
+      context.imageSmoothingQuality = 'high'
+      context.drawImage(bannerImage, 0, bannerY, bannerWidth, fittedHeight)
+      bannerTexture.refresh()
+      bannerTexture.add('art', 0, 0, bannerY, bannerWidth, fittedHeight)
+      bannerTexture.setFilter(Phaser.Textures.FilterMode.LINEAR)
+    }
+
+    const iconKeys = ['hud-theme', 'hud-farm', 'hud-quran'] as const
+    for (const key of iconKeys) {
+      const source = this.textures.get(key).getSourceImage() as HTMLImageElement
+      const texture = this.textures.createCanvas(`${key}-mipped`, 512, 512)
+      if (!texture) continue
+      const iconContext = texture.getContext()
+      iconContext.imageSmoothingEnabled = true
+      iconContext.imageSmoothingQuality = 'high'
+      iconContext.drawImage(source, 0, 0, 512, 512)
+      texture.refresh()
+      texture.setFilter(Phaser.Textures.FilterMode.LINEAR)
+    }
   }
 }
