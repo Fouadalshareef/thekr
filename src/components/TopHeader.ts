@@ -2,9 +2,11 @@
  * TopHeader — الشريط العلوي فوق قماش اللعبة (DOM) بتصميم اللوحة الخشبية.
  *
  * الأصل: `src/assets/rk-banner.png` (2172×724) لوحة خشبية بثلاث فتحات:
- *   - يسار (10.27% عرض، 30.66% ارتفاع): دائرة صغيرة ⇒ اسم المستخدم + المستوى.
- *   - وسط (41.76% عرض، 27.21% ارتفاع): الحبة البيضاء يمين النجمة ⇒ الإجمالي.
- *   - يمين (18.55% عرض، 56.08% ارتفاع): دائرة كبيرة ⇒ زر الإيقاف/الاستئناف.
+ *   - يسار (15.47% عرض، 47.10% ارتفاع): دائرة كبيرة ⇒ اسم المستخدم + المستوى.
+ *   - وسط (44.71% عرض، 29.14% ارتفاع): الحبة البيضاء يمين النجمة ⇒ الإجمالي
+ *     في سطر أفقي واحد (التسمية يمين والرقم يسارها — لا تكديس).
+ *   - يمين (10.87% عرض، 33.29% ارتفاع): دائرة صغيرة ⇒ أيقونة الإيقاف/الاستئناف
+ *     مباشرة بلا زر، ملوّنة بنّياً عبر CSS mask (لا صورة منسوخة).
  * كل عنصر يُموضَع بنسبة مئوية من أبعاد اللوحة، فيبقى مضبوطاً على أي مقاس.
  * عند استبدال الصورة: `node scripts/measure-banner.mjs src/assets/rk-banner.png`
  * ثم تُحدَّث النسب هنا وفي .rk-slot-* في style.css من مخرجات القياس.
@@ -36,6 +38,17 @@ let paused = false
 const PAUSE_ICON = 'game/icons/pause-gbtn.svg'
 const PLAY_ICON  = 'game/icons/play-gbtn.svg'
 
+/**
+ * مسار مطلق للأيقونة.
+ * السبب: متغيّر --rk-pause-ico يُستهلك داخل `mask: var(...)` في style.css،
+ * والمتصفح يحلّ الـ url النسبي فيه بقاعدة الستايل (dist/assets/*.css) لا بقاعدة
+ * الورقة ⇒ يصبح المسار dist/assets/game/icons/... (404) وتختفي الأيقونة.
+ * الحل: تمرير URL مطلق من document.baseURI (يعمل مع base:'./' على GitHub Pages).
+ */
+function iconUrl(file: string): string {
+  return new URL(file, document.baseURI).href
+}
+
 
 
 /** تحديث اسم المستخدم المعروض. */
@@ -56,12 +69,14 @@ function renderCount(): void {
   countEl.textContent = String(getTotalGoodDeeds())
 }
 
-/** مزامنة أيقونة الزر مع حالة الإيقاف الحالية. */
+/** مزامنة أيقونة الزر مع حالة الإيقاف الحالية ( عبر متغيّر القناع --rk-pause-ico). */
 function renderPauseIcon(): void {
   if (!pauseBtn) return
-  const icon = pauseBtn.querySelector('img')
+  const icon = pauseBtn.querySelector<HTMLElement>('.rk-pause-ico')
   const src = paused ? PLAY_ICON : PAUSE_ICON
-  if (icon && icon.getAttribute('src') !== src) icon.setAttribute('src', src)
+  if (icon && !icon.style.getPropertyValue('--rk-pause-ico').includes(src)) {
+    icon.style.setProperty('--rk-pause-ico', `url("${iconUrl(src)}")`)
+  }
   pauseBtn.setAttribute('aria-label', paused ? 'استئناف' : 'إيقاف مؤقت')
   pauseBtn.setAttribute('aria-pressed', String(paused))
   pauseBtn.title = paused ? 'استئناف' : 'إيقاف مؤقت'
@@ -121,7 +136,7 @@ export function initTopHeader(): void {
   rootEl.style.display = 'none'
 
   rootEl.innerHTML = `
-    <!-- يسار: اسم المستخدم + المستوى (الدائرة الصغيرة) -->
+    <!-- يسار: اسم المستخدم + المستوى (الدائرة الكبيرة) -->
     <div class="rk-slot rk-slot-left">
       <span class="rk-level-line">
         <span class="rk-slot-label">المستوى</span>
@@ -130,16 +145,16 @@ export function initTopHeader(): void {
       <span id="top-header-name" class="rk-header-name"></span>
     </div>
 
-    <!-- وسط: إجمالي الأذكار (الحبة البيضاء يمين النجمة) -->
+    <!-- وسط: إجمالي الأذكار — سطر أفقي داخل الحبة البيضاء يمين النجمة -->
     <div class="rk-slot rk-slot-center">
       <span class="rk-slot-label">إجمالي الأذكار</span>
       <span id="top-header-total" class="rk-header-count">0</span>
     </div>
 
-    <!-- يمين: زر الإيقاف/الاستئناف (الدائرة الكبيرة) -->
+    <!-- يمين: أيقونة الإيقاف/الاستئناف مباشرة داخل الدائرة الصغيرة (بلا زر) -->
     <button id="top-header-pause" class="rk-slot rk-slot-right rk-pause-btn" type="button"
             aria-label="إيقاف مؤقت" aria-pressed="false">
-      <img src="${PAUSE_ICON}" alt="" aria-hidden="true" />
+      <span class="rk-pause-ico" aria-hidden="true" style="--rk-pause-ico: url('${iconUrl(PAUSE_ICON)}')"></span>
     </button>
   `
   // الصورة تُمرَّر عبر --rk-banner. العنوان هنا ناتج عن استيراد Vite فيصير

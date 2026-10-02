@@ -179,13 +179,16 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     // إضافة الـ glow كأول طبقة (أسفل الجميع داخل الـ Container)
     this.addAt(glow, 0)
 
-    // حلقة بيضاء رفيعة أنيقة حول حافة الجسم
-    const outline = this.scene.add.graphics()
-    outline.lineStyle(3, 0xffffff, 0.88)
-    outline.strokeCircle(0, 0, hitRadius * 1.0)
-    outline.lineStyle(1, 0xffffff, 0.35)
-    outline.strokeCircle(0, 0, hitRadius * 1.1)
-    this.addAt(outline, 1)
+    // حلقة بيضاء رفيعة أنيقة حول حافة الجسم — تُطفأ للفقاعات التي تأتي
+    // بصورة جاهزة ترسم حدودها بنفسها (فقاعة سبحان الله المرسومة كصورة).
+    if (this.showEdgeRing()) {
+      const outline = this.scene.add.graphics()
+      outline.lineStyle(3, 0xffffff, 0.88)
+      outline.strokeCircle(0, 0, hitRadius * 1.0)
+      outline.lineStyle(1, 0xffffff, 0.35)
+      outline.strokeCircle(0, 0, hitRadius * 1.1)
+      this.addAt(outline, 1)
+    }
 
     // نبض خفيف ناعم للهالة
     this.scene.tweens.add({
@@ -203,6 +206,14 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   /** لون هالة الإضاءة — كل نوع يستطيع تجاوزه؛ الافتراضي أخضر فسفوري زاهٍ جداً. */
   protected getGlowColor(): number {
     return 0x39ff14 // فسفوري نيون صريح لتمييز التغيير فوراً
+  }
+
+  /**
+   * هل تُرسم حلقة الحافة البيضاء حول الجسم؟
+   * تُطفأ للأجسام التي تأتي بصورة جاهزة بحدودها (مثل فقاعة سبحان الله).
+   */
+  protected showEdgeRing(): boolean {
+    return true
   }
 
   private onUpdate(_time: number, delta: number): void {

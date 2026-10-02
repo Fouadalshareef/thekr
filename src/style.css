@@ -951,10 +951,12 @@ body.modal-open {
 /* Royal Kingdom Top Header (rk-header)                                */
 /* ------------------------------------------------------------------ */
 /* الأحجام بوحدة cqw فتتوسّع مع عرض اللوحة (container-type أسفله).      */
-/* الشريط = صورة واحدة (src/assets/rk-banner.png) بنسبة 3:1، والعناصر الثلاثة */
-/* مزروعة فوق فتحاتها بالنسب المقاسة من الأصل عبر                       */
+/* الشريط = صورة واحدة (src/assets/rk-banner.png) بنسبة 3:1 — لوحة بثلاث  */
+/* فتحات: دائرة يسار كبيرة (15.47%×47.10%) للاسم والمستوى، حبة وسطى      */
+/* (44.71%×29.14%) للإجمالي بسطر أفقي، ودائرة يمين صغيرة (10.87%×33.29%)  */
+/* لأيقونة الإيقاف (بلا زر). النسب مأخوذة من الأصل عبر                    */
 /*   node scripts/measure-banner.mjs src/assets/rk-banner.png            */
-/*   يسار ≈10.61%/49.59% · وسط ≈49.56%/49.79% · يمين ≈84.32%/47.93%      */
+/*   يسار ≈12.52%/47.44% · وسط ≈53.73%/49.93% · يمين ≈90.06%/48.96%      */
 .rk-header {
   position: fixed;
   top: 4px;
@@ -992,99 +994,113 @@ body.modal-open {
   text-align: center;
 }
 /* النقاط مقاسة من الأصل (scripts/measure-banner.mjs). */
-.rk-slot-left   { left: 10.61%; top: 49.59%; }
-/* الوسط: النجمة تشغل يسار الحبة (≈25%..33%)، فنضبط المحتوى على مركز
-   الفراغ المتبقي يمينها (33.3%..65.8%) بدل مركز الحبة الهندسي (45.9%)،
-   وإلا تراكب النصُّ النجمةَ. */
-.rk-slot-center { left: 49.56%; top: 49.79%; }
-.rk-slot-right  { left: 84.32%; top: 47.93%; }
+.rk-slot-left   { left: 12.52%; top: 47.44%; }
+/* الوسط: النجمة تمتد يميناً حتى ≈39.2% من عرض الشريط (مسح بكسل مباشر لصفوف
+   النص في rk-banner.png)، والكريمي يمتد حتى ≈73.5% ⇒ الفراغ الآمن
+   39.5%..73.3% (لا 36.3%..71.2% كما يعطيه القياس التقريبي) ومركزه 56.4%.
+   المحتوى سطر أفقي واحد (rtl): التسمية يمين ورقم الإجمالي يسارها. */
+.rk-slot-center {
+  left: 56.4%;
+  top: 49.93%;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0.04em;
+  direction: rtl;
+}
+.rk-slot-right  { left: 90.06%; top: 48.96%; }
 
-/* تسمية داخل الفتحة (بنّي داكن عالي التباين يقرأ على الخلفية الكريمية). */
+/* تسمية داخل الفتحة (بنّي دافئ #4a2306 عالي التباين على الخلفية الكريمية
+   + لمعة كريمية دافئة = لمسة فاتحة تناسب الثيم الخشبي/الذهبي). */
 .rk-slot-label {
-  font-size: clamp(8px, 2.5cqw, 15px);
+  font-size: clamp(8px, 2.4cqw, 16px);
   font-weight: 800;
   color: #4a2306;
-  letter-spacing: 0.02em;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 0 rgba(255, 244, 224, 0.7);
 }
 .rk-slot-left .rk-slot-label,
 .rk-slot-center .rk-slot-label { white-space: nowrap; }
 
-/* سطر المستوى داخل الدائرة الصغيرة يساراً: «المستوى 1» في سطر واحد
+/* سطر المستوى داخل الدائرة الكبيرة يساراً: «المستوى 1» في سطر واحد
    حتى لا يشغل الدائرة ارتفاعاً مضاعفاً مع اسم المستخدم. */
 .rk-level-line {
   display: flex;
   align-items: baseline;
-  gap: 0.1em;
+  gap: 0.06em;
   direction: rtl;
   white-space: nowrap;
 }
-/* تسمية «المستوى» أصغر داخل الدائرة الصغيرة (عرضها مقيّد بقطر الدائرة). */
-.rk-slot-left .rk-slot-label { font-size: clamp(5px, 1.7cqw, 12px); text-shadow: none; }
+/* تسمية «المستوى» — مصغّرة قليلاً لتبقى **داخل** الدائرة مع رقم المستوى
+   (نصف العرض الكامل 15.47% ⇒ المطلوب n ≤ 0.9 بقياس دوم). */
+.rk-slot-left .rk-slot-label { font-size: clamp(6.5px, 2.2cqw, 14px); letter-spacing: 0.01em; text-shadow: none; }
 
 /* رقم المستوى — يسار */
 .rk-level {
-  font-size: clamp(8px, 2.4cqw, 15px);
+  font-size: clamp(9px, 2.7cqw, 19px);
   font-weight: 900;
   color: #4a2306;
   direction: ltr;
 }
-/* اسم المستخدم أسفل المستوى، مقصوص إن طال (أضيق من قطر الدائرة). */
+/* اسم المستخدم أسفل المستوى، مكبّر ليملأ الدائرة ومقصوص إن طال. */
 .rk-header-name {
-  max-width: 7.4cqw;
-  font-size: clamp(6px, 1.6cqw, 10px);
+  max-width: 12.8cqw;
+  font-size: clamp(8px, 2.5cqw, 15px);
   font-weight: 700;
-  color: #7a4d24;
+  color: #4a2306;
+  text-shadow: 0 1px 0 rgba(255, 244, 224, 0.7);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   direction: rtl;
 }
 
-/* إجمالي الأذكار — وسط: الرقم كبير وعالي التباين (بنّي داكن) */
+/* إجمالي الأذكار — وسط: سطر أفقي داخل الفراغ الآمن 39.5%..73.3% يمين
+   النجمة. الرقم أكبر ما تتسع به الحبة بجانب التسمية: بنّي دافئ #4a2306
+   (لا أسود) + ظل دافئ، وتكسيد أفقي خفيف (scaleX) يحقق عرض خمسة أرقام
+   داخل الفراغ دون التضحية بالارتفاع. */
 .rk-header-count {
   font-family: Consolas, 'Courier New', monospace;
-  font-size: clamp(18px, 6.4cqw, 40px);
+  font-size: clamp(14px, 5.9cqw, 38px);
   font-weight: 900;
-  color: #3e2723;
+  color: #4a2306;
   text-shadow:
-    0 2px 3px rgba(58, 30, 10, 0.4),
-    0 1px 0 rgba(255, 255, 255, 0.6);
+    0 1px 2px rgba(58, 30, 10, 0.32),
+    0 1px 0 rgba(255, 244, 224, 0.65);
   direction: ltr;
   font-variant-numeric: tabular-nums;
+  transform: scaleX(0.85);
+  transform-origin: center;
 }
 
-/* زر الإيقاف/الاستئناف — يمين: زر دائري ذهبي غني داخل الدائرة الكبيرة */
+/* زر الإيقاف/الاستئناف — يمين: الأيقونة مباشرة داخل الدائرة الصغيرة
+   بلا زر ولا خلفية صفراء ولا إطار — حاوية شفافة تماماً. */
 .rk-pause-btn {
-  width: clamp(34px, 13cqw, 76px);
-  height: clamp(34px, 13cqw, 76px);
+  width: clamp(26px, 10.2cqw, 58px);
+  height: clamp(26px, 10.2cqw, 58px);
+  border: 0;
   border-radius: 50%;
-  border: clamp(2px, 0.55cqw, 3px) solid #7a4a12;
-  background: radial-gradient(
-    circle at 32% 28%,
-    #fff4cc 0%,
-    #f5c14e 42%,
-    #c98518 100%
-  );
-  box-shadow:
-    0 3px 7px rgba(50, 25, 0, 0.45),
-    inset 0 2px 3px rgba(255, 255, 255, 0.7),
-    inset 0 -3px 5px rgba(122, 74, 18, 0.55);
+  background: none;
+  box-shadow: none;
   padding: 0;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.1s ease, filter 0.1s ease;
 }
-.rk-pause-btn img {
-  width: 46%;
-  height: 46%;
-  object-fit: contain;
+/* كتلة القناع: تُلوّن الأيقونة الأصلية (SVG أبيض مشترك مع HUD) بالبنّي
+   الدافئ #4a2306 دون نسخة ثانية من الملف — مسار pause/play يُمرَّر عبر
+   --rk-pause-ico من TopHeader، فتبقى أيقونات HUD البيضاء كما هي. */
+.rk-pause-ico {
+  width: 76%;
+  height: 76%;
   display: block;
-  filter: drop-shadow(0 1px 2px rgba(90, 50, 10, 0.55));
+  background-color: #4a2306;
+  -webkit-mask: var(--rk-pause-ico) center / contain no-repeat;
+  mask: var(--rk-pause-ico) center / contain no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(255, 244, 220, 0.6));
 }
-.rk-pause-btn:hover { filter: brightness(1.08); }
+.rk-pause-btn:hover { filter: brightness(1.12); }
 .rk-pause-btn:active { transform: translate(-50%, -50%) scale(0.9); }
-.rk-pause-btn:focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
+.rk-pause-btn:focus-visible { outline: 2px solid #4a2306; outline-offset: 3px; }
 
 /* دعم container queries: تجعل أحجام العناصر تتوسّع مع عرض اللوحة. */
 @supports (container-type: inline-size) {
