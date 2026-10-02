@@ -4,6 +4,7 @@ import { setTopHeaderVisible } from '../../components/TopHeader'
 // استيراد عبر Vite: يُصدر الصورة باسم مجزّأ ببصمة المحتوى، فلا يصيبها
 // كاش قديم من Service Worker عند استبدال الأصل، كما أنه يعمل مع base:'./'.
 import SESSION_FRAME_URL from '../../assets/session-frame.png'
+import BANNER_URL from '../../assets/rk-banner.png'
 // فقاعة «سبحان الله» — الصورة المولّدة pi/Bubbles/sobhanallah.png مُنسوخة
 // إلى src/assets/bubbles/ (استيراد Vite المجزّأ ببصمة المحتوى).
 import SOBHAN_ALLAH_BUBBLE_URL from '../../assets/bubbles/sobhanallah.png'
@@ -43,6 +44,7 @@ export default class BootScene extends Phaser.Scene {
     // إطار عدّاد الجلسة (لوحة ذهبية + مربّع كريمي داخلي) — src/assets/session-frame.png
     // يُستورد بمسار Vite المجزّأ ليبقى خارج كاش Service Worker القديم.
     this.load.image('session-frame', SESSION_FRAME_URL)
+    this.load.image('hud-banner', BANNER_URL)
     // جسم فقاعة «سبحان الله» — صورة مولّدة بخلفية شفافة (بصمة Vite).
     this.load.image('bubble-subhanallah', SOBHAN_ALLAH_BUBBLE_URL)
   }

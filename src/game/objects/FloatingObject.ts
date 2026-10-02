@@ -56,8 +56,7 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     // تكبير واضح للجسم ليسهل لمسه
     this.setScale(BODY_SCALE)
 
-    // كل عناصر اللعب تحت طبقة الواجهة (DEPTH_HUD=1000)، فلا تستطيع الفقاعات
-    // أن تطفو فوق الشريط العلوي/الجلسة مهما بلغ عمقها.
+    // الأذكار الطافية فوق HUD داخل Canvas، وتبقى النوافذ المنبثقة أعلى منها.
     this.setDepth(DEPTH_GAMEPLAY)
 
     // بيانات التعريف (تُستخدم للفحص الآلي والتنظيف)
@@ -231,11 +230,8 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     this.x = this.startX + Math.sin(this.phase * Math.PI * 2) * this.opts.wiggleAmp
     this.rotation = Math.sin(this.phase * Math.PI * 2) * 0.05
 
-    // إبقاء الذكر أسفل الشريط العلوي حتى لا يختفي خلف عناصر الواجهة.
-    const bannerWidth = Math.min(window.innerWidth * 0.94, 520)
-    const hudBottom = 4 + bannerWidth / 3
-    const gameplayTop = Math.max(hudBottom + this.opts.hitRadius * BODY_SCALE, this.scene.scale.height * 0.22)
-    if (this.y < gameplayTop) {
+    // تستمر الفقاعة بالصعود عبر الواجهة حتى تتجاوز أعلى الشاشة بالكامل.
+    if (this.y < -this.opts.hitRadius * 3) {
       this.destroy()
     }
   }

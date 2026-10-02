@@ -103,7 +103,7 @@ function showInstallBanner(deferred: BeforeInstallPromptEvent): void {
     'top: 14px',
     'left: 50%',
     'transform: translateX(-50%)',
-    'z-index: 9999',
+    'z-index: 12000',
     'width: min(90%, 400px)',
     'display: flex',
     'align-items: center',

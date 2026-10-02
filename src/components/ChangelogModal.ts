@@ -13,7 +13,7 @@ export function initChangelog(): void {
 
   changelogModal = document.createElement('div')
   changelogModal.id = 'changelog-modal'
-  changelogModal.className = 'fixed inset-0 z-[70] flex items-center justify-center p-4'
+  changelogModal.className = 'fixed inset-0 z-[11000] flex items-center justify-center p-4'
   changelogModal.innerHTML = `
     <div id="changelog-backdrop" class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
     <div class="juicy-panel relative w-[90%] max-w-[400px] p-6 space-y-4 animate-[fadeIn_0.25s_ease-out]">

@@ -24,8 +24,7 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
     super(scene, x, y)
     this.item = item
     this.countRemaining = item.count
-    // بطاقة أذكار الصباح/المساء: عنصر لعب، فيبقى تحت طبقة الواجهة (HUD).
-    // كانت 2500 فترسم فوق عدّاد الجلسة (1999) — وهي سبب تراكب مرئي.
+    // بطاقة أذكار الصباح/المساء تُرسم فوق HUD وفي طبقة اللعب نفسها.
     this.setDepth(DEPTH_GAMEPLAY)
     // بطاقة أكبر: 90% من عرض الشاشة بحد أقصى 420px (لافتة الأذكار مكبّرة وواضحة)
     const { width, height } = scene.scale

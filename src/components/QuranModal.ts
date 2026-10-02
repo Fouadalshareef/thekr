@@ -72,7 +72,7 @@ async function openSurah(id: number, focusVerse?: number): Promise<void> {
 export function initQuranModal(): void {
   modal = document.createElement('div')
   modal.id = 'quran-modal'
-  modal.className = 'fixed inset-0 z-[70] hidden touch-pan-y'
+  modal.className = 'fixed inset-0 z-[11000] hidden touch-pan-y'
   modal.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;margin:0;padding:0;'
   modal.innerHTML = `<div id="quran-backdrop" class="absolute inset-0 bg-black/60"></div><div id="quran-scroll" class="relative h-full w-full overflow-y-auto bg-emerald-50 p-5 pt-20 text-slate-900" style="touch-action:pan-y;overscroll-behavior:contain"><header id="quran-header" class="fixed inset-x-0 top-0 z-10 flex items-center justify-between bg-white/90 p-4 shadow-md backdrop-blur transition-opacity"><h2 class="flex items-center gap-2 text-2xl font-bold text-emerald-900"><span class="h-6 w-6">📖</span> المصحف الشريف</h2><div class="flex items-center gap-3"><button id="quran-index" class="modal-index-button" type="button"><img src="game/icons/index.svg" alt="الفهرس"></button><button id="quran-close" class="modal-close-button" type="button" aria-label="إغلاق"><img src="game/icons/close.svg" alt=""></button></div></header><div id="quran-viewer" class="mx-auto w-full max-w-3xl space-y-3"></div></div>`
   document.body.appendChild(modal); viewer = modal.querySelector('#quran-viewer'); renderIndex()

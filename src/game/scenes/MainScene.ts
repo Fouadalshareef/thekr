@@ -21,6 +21,7 @@ import { Events } from '../events'
 import { incrementDhikr } from '../../services/DhikrStorage'
 import { SEQUENCE_DHIKRS, FOCUS_OPTIONS, DHIKR_VIRTUES, gameMode, type GameMode } from '../../services/gameMode'
 import { recordTodayDhikr, isGameEnabled, markAzkarDone } from '../../services/SettingsService'
+import { getTotalGoodDeeds, getGardenState } from '../../services/GardenService'
 import { hasPendingUpdate } from '../../services/AppVersion'
 import { getNextQuote } from '../../services/QuotesDB'
 import {
@@ -68,7 +69,7 @@ const WELCOME_SCENE = 'BootScene'
 const PAUSE_ICON_SIZE = BTN_ICON_SIZE
 
 /** موضع عمود الأزرار الجانبية أفقياً (كل الأزرار على نفس الخط الرأسي). */
-const SIDEBAR_X = 56
+const SIDEBAR_X = 42
 /** قطر الحاضنة/الحاوية الثابتة (46px) — width/height/flex-shrink/position/overflow. */
 const SIDE_CRADLE_SIZE = 46
 /**
@@ -166,6 +167,11 @@ export default class MainScene extends Phaser.Scene {
   private sessionText!: Phaser.GameObjects.Text
   private pauseButton!: Phaser.GameObjects.Container
   private pauseIcon!: Phaser.GameObjects.Image
+  private topBanner!: Phaser.GameObjects.Image
+  private headerLevelText!: Phaser.GameObjects.Text
+  private headerLevelValueText!: Phaser.GameObjects.Text
+  private headerCountText!: Phaser.GameObjects.Text
+  private headerCountLabel!: Phaser.GameObjects.Text
   private updateBadge!: Phaser.GameObjects.Container
   private modePanel!: Phaser.GameObjects.Container
   private modeList!: Phaser.GameObjects.Container
@@ -208,6 +214,7 @@ export default class MainScene extends Phaser.Scene {
 
   create(): void {
     ensurePixelTexture(this)
+    document.body.classList.add('phaser-hud-active')
 
     // إعادة ضبط حالة الجلسة والأوضاع عند كل فتح
     this.data.set('paused', false)
@@ -249,6 +256,9 @@ export default class MainScene extends Phaser.Scene {
 
     this.events.on(Events.DHIKR_COLLECTED, this.onDhikrCollected, this)
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this)
+    this.scale.on(Phaser.Scale.Events.RESIZE, this.layoutTopHud, this)
+    window.addEventListener('settings-changed', this.refreshCanvasHeader)
+    window.addEventListener('dhikr-counted', this.refreshCanvasHeader)
 
     // إظهار نافذة النصائح في البداية (تظهر مرة واحدة فقط)
     window.dispatchEvent(new CustomEvent('show-advice'))
@@ -339,20 +349,127 @@ export default class MainScene extends Phaser.Scene {
   // ------------------------------------------------------------------
 
   private buildHud(): void {
-    // العمود الجانبي بأيقونات مصغّرة (46px — مقاس ألعاب الموبايل) مع بطاقة اسم ثابتة
-    // موحّدة الأبعاد أسفل كل أيقونة، والفاصل الرأسي يتسع لها (SIDEBAR_STEP = 78px).
-    // الأيقونات ثابتة الظاهرة دائماً: لا سهم طي/فتح ولا حركة إخفاء.
-    // تمت إزالة أزرار القائمة الجانبية من WebGL واستبدالها بواجهة DOM في Sidebar.ts
-    // للحصول على دقة Retina فائقة وحل مشاكل تداخل الأنيمشن.
-
-    // أقصى اليمين العلوي: الإيقاف أعلى عداد الجلسة بفاصل رأسي 25px على الأقل.
+    this.buildTopBanner()
     this.buildPauseButton()
+    this.layoutTopHud()
     this.buildSessionCounter()
     this.buildComboCounter()
     this.buildAzkarCounter()
     this.buildFocusBar()
+    this.buildCanvasSidebar()
+  }
 
-    // أيقونات القائمة الجانبية ثابتة الظاهرة دائماً (بلا سهم طي/فتح).
+  private buildTopBanner(): void {
+    this.topBanner = this.add.image(this.scale.width / 2, 4, 'hud-banner')
+      .setOrigin(0.5, 0)
+      .setDepth(DEPTH_HUD)
+
+    const textStyle = {
+      fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+      fontStyle: 'bold',
+      color: '#4a2306',
+      align: 'center' as const,
+    }
+    this.headerLevelText = this.add.text(0, 0, 'المستوى', { ...textStyle, fontSize: '15px' }).setOrigin(0.5).setDepth(DEPTH_HUD + 1)
+    this.headerLevelValueText = this.add.text(0, 0, '', { ...textStyle, fontSize: '21px' }).setOrigin(0.5).setDepth(DEPTH_HUD + 1)
+    this.headerCountLabel = this.add.text(0, 0, 'إجمالي الأذكار', { ...textStyle, fontSize: '13px' }).setOrigin(1, 0.5).setDepth(DEPTH_HUD + 1)
+    this.headerCountText = this.add.text(0, 0, '', {
+      ...textStyle,
+      fontFamily: 'Consolas, "Courier New", monospace',
+      fontSize: '24px',
+    }).setOrigin(0, 0.5).setDepth(DEPTH_HUD + 1)
+    this.refreshCanvasHeader()
+  }
+
+  private layoutTopHud(): void {
+    if (!this.topBanner) return
+    const bannerWidth = Math.min(window.innerWidth * 0.94, 520)
+    const bannerHeight = bannerWidth / 3
+    const bannerLeft = (this.scale.width - bannerWidth) / 2
+    const bannerTop = 4
+    this.topBanner.setPosition(this.scale.width / 2, bannerTop).setDisplaySize(bannerWidth, bannerHeight)
+
+    const leftCenterX = bannerLeft + bannerWidth * 0.1252
+    const leftCenterY = bannerTop + bannerHeight * 0.4744
+    this.headerLevelText.setPosition(leftCenterX, leftCenterY - 10)
+    this.headerLevelValueText.setPosition(leftCenterX, leftCenterY)
+    this.layoutHeaderCount(bannerLeft, bannerWidth, bannerTop + bannerHeight * 0.4993)
+
+    const pauseSize = Math.min(48, bannerWidth * 0.105)
+    this.pauseButton.setPosition(bannerLeft + bannerWidth * 0.9006, bannerTop + bannerHeight * 0.4896)
+    this.pauseButton.setSize(pauseSize * 1.5, pauseSize * 1.5)
+    this.pauseIcon.setDisplaySize(pauseSize, pauseSize)
+    this.pauseButton.input!.hitArea.setTo(-pauseSize * 0.75, -pauseSize * 0.75, pauseSize * 1.5, pauseSize * 1.5)
+    this.layoutCanvasSidebar(bannerTop + bannerHeight + 38)
+  }
+
+  private layoutHeaderCount(bannerLeft: number, bannerWidth: number, y: number): void {
+    const centerX = bannerLeft + bannerWidth * 0.564
+    const gap = Math.max(3, bannerWidth * 0.01)
+    const safeWidth = bannerWidth * (0.733 - 0.395)
+    const labelWidth = this.headerCountLabel.width
+    const countWidth = this.headerCountText.width
+    const scale = Math.min(1, (safeWidth - gap) / (labelWidth + countWidth))
+    const groupWidth = (labelWidth + countWidth) * scale + gap
+
+    this.headerCountLabel.setScale(scale, 1)
+    this.headerCountText.setScale(scale, 1)
+    this.headerCountText.setPosition(centerX - groupWidth / 2, y)
+    this.headerCountLabel.setPosition(centerX + groupWidth / 2, y)
+  }
+
+  private layoutCanvasSidebar(top: number): void {
+    const step = Math.max(82, Math.min(98, this.scale.height * 0.105))
+    for (const [index, button] of [this.btnSliders, this.btnLeaf, this.btnQuran, this.btnGear].entries()) {
+      button?.setPosition(42, top + index * step)
+      button?.setData('homeY', top + index * step)
+    }
+    this.pinUpdateBadge()
+  }
+
+  private refreshCanvasHeader = (): void => {
+    this.headerLevelValueText?.setText(String(getGardenState().level))
+    this.headerCountText?.setText(String(getTotalGoodDeeds()))
+    if (this.topBanner) {
+      const bannerWidth = Math.min(window.innerWidth * 0.94, 520)
+      const bannerHeight = bannerWidth / 3
+      this.layoutHeaderCount(
+        (this.scale.width - bannerWidth) / 2,
+        bannerWidth,
+        4 + bannerHeight * 0.4993,
+      )
+    }
+  }
+
+  private buildCanvasSidebar(): void {
+    const top = 4 + Math.min(window.innerWidth * 0.94, 520) / 3 + 38
+    const step = Math.max(82, Math.min(98, this.scale.height * 0.105))
+    const sideButton = (texture: string, label: string, y: number, action: () => void): Phaser.GameObjects.Container => {
+      const button = this.add.container(42, y).setDepth(DEPTH_HUD + 2)
+      const image = this.add.image(0, 0, texture).setDisplaySize(54, 54)
+      const badge = this.add.graphics()
+      badge.fillStyle(0xd97706, 1)
+      badge.fillRoundedRect(-39, 30, 78, 28, 7)
+      badge.lineStyle(2, 0xffffff, 1)
+      badge.strokeRoundedRect(-39, 30, 78, 28, 7)
+      const caption = this.add.text(0, 44, label, {
+        fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
+        fontSize: '14px',
+        fontStyle: 'bold',
+        color: '#ffffff',
+      }).setOrigin(0.5)
+      caption.setShadow(0, 1, 'rgba(0,0,0,0.8)', 2, false, true)
+      button.add([image, badge, caption])
+      button.setSize(80, 60)
+      button.setInteractive(new Phaser.Geom.Rectangle(-40, -27, 80, 60), Phaser.Geom.Rectangle.Contains)
+      button.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, action)
+      return button
+    }
+
+    this.btnSliders = sideButton('hud-theme', 'النمط', top, () => this.onOpenModePanel())
+    this.btnLeaf = sideButton('hud-farm', 'المزرعة', top + step, () => this.onOpenGarden())
+    this.btnQuran = sideButton('hud-quran', 'المصحف', top + step * 2, () => window.dispatchEvent(new CustomEvent('open-quran')))
+    this.btnGear = sideButton('hud-settings', 'الإعدادات', top + step * 3, () => this.onOpenSettings())
     this.setSideMenuVisible(true, true)
   }
 
@@ -560,7 +677,7 @@ export default class MainScene extends Phaser.Scene {
       b?.setVisible(true)
     }
     // عناصر الجلسة تبقى ظاهرة كما هي.
-    this.pauseButton?.setVisible(false) // استُبدل بزر الإيقاف في TopHeader
+    this.pauseButton?.setVisible(true)
     this.sessionPill?.setVisible(true)
     this.sessionText?.setVisible(true)
     this.comboText?.setVisible(true)
@@ -676,7 +793,7 @@ export default class MainScene extends Phaser.Scene {
    * مع أيقونة SVG بيضاء ناصعة في الحلقة الداخلية، وظل أرضي ناعم وهالة ملوّنة.
    * (كل القيم البصرية مستخرجة من css/style.css في الحزمة — انظر GameButtonSkin.ts)
    */
-  private buildRoundButton(
+  protected buildRoundButton(
     x: number,
     y: number,
     icon: HudIcon,
@@ -919,12 +1036,12 @@ export default class MainScene extends Phaser.Scene {
 
   /** زر إيقاف/استئناف مؤقت أعلى اليمين (بنفس نمط الأزرار الجديدة). */
   private buildPauseButton(): void {
-    this.pauseButton = this.buildRoundButton(
-      this.scale.width - 56,
-      52,
-      'pause',
-      () => this.togglePause(),
-    )
+    this.pauseButton = this.add.container(0, 0).setDepth(DEPTH_HUD + 2)
+    this.pauseIcon = this.add.image(0, 0, 'hud-pause').setTint(0x4a2306)
+    this.pauseButton.add(this.pauseIcon)
+    this.pauseButton.setSize(56, 56)
+    this.pauseButton.setInteractive(new Phaser.Geom.Rectangle(-28, -28, 56, 56), Phaser.Geom.Rectangle.Contains)
+    this.pauseButton.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.onHeaderPauseToggle)
     this.pauseButton.setScrollFactor(0)
     this.refreshPauseIcon()
   }
@@ -934,6 +1051,7 @@ export default class MainScene extends Phaser.Scene {
     if (!this.pauseIcon) return
     // 1) تبديل النيسج (إيقاف/تشغيل).
     this.pauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
+    this.pauseIcon.setTint(0x4a2306)
     // 2) فرض القياس الصريح بعد كل تبديل: setTexture تُعيد أبعاد الإطار الأصلي
     //    (256×256) مع الاحتفاظ بالـ scale القديم ⇒ قد تُرسم الأيقونة بحجم هائل
     //    ومشوّه. لذلك نُثبّت القياس دائماً على PAUSE_ICON_SIZE (لا اعتماد على
@@ -968,12 +1086,12 @@ export default class MainScene extends Phaser.Scene {
    *
     * الأصل 1024×1024 (مربّع، POT — أنظر أدناه): لوحة «الجلسة» الذهبية علوياً،
    * وتحتها المربّع الكريمي الفاتح الذي يُوضع فيه الرقم. نُحجم الإطار إلى عرض
-   * 112..150px (مناسب للهاتف)، فنُعيد حساب موضع الرقم كنسبة من أبعاد الإطار
+  * 160..190px (مناسب للهاتف)، فنُعيد حساب موضع الرقم كنسبة من أبعاد الإطار
    * لا كإحداث ثابت، حتى يبقى داخل المربّع مهما تغيّر الحجم.
    */
   private buildSessionCounter(): void {
     // الأصل مربّع 1024×1024 ⇒ frameH = frameW.
-    const frameW = Math.round(Math.min(150, Math.max(112, this.scale.width * 0.3)))
+    const frameW = Math.round(Math.min(190, Math.max(160, this.scale.width * 0.42)))
     const frameH = frameW
     // البطاقة مثبّتة أعلى اليمين، أسفل الشريط العلوي مباشرة.
     // الشريط عرضه min(94vw, 520px) وارتفاعه = ثلثه ⇒ نحسب أسفله بدل ثابت.
@@ -981,7 +1099,7 @@ export default class MainScene extends Phaser.Scene {
     const bannerBottom = 4 + bannerW / 3
     const x = this.scale.width - Math.round(frameW * 0.62)
     const topY = Math.round(bannerBottom + 10)
-    // مركز المربّع الكريمي الداخلي كنسبة من ارتفاع الأصل (قِسته: 350/512 ≈ 0.684)
+    // مركز المربّع الكريمي الداخلي كنسبة من ارتفاع الإطار (0.684)
     const innerY = 0.684
     const hasFrame = this.textures.exists('session-frame')
 
@@ -1669,11 +1787,7 @@ export default class MainScene extends Phaser.Scene {
 
     const def = SEQUENCE_DHIKRS.find((d) => d.id === id)
     const Klass = CLASS_BY_DHIKR[id] ?? ALL_CLASSES[Phaser.Math.Between(0, ALL_CLASSES.length - 1)]
-    const x = Phaser.Math.Clamp(
-      width / 2 + Phaser.Math.Between(-Math.round(width * 0.025), Math.round(width * 0.025)),
-      margin,
-      width - margin,
-    )
+    const x = Phaser.Math.Between(margin, width - margin)
     const y = height + 80
     const body = new Klass(this, x, y, {
       dhikrId: id,
@@ -2024,6 +2138,9 @@ export default class MainScene extends Phaser.Scene {
     window.removeEventListener('reader-closed', this.resumeFromModal)
     if (this._onReaderClosed) window.removeEventListener('reader-closed', this._onReaderClosed)
     window.removeEventListener('settings-changed', this.onSettingsChanged)
+    window.removeEventListener('settings-changed', this.refreshCanvasHeader)
+    window.removeEventListener('dhikr-counted', this.refreshCanvasHeader)
+    this.scale.off(Phaser.Scale.Events.RESIZE, this.layoutTopHud, this)
     // إزالة مستمعات فتح النوافذ من شريط الأيقونات (DOM).
     window.removeEventListener('open-mode-panel', this.onOpenModePanel)
     window.removeEventListener('open-garden', this.onOpenGarden)
@@ -2035,6 +2152,7 @@ export default class MainScene extends Phaser.Scene {
     resetSidebarModals()
     // إخفاء الشريط العلوي عند مغادرة المشهد الرئيسي.
     setTopHeaderVisible(false)
+    document.body.classList.remove('phaser-hud-active')
     // إخفاء شريط تقدم الورد DOM عند مغادرة المشهد.
     document.getElementById('rk-focus-bar-dom')?.classList.remove('visible')
     // إزالة صنف الإزاحة من body وإلا تسرّب إلى المشاهد الأخرى (Zen/Boot).

@@ -31,6 +31,7 @@ body {
   padding: 0;
   overflow: hidden;
   position: fixed;
+  z-index: 2000;
   top: 0;
   left: 0;
   right: 0;
@@ -150,6 +151,11 @@ body {
   /* منع ظهور قائمة السياق عند الضغط المطوّل على الهاتف */
   -webkit-touch-callout: none;
   user-select: none;
+}
+
+body.phaser-hud-active #dom-sidebar,
+body.phaser-hud-active #top-header {
+  display: none !important;
 }
 
 /* إصلاح انزياح اللمس RTL:
@@ -363,7 +369,7 @@ body.modal-open {
 .focus-dom-modal {
   position: fixed;
   inset: 0;
-  z-index: 5000;
+  z-index: 11000;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -464,7 +470,7 @@ body.modal-open {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 9999;
+  z-index: 11000;
   padding: 20px 16px;
   box-sizing: border-box;
   background-color: #f8fafc;
@@ -685,7 +691,7 @@ body.modal-open {
 .crisp-modal {
   position: fixed;
   inset: 0;
-  z-index: 5000;
+  z-index: 11000;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1003,7 +1009,8 @@ body.modal-open {
   left: 56.4%;
   top: 49.93%;
   flex-direction: row;
-  align-items: baseline;
+  align-items: center;
+  justify-content: center;
   gap: 0.04em;
   direction: rtl;
 }
@@ -1144,7 +1151,7 @@ body.rk-focus-bar-open .rk-header {
   left: 50%;
   transform: translateX(-50%);
   width: min(94vw, 460px);
-  z-index: 1890;
+  z-index: 11000;
   display: none;
   align-items: center;
   justify-content: center;

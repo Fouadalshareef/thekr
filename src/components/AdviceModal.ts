@@ -3,7 +3,7 @@ let modal: HTMLElement | null = null
 export function initAdviceModal(): void {
   modal = document.createElement('div')
   modal.id = 'advice-modal'
-  modal.className = 'fixed inset-0 z-[70] hidden items-center justify-center p-4 touch-pan-y'
+  modal.className = 'fixed inset-0 z-[11000] hidden items-center justify-center p-4 touch-pan-y'
   modal.innerHTML = `
     <div id="advice-backdrop" class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
     <div id="advice-scroll" class="juicy-panel relative w-[95%] max-w-[480px] max-h-[85vh] overflow-y-auto p-6 space-y-6" style="touch-action: pan-y !important; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;">

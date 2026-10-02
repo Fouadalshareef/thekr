@@ -15,7 +15,6 @@
  *   يظهر الشريط أثناء اللعب الفعلي في MainScene فقط، ويختفي تلقائياً عند
  *   شاشة الترحيب أو نمط الاستغفار أو فتح أي نافذة (المصحف/النصائح/المزرعة…).
  */
-import { getUsername } from '../services/SettingsService'
 import { getTotalGoodDeeds, getGardenState } from '../services/GardenService'
 import { onGameUiVisibilityChange } from './Sidebar'
 // استيراد عبر Vite (وليس مساراً ثابتاً في public/):
@@ -26,7 +25,6 @@ import BANNER_URL from '../assets/rk-banner.png'
 
 /** مراجع عناصر الشريط (بعد initTopHeader). */
 let rootEl: HTMLElement | null = null
-let nameEl: HTMLElement | null = null
 let levelEl: HTMLElement | null = null
 let countEl: HTMLElement | null = null
 let pauseBtn: HTMLButtonElement | null = null
@@ -50,12 +48,6 @@ function iconUrl(file: string): string {
 }
 
 
-
-/** تحديث اسم المستخدم المعروض. */
-function renderName(): void {
-  if (!nameEl) return
-  nameEl.textContent = getUsername()
-}
 
 /** تحديث المستوى (عدد عناصر الحديقة المفتوحة) — يسار اللوحة. */
 function renderLevel(): void {
@@ -87,7 +79,6 @@ function renderPauseIcon(): void {
  * تُستدعى عند فتح أي نافذة أو بعد كل ذكر جديد.
  */
 export function refreshTopHeader(): void {
-  renderName()
   renderLevel()
   renderCount()
   renderPauseIcon()
@@ -136,13 +127,10 @@ export function initTopHeader(): void {
   rootEl.style.display = 'none'
 
   rootEl.innerHTML = `
-    <!-- يسار: اسم المستخدم + المستوى (الدائرة الكبيرة) -->
+    <!-- يسار: المستوى والرقم فقط -->
     <div class="rk-slot rk-slot-left">
-      <span class="rk-level-line">
-        <span class="rk-slot-label">المستوى</span>
-        <span id="top-header-level" class="rk-level">1</span>
-      </span>
-      <span id="top-header-name" class="rk-header-name"></span>
+      <span class="rk-slot-label">المستوى</span>
+      <span id="top-header-level" class="rk-level">1</span>
     </div>
 
     <!-- وسط: إجمالي الأذكار — سطر أفقي داخل الحبة البيضاء يمين النجمة -->
@@ -164,7 +152,6 @@ export function initTopHeader(): void {
 
   document.body.appendChild(rootEl)
 
-  nameEl   = rootEl.querySelector('#top-header-name')
   levelEl  = rootEl.querySelector('#top-header-level')
   countEl  = rootEl.querySelector('#top-header-total')
   pauseBtn = rootEl.querySelector('#top-header-pause')
@@ -182,8 +169,7 @@ export function initTopHeader(): void {
 
   refreshTopHeader()
 
-  // تحديث الاسم فوراً عند تغييره من نافذة الإعدادات، والإجمالي بعد كل ذكر.
-  window.addEventListener('username-changed', renderName)
+  // تحديث الإجمالي بعد كل ذكر.
   window.addEventListener('settings-changed', refreshTopHeader)
   window.addEventListener('dhikr-counted', renderCount)
 }
