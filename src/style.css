@@ -1012,7 +1012,7 @@ body.modal-open {
 /* تسمية داخل الفتحة (بنّي دافئ #4a2306 عالي التباين على الخلفية الكريمية
    + لمعة كريمية دافئة = لمسة فاتحة تناسب الثيم الخشبي/الذهبي). */
 .rk-slot-label {
-  font-size: clamp(8px, 2.4cqw, 16px);
+  font-size: clamp(11px, 3.4cqw, 20px);
   font-weight: 800;
   color: #4a2306;
   letter-spacing: 0.01em;
@@ -1032,19 +1032,19 @@ body.modal-open {
 }
 /* تسمية «المستوى» — مصغّرة قليلاً لتبقى **داخل** الدائرة مع رقم المستوى
    (نصف العرض الكامل 15.47% ⇒ المطلوب n ≤ 0.9 بقياس دوم). */
-.rk-slot-left .rk-slot-label { font-size: clamp(6.5px, 2.2cqw, 14px); letter-spacing: 0.01em; text-shadow: none; }
+.rk-slot-left .rk-slot-label { font-size: clamp(9px, 3.1cqw, 17px); letter-spacing: 0.01em; text-shadow: none; }
 
 /* رقم المستوى — يسار */
 .rk-level {
-  font-size: clamp(9px, 2.7cqw, 19px);
+  font-size: clamp(12px, 3.8cqw, 24px);
   font-weight: 900;
   color: #4a2306;
   direction: ltr;
 }
 /* اسم المستخدم أسفل المستوى، مكبّر ليملأ الدائرة ومقصوص إن طال. */
 .rk-header-name {
-  max-width: 12.8cqw;
-  font-size: clamp(8px, 2.5cqw, 15px);
+  max-width: 14.8cqw;
+  font-size: clamp(11px, 3.2cqw, 19px);
   font-weight: 700;
   color: #4a2306;
   text-shadow: 0 1px 0 rgba(255, 244, 224, 0.7);
@@ -1060,7 +1060,7 @@ body.modal-open {
    داخل الفراغ دون التضحية بالارتفاع. */
 .rk-header-count {
   font-family: Consolas, 'Courier New', monospace;
-  font-size: clamp(14px, 5.9cqw, 38px);
+  font-size: clamp(18px, 6.8cqw, 44px);
   font-weight: 900;
   color: #4a2306;
   text-shadow:

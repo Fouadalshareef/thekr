@@ -966,13 +966,13 @@ export default class MainScene extends Phaser.Scene {
   /**
    * عدّاد الجلسة — إطار معدني جاهز (src/assets/session-frame.png) بدل الرسم البرمجي.
    *
-   * الأصل 512×512 (مربّع، POT — أنظر أدناه): لوحة «الجلسة» الذهبية علوياً،
+    * الأصل 1024×1024 (مربّع، POT — أنظر أدناه): لوحة «الجلسة» الذهبية علوياً،
    * وتحتها المربّع الكريمي الفاتح الذي يُوضع فيه الرقم. نُحجم الإطار إلى عرض
    * 112..150px (مناسب للهاتف)، فنُعيد حساب موضع الرقم كنسبة من أبعاد الإطار
    * لا كإحداث ثابت، حتى يبقى داخل المربّع مهما تغيّر الحجم.
    */
   private buildSessionCounter(): void {
-    // الأصل مربّع 512×512 ⇒ frameH = frameW.
+    // الأصل مربّع 1024×1024 ⇒ frameH = frameW.
     const frameW = Math.round(Math.min(150, Math.max(112, this.scale.width * 0.3)))
     const frameH = frameW
     // البطاقة مثبّتة أعلى اليمين، أسفل الشريط العلوي مباشرة.
@@ -986,11 +986,8 @@ export default class MainScene extends Phaser.Scene {
     const hasFrame = this.textures.exists('session-frame')
 
     // سبب الباهتان والدقة المنخفضة كان جذرين:
-    // 1) الأصل 1536*1024 ليس مضاعف للاثنين (non-POT) و Phaser يولد mipmaps
-    //    للأصول POT فقط (WebGLTexture.createTextureFromSource: isMip = IsSizePowerOfTwo)
-    // فلم تكن هناك سلم مدرجات اصلا فيصغر الملف دفعة واحدة فيظهر مهتجا.
-    //    الحل: قص الأصل إلى محتواه الفعلي (943x955) ثم صغر
-    //    إلى 512×512 (POT) ⇒ تصغير 3.4× فقط و mipmaps فعّالة.
+    // 1) نستخدم أصل pi/session.png بدقة 1536×1024، مقصوصاً إلى إطار مربع
+    //    عالي الدقة 1024×1024؛ لا نكبّر النسخة القديمة 512px.
     // 2) القماش كان يُرسم بدقة CSS بلا devicePixelRatio ⇒ نصف دقة الشاشة.
     //    الحل في PhaserGame: render.mipmapFilter + scale.zoom = 1/dpr.
     // الترشيح يبقى LINEAR (نعومة) لا NEAREST (المستخدم لأيقونات HUD الصغيرة)،
@@ -1672,7 +1669,11 @@ export default class MainScene extends Phaser.Scene {
 
     const def = SEQUENCE_DHIKRS.find((d) => d.id === id)
     const Klass = CLASS_BY_DHIKR[id] ?? ALL_CLASSES[Phaser.Math.Between(0, ALL_CLASSES.length - 1)]
-    const x = Phaser.Math.Between(margin, width - margin)
+    const x = Phaser.Math.Clamp(
+      width / 2 + Phaser.Math.Between(-Math.round(width * 0.025), Math.round(width * 0.025)),
+      margin,
+      width - margin,
+    )
     const y = height + 80
     const body = new Klass(this, x, y, {
       dhikrId: id,

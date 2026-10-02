@@ -231,8 +231,11 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     this.x = this.startX + Math.sin(this.phase * Math.PI * 2) * this.opts.wiggleAmp
     this.rotation = Math.sin(this.phase * Math.PI * 2) * 0.05
 
-    // تنظيف: تدمير أي جسم خرج من أعلى الشاشة
-    if (this.y < -this.opts.hitRadius * 3) {
+    // إبقاء الذكر أسفل الشريط العلوي حتى لا يختفي خلف عناصر الواجهة.
+    const bannerWidth = Math.min(window.innerWidth * 0.94, 520)
+    const hudBottom = 4 + bannerWidth / 3
+    const gameplayTop = Math.max(hudBottom + this.opts.hitRadius * BODY_SCALE, this.scene.scale.height * 0.22)
+    if (this.y < gameplayTop) {
       this.destroy()
     }
   }
