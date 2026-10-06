@@ -169,21 +169,26 @@ canvas {
 /* ------------------------------------------------------------------ */
 /* High-DPI Image & Font Rendering — إصلاح التشوه والباهتان على الجوال */
 /* ------------------------------------------------------------------ */
-/* تطبيق التنعيم الصحيح على الصور وعناصر واجهة اللعبة DOM لمنع التكسر
-   على شاشات Retina/عالية الكثافة عند التكبير/التصغير. */
+/* تشغيل ترشيح bilinear ناعم + تسريع GPU لمنع تكسر التدرجات والأصول    */
+/* عالية الدقة (الترس، الأيقونات، اللوحة الخشبية، إطار الجلسة).        */
+/* تحذير: crisp-edges / optimize-contrast تُجبر nearest-neighbor        */
+/* (مثل pixelArt) مما يُدمّر تدرجات الألوان على الأصول عالية الدقة.    */
 img,
 .game-ui-element,
 .rk-header,
 .rk-header img,
 .hud-icon,
-.icon-frame > img {
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.icon-frame > img,
+.session-container {
+  image-rendering: auto;
+  image-rendering: smooth;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0); /* تسريع GPU لتنعيم الحواف */
 }
 
-/* النصوص والحاويات: تنعيم الخطوط على الشاشات عالية الكثافة */
+/* النصوص: تنعيم subpixel مثالي على الشاشات عالية الكثافة */
+body,
 .rk-slot-label,
 .rk-level,
 .rk-header-count,
@@ -193,6 +198,7 @@ img,
 .top-header * {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* شريط علوي تُرسم فوق اللعبة بواسطة Tailwind (من UIOverlay) */
@@ -723,8 +729,8 @@ body.modal-open {
    <img>، لذا CSS هنا وثيق مرجعي؛ التطبيق الفعلي في MainScene.buildRoundButton. */
 .hud-icon, .hud-icon svg, img.hud-icon {
   object-fit: contain;
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  image-rendering: auto;   /* bilinear ناعم — لا nearest-neighbor */
+  image-rendering: smooth;
 }
 /* بطاقة الاسم أسفل الأيقونة: تدرّج ذهبي/برتقالي دافئ + حد أبيض + ظل */
 .label-badge {
