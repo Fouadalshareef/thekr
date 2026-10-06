@@ -166,6 +166,35 @@ canvas {
   touch-action: none;
 }
 
+/* ------------------------------------------------------------------ */
+/* High-DPI Image & Font Rendering — إصلاح التشوه والباهتان على الجوال */
+/* ------------------------------------------------------------------ */
+/* تطبيق التنعيم الصحيح على الصور وعناصر واجهة اللعبة DOM لمنع التكسر
+   على شاشات Retina/عالية الكثافة عند التكبير/التصغير. */
+img,
+.game-ui-element,
+.rk-header,
+.rk-header img,
+.hud-icon,
+.icon-frame > img {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* النصوص والحاويات: تنعيم الخطوط على الشاشات عالية الكثافة */
+.rk-slot-label,
+.rk-level,
+.rk-header-count,
+.rk-header-name,
+.label-badge,
+.top-header,
+.top-header * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 /* شريط علوي تُرسم فوق اللعبة بواسطة Tailwind (من UIOverlay) */
 body {
   overflow: hidden;

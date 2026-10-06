@@ -31,14 +31,16 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
     parent: config.parent ?? 'game-container',
     backgroundColor: '#0f172a',
     render: {
-      // توليد سلّم مدرّجات (mipmaps) للنسيج + ترشيح lineare بين المستويات.
+      // توليد سلّم مدرّجات (mipmaps) للنسيج + ترشيح linear بين المستويات.
       // ضروري للأصول الكبيرة المُصغَّرة كثيراً كإطار عدّاد الجلسة
       // (1536×1024 يُعرض بحوالي 150px) بدونه تظهر الحواف مهتّجة.
       mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
-      // antialias يرفع جودة النصوص والحدود المائلة على الدقة العالية.
+      // antialias: يرفع جودة النصوص والحدود المائلة على الشاشات عالية الكثافة.
       antialias: true,
-      // roundPixels: نُبقيه false لأن بعض العناصر المتحركة تحتاج إحداثيات كسرية.
-      roundPixels: false,
+      // pixelArt: false يضمن استخدام ترشيح bilinear ناعم بدل nearest-neighbor.
+      pixelArt: false,
+      // roundPixels: يُقرّب الإحداثيات لأقرب بكسل كامل ⇒ نصوص وحواف أكثر حدة.
+      roundPixels: true,
       powerPreference: 'high-performance',
     },
     // نظام الفيزياء (Arcade): مطلوب لتوفّر this.physics داخل المشاهد.

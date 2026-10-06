@@ -1038,7 +1038,7 @@ export default class MainScene extends Phaser.Scene {
   /** زر الإعدادات داخل الخانة اليمنى للشريط العلوي. */
   private buildHeaderSettingsButton(): void {
     this.headerSettingsButton = this.add.container(0, 0).setDepth(DEPTH_HUD + 2)
-    this.headerSettingsIcon = this.add.image(0, 0, 'hud-settings').setTint(0x23564e)
+    this.headerSettingsIcon = this.add.image(0, 0, 'hud-settings').setTint(0x4a2306)
     this.headerSettingsButton.add(this.headerSettingsIcon)
     this.headerSettingsButton.setSize(56, 56)
     this.headerSettingsButton.setInteractive(new Phaser.Geom.Rectangle(-28, -28, 56, 56), Phaser.Geom.Rectangle.Contains)

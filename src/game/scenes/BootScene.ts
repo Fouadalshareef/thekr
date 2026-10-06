@@ -220,5 +220,13 @@ export default class BootScene extends Phaser.Scene {
       texture.refresh()
       texture.setFilter(Phaser.Textures.FilterMode.LINEAR)
     }
+
+    // تطبيق ترشيح LINEAR على أيقونة الإعدادات وأيقونات SVG الأخرى
+    // لمنع التشوه عند عرضها بأحجام غير أصلية.
+    for (const key of ['hud-settings', 'hud-pause', 'hud-play', 'hud-arrow'] as const) {
+      if (this.textures.exists(key)) {
+        this.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR)
+      }
+    }
   }
 }
