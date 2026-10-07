@@ -70,9 +70,8 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
       parent: config.parent ?? 'game-container',
       width: config.width,
       height: config.height,
-      // الرسم بدقة الجهاز: في وضع RESIZE يقسم ScaleManager المقاس المنطقي على
-      // zoom، فـ zoom = 1/dpr يعني مخزن بكسل أكبر dpr مرات (حادّة على 2x/3x).
-      zoom: 1 / getDevicePixelRatio(),
+      // الرسم بدقة الجهاز لضمان نقاء الصور والنصوص بدون تصغير الواجهة:
+      resolution: window.devicePixelRatio || 2,
     },
     scene: [BootScene, MainScene, ZenScene],
   })
@@ -83,5 +82,7 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
  * بمقاسات مختلفة الكثافة). بدونها يبقى القماش بالدقة القديمة.
  */
 export function refreshGameZoom(game: Phaser.Game): void {
-  game.scale.setZoom(1 / getDevicePixelRatio())
+  // لم نعد نستخدم zoom لتصحيح الدقة، بل نعتمد على scale.resolution
+  // هذا يمنع تصغير الواجهة على الشاشات عالية الكثافة.
+  game.scale.setZoom(1)
 }
