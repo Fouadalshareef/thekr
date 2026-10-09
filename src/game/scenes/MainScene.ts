@@ -4,7 +4,6 @@
  * (فقاعة واحدة فقط تُستبدل عند التفجير، مع أنماط: مترابط/شامل/مخصص/استغفار).
  */
 import Phaser from 'phaser'
-import { configureHighDpiCamera } from '../PhaserGame'
 import confetti from 'canvas-confetti'
 import { FloatingObject, type FloatingObjectOptions } from '../objects/FloatingObject'
 import Bubble from '../objects/Bubble'
@@ -207,7 +206,6 @@ export default class MainScene extends Phaser.Scene {
   }
 
   create(): void {
-    configureHighDpiCamera(this)
     ensurePixelTexture(this)
     document.body.classList.add('phaser-hud-active')
 

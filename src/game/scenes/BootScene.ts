@@ -1,5 +1,4 @@
 import Phaser from 'phaser'
-import { configureHighDpiCamera } from '../PhaserGame'
 import { setSidebarWelcomeActive } from '../../components/Sidebar'
 import { setTopHeaderVisible } from '../../components/TopHeader'
 // استيراد عبر Vite: يُصدر الصورة باسم مجزّأ ببصمة المحتوى، فلا يصيبها
@@ -51,7 +50,6 @@ export default class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    configureHighDpiCamera(this)
     this.createHudTextures()
 
     // شاشة الترحيب: يُخفى سهم القائمة الجانبية تماماً (يُعاد إظهاره في MainScene).
