@@ -15,6 +15,39 @@ export function getDevicePixelRatio(): number {
 }
 
 /**
+ * Phaser 3 sizes its WebGL drawing buffer in CSS pixels by default. On a 3x
+ * phone this means the browser enlarges a 390px canvas to 1,170 device pixels.
+ * Keep the game coordinate system in CSS pixels (so layout and touch input
+ * remain unchanged), but give WebGL a device-pixel backing buffer and a camera
+ * viewport that maps it back to those logical coordinates.
+ */
+function syncHighDpiCanvas(game: Phaser.Game): void {
+  const dpr = getDevicePixelRatio()
+  const { scale, canvas, renderer } = game
+  const width = scale.gameSize.width
+  const height = scale.gameSize.height
+  const bufferWidth = Math.round(width * dpr)
+  const bufferHeight = Math.round(height * dpr)
+
+  scale.baseSize.setSize(bufferWidth, bufferHeight)
+  canvas.width = bufferWidth
+  canvas.height = bufferHeight
+  renderer.resize(bufferWidth, bufferHeight)
+  scale.displayScale.set(dpr, dpr)
+
+  // A resize may happen after a scene is already active (rotation, split
+  // screen, or moving between displays), so keep its physical viewport in
+  // lock-step with the new backing buffer.
+  game.scene.getScenes(true).forEach((scene) => configureHighDpiCamera(scene))
+}
+
+/** Apply the matching device-pixel viewport to a scene that renders to the shared canvas. */
+export function configureHighDpiCamera(scene: Phaser.Scene): void {
+  const dpr = getDevicePixelRatio()
+  scene.cameras.main.setViewport(0, 0, scene.scale.width * dpr, scene.scale.height * dpr).setZoom(dpr)
+}
+
+/**
  * إنشاء وإعادة تشغيل لعبة Phaser كاملة.
  * نمط RESIZE: أبعاد Phaser مطابقة لأبعاد الشاشة الحقيقية بالبكسل —
  * لا يوجد أي تحويل هندسي (Scale Offset) بين موقع اللمس الحقيقي وعناصر اللعبة.
@@ -39,8 +72,9 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
       antialias: true,
       // pixelArt: false يضمن استخدام ترشيح bilinear ناعم بدل nearest-neighbor.
       pixelArt: false,
-      // roundPixels: يُقرّب الإحداثيات لأقرب بكسل كامل ⇒ نصوص وحواف أكثر حدة.
-      roundPixels: true,
+      // Keep fractional positions: snapping vector/plastic artwork to texels
+      // is visibly jagged when the canvas is downsampled on mobile displays.
+      roundPixels: false,
       powerPreference: 'high-performance',
     },
     // نظام الفيزياء (Arcade): مطلوب لتوفّر this.physics داخل المشاهد.
@@ -70,8 +104,13 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
       parent: config.parent ?? 'game-container',
       width: config.width,
       height: config.height,
-      // الرسم بدقة الجهاز لضمان نقاء الصور والنصوص بدون تصغير الواجهة:
-      resolution: window.devicePixelRatio || 2,
+    },
+    callbacks: {
+      postBoot: (game) => {
+        const sync = () => syncHighDpiCanvas(game)
+        sync()
+        game.scale.on(Phaser.Scale.Events.RESIZE, () => window.requestAnimationFrame(sync))
+      },
     },
     scene: [BootScene, MainScene, ZenScene],
   })

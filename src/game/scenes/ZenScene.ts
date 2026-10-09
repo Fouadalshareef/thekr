@@ -4,6 +4,7 @@
  * عدّاد استغفار مستقل، وزر "رجوع" للعودة للمشهد الرئيسي.
  */
 import Phaser from 'phaser'
+import { configureHighDpiCamera } from '../PhaserGame'
 import { playDhikrVoice, playZenTone } from '../../services/audio'
 import { vibrate } from '../../services/haptics'
 import { getIstighfarCount, incrementIstighfar } from '../../services/DhikrStorage'
@@ -24,6 +25,7 @@ export default class ZenScene extends Phaser.Scene {
   }
 
   create(): void {
+    configureHighDpiCamera(this)
     const { width, height } = this.scale
 
     // تعطيل شريط السرعة في نافذة الإعدادات أثناء نمط Zen + إخفاء سهم القائمة الجانبية
