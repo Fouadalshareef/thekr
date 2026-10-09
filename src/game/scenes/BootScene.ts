@@ -192,6 +192,15 @@ export default class BootScene extends Phaser.Scene {
   }
 
   private createHudTextures(): void {
+    // Keep the source artwork on the GPU's linear sampling path as well as the
+    // generated mip-ready copies below. This prevents a brief nearest-neighbor
+    // frame while Resource/session textures are first displayed.
+    for (const key of ['hud-banner', 'session-frame'] as const) {
+      if (this.textures.exists(key)) {
+        this.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR)
+      }
+    }
+
     const bannerImage = this.textures.get('hud-banner').getSourceImage() as HTMLImageElement
     const bannerWidth = 2048
     const bannerHeight = 1024

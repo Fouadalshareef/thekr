@@ -113,7 +113,7 @@ export function initSidebar(): void {
       <!-- النمط -->
       <div class="flex flex-col items-center">
         <button id="btn-pattern" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
-          <img src="icons/icon-pattern.png" alt="Pattern" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" style="image-rendering: -webkit-optimize-contrast;" />
+          <img src="icons/icon-pattern.png" alt="Pattern" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" />
         </button>
         <span class="label-badge mt-[-6px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap">النمط</span>
       </div>
@@ -121,7 +121,7 @@ export function initSidebar(): void {
       <!-- المزرعة -->
       <div class="flex flex-col items-center">
         <button id="btn-farm" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
-          <img src="icons/icon-farm.png" alt="Farm" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" style="image-rendering: -webkit-optimize-contrast;" />
+          <img src="icons/icon-farm.png" alt="Farm" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" />
         </button>
         <span class="label-badge mt-[-6px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap">المزرعة</span>
       </div>
@@ -129,7 +129,7 @@ export function initSidebar(): void {
       <!-- المصحف -->
       <div class="flex flex-col items-center">
         <button id="btn-quran" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
-          <img src="icons/icon-quran.png" alt="Quran" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" style="image-rendering: -webkit-optimize-contrast;" />
+          <img src="icons/icon-quran.png" alt="Quran" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" />
         </button>
         <span class="label-badge mt-[-6px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap">المصحف</span>
       </div>
