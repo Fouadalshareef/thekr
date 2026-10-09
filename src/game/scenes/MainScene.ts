@@ -1099,13 +1099,9 @@ export default class MainScene extends Phaser.Scene {
     const innerY = 0.684
     const hasFrame = this.textures.exists('session-frame')
 
-    // سبب الباهتان والدقة المنخفضة كان جذرين:
-    // 1) نستخدم أصل pi/session.png بدقة 1536×1024، مقصوصاً إلى إطار مربع
-    //    عالي الدقة 1024×1024؛ لا نكبّر النسخة القديمة 512px.
-    // 2) القماش كان يُرسم بدقة CSS بلا devicePixelRatio ⇒ نصف دقة الشاشة.
-    //    الحل في PhaserGame: render.mipmapFilter + scale.zoom = 1/dpr.
-    // الترشيح يبقى LINEAR (نعومة) لا NEAREST (المستخدم لأيقونات HUD الصغيرة)،
-    // وتحته mipmapFilter من إعدادات المحرك يتولّى اختيار مستوى التصغير المناسب.
+    // الإطار الأصلي عالي الدقة يُصغّر بترشيح LINEAR ناعم؛ إعداد mipmapFilter
+    // في Phaser يختار مستوى التصغير المناسب لتقليل التعرّج على شاشات الجوال.
+    // نحافظ على إحداثيات المشهد الطبيعية لتبقى مواقع اللمس والعناصر متطابقة.
     if (hasFrame) {
       this.textures.get('session-frame').setFilter(Phaser.Textures.FilterMode.LINEAR)
     }

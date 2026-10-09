@@ -19,11 +19,8 @@ export function getDevicePixelRatio(): number {
  * نمط RESIZE: أبعاد Phaser مطابقة لأبعاد الشاشة الحقيقية بالبكسل —
  * لا يوجد أي تحويل هندسي (Scale Offset) بين موقع اللمس الحقيقي وعناصر اللعبة.
  *
- * دقة العرض (High-DPI):
- * كان القماش يُرسم بمقاس CSS بالبكسل ثم يُكبَّر لعرضه على شاشة 2x/3x،
- * فيخرج الرسم كله مهتّجاً — وهو سبب باهتان الدقة. الحل: zoom = 1/dpr يجعل
- * مخزن بكسل القماش أكبر بعدد مرات devicePixelRatio، بينما يبقى المقاس
- * المنطقي وإحداثيات اللمس كما هي (ScaleManager يضبط input من نفس المقياس).
+ * دقة العرض (High-DPI): نُبقي إحداثيات Phaser منطقية ومطابقة للمس، مع
+ * تفعيل تنعيم الحواف وترشيح mipmap الخطي للأصول الكبيرة المصغّرة على الجوال.
  */
 export function createGame(config: PhaserGameConfig = { width: 480, height: 854 }): Phaser.Game {
   return new Phaser.Game({
@@ -37,10 +34,9 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
       mipmapFilter: 'LINEAR_MIPMAP_LINEAR',
       // antialias: يرفع جودة النصوص والحدود المائلة على الشاشات عالية الكثافة.
       antialias: true,
-      // pixelArt: false يضمن استخدام ترشيح bilinear ناعم بدل nearest-neighbor.
+      // pixelArt: false يضمن ترشيحاً خطياً ناعماً للأصول بدلاً من nearest-neighbor.
       pixelArt: false,
-      // Keep fractional positions: snapping vector/plastic artwork to texels
-      // is visibly jagged when the canvas is downsampled on mobile displays.
+      // احتفظ بالمواضع الكسريّة لتفادي اهتزاز/تكسّر الأصول على شاشات الجوال.
       roundPixels: false,
       powerPreference: 'high-performance',
     },
@@ -81,7 +77,6 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
  * بمقاسات مختلفة الكثافة). بدونها يبقى القماش بالدقة القديمة.
  */
 export function refreshGameZoom(game: Phaser.Game): void {
-  // لم نعد نستخدم zoom لتصحيح الدقة، بل نعتمد على scale.resolution
-  // هذا يمنع تصغير الواجهة على الشاشات عالية الكثافة.
+  // لا نغيّر zoom عند تبدّل DPI؛ الحفاظ على وحدة الإحداثيات يمنع انزياح اللمس.
   game.scale.setZoom(1)
 }

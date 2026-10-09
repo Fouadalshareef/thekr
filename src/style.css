@@ -169,13 +169,9 @@ canvas {
 /* ------------------------------------------------------------------ */
 /* High-DPI Image & Font Rendering — إصلاح التشوه والباهتان على الجوال */
 /* ------------------------------------------------------------------ */
-/* تشغيل ترشيح bilinear ناعم + تسريع GPU لمنع تكسر التدرجات والأصول    */
-/* عالية الدقة (الترس، الأيقونات، اللوحة الخشبية، إطار الجلسة).        */
-/* تحذير: crisp-edges / optimize-contrast تُجبر nearest-neighbor        */
-/* (مثل pixelArt) مما يُدمّر تدرجات الألوان على الأصول عالية الدقة.    */
+/* ترشيح ناعم للأصول عالية الدقة (الأيقونات وإطار الجلسة) مع تسريع GPU. */
 img,
 .game-ui-element,
-.rk-header,
 .rk-header img,
 .hud-icon,
 .icon-frame > img,
@@ -185,6 +181,14 @@ img,
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   transform: translateZ(0); /* تسريع GPU لتنعيم الحواف */
+}
+
+/* الشريط صورة خلفية: ننعّمها من دون استبدال translateX(-50%) الخاص بتمركزه. */
+.rk-header {
+  image-rendering: auto;
+  image-rendering: smooth;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* النصوص: تنعيم subpixel مثالي على الشاشات عالية الكثافة */
@@ -724,13 +728,10 @@ body.modal-open {
 /* ------------------------------------------------------------------ */
 /* حدة الأيقونات وبطاقات الأسماء                                      */
 /* ------------------------------------------------------------------ */
-/* حدة الأيقونات + الحفاظ على نسبة الأبعاد (object-fit: contain) في نسخة DOM.
-   ملاحظة: أيقونات HUD في هذا المشروع تُرسم داخل Phaser (WebGL Canvas) وليست
-   <img>، لذا CSS هنا وثيق مرجعي؛ التطبيق الفعلي في MainScene.buildRoundButton. */
+/* الحفاظ على نسبة الأبعاد (object-fit: contain) لأيقونات نسخة DOM.
+   أيقونات HUD المرسومة داخل Phaser تُنعّم عبر ترشيح LINEAR للنسيج. */
 .hud-icon, .hud-icon svg, img.hud-icon {
   object-fit: contain;
-  image-rendering: auto;   /* bilinear ناعم — لا nearest-neighbor */
-  image-rendering: smooth;
 }
 /* بطاقة الاسم أسفل الأيقونة: تدرّج ذهبي/برتقالي دافئ + حد أبيض + ظل */
 .label-badge {
