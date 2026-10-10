@@ -1,5 +1,5 @@
 import './style.css'
-import { createGame, refreshGameZoom } from './game/PhaserGame'
+import { createGame, installHighDpiCanvas, refreshGameZoom } from './game/PhaserGame'
 import { initAdviceModal } from './components/AdviceModal'
 import { initQuranModal } from './components/QuranModal'
 import { initSidebar } from './components/Sidebar'
@@ -38,6 +38,13 @@ initSidebar()
 // مقاس ثابت موحّد (480×854) بدون devicePixelRatio — هو سبب انزياح اللمس.
 // Phaser بنمط FIT سيوسّع اللعبة تلقائياً مع بقاء إحداثيات اللمس متطابقة 100%.
 const game = createGame({ width: 480, height: 854, parent: 'game-container' })
+
+// ضبط الدقة العالية (High-DPI) يدوياً بعد الإقلاع — انظر installHighDpiCanvas.
+installHighDpiCanvas(game)
+
+// معالج عام للاختبار الآلي (scripts/verify-hidpi-pinch.mjs): يمكنه الوصول إلى
+// الكاميرا والمشهد للتحقق من التكبير وإحداثيات اللمس.
+;(window as unknown as { __phaserGame?: Phaser.Game }).__phaserGame = game
 
 // تحديث ناعم عند تغيّر حجم النافذة أو تدوير الجهاز.
 // نعيد أيضاً ضبط التكبير (zoom) لأن devicePixelRatio قد يتغيّر عند النقل بين

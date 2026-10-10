@@ -156,6 +156,20 @@ async function hasContent(page) {
   return stddev > 8 && mean > 8
 }
 
+/**
+ * انتظار ظهور محتوى حقيقي على الشاشة (باستطلاع متكرر) بدل انتظار ثابت.
+ * شاشة البداية تقدّم نفسها تلقائياً بعد 6 ثوانٍ وتلاشي بلون عاجي موحّد،
+ * فالفحص الثابت عند ~4.5s كان يصطاد أحياناً إطار التلاشي الموحّد فيبدو الشاشة "فارغة".
+ */
+async function waitForContent(page, timeoutMs = 6000, stepMs = 400) {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    if (await hasContent(page)) return true
+    await new Promise((r) => setTimeout(r, stepMs))
+  }
+  return false
+}
+
 /** تجهيز صفحة جديدة مع منع Service Worker وتسجيل أخطاء التشغيل. */
 async function newPage(browser, errors, storageInit) {
   const page = await browser.newPage()
@@ -209,7 +223,9 @@ async function main() {
   await new Promise((r) => setTimeout(r, 4500))
 
   check((await page.$('canvas')) !== null, 'قماش Phaser موجود في الصفحة')
-  check(await hasContent(page), 'شاشة البداية تعرض محتوى (ليست فارغة)')
+  // استطلاع متكرر: الفحص الثابت عند 4.5s كان يصطاد إطار التلاشي الموحّد
+  // بين شاشة البداية والمشهد الرئيسي (تلقائي بعد 6 ثوانٍ) فيبدو الشاشة فارغة.
+  check(await waitForContent(page), 'شاشة البداية تعرض محتوى (ليست فارغة)')
 
   await clickGame(page, 240, 500) // الانتقال إلى المشهد الرئيسي
   await page.evaluate(() => document.querySelector('#advice-close')?.click())
@@ -234,9 +250,12 @@ async function main() {
   await clickGame(page2, 240, 500)
   await page2.evaluate(() => document.querySelector('#advice-close')?.click())
   await new Promise((r) => setTimeout(r, 1000))
+  // استطلاع متكرر بدل لقطة واحدة: مع تعدد الصفحات المفتوحة قد تلتقط لقطة واحدة
+  // إطار التلاشي الموحّد بين المشهدين (لون عاجي) فتبدو الشاشة "فارغة" زوراً.
+  const shown2 = await waitForContent(page2)
   const stats2 = await screenStats(page2)
   check(
-    stats2.stddev > 8 && stats2.mean > 8,
+    shown2 && stats2.stddev > 8 && stats2.mean > 8,
     `المشهد الرئيسي يظهر (لا شاشة فارغة) واللعبة موقوفة — إضاءة=${stats2.mean.toFixed(1)} تباين=${stats2.stddev.toFixed(1)}`,
   )
 

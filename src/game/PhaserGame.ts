@@ -8,10 +8,10 @@ import MainScene from './scenes/MainScene'
 import ZenScene from './scenes/ZenScene'
 import type { PhaserGameConfig } from './types'
 
-/** نسبة بكسل الجهاز إلى بكسل CSS، محدودة بسقف 3 لمنع تضخيم هائل للأداء. */
+/** نسبة بكسل الجهاز إلى بكسل CSS، محدودة بسقف 2 (توازن حدّة/أداء). */
 export function getDevicePixelRatio(): number {
   const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
-  return Math.min(Math.max(dpr, 1), 3)
+  return Math.min(Math.max(dpr, 1), 2)
 }
 
 /**
@@ -63,20 +63,81 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
     scale: {
       // اجعل مساحة الرسم مطابقة للـ viewport الفعلي بدلاً من احتواء مقاس
       // ثابت داخلها؛ بذلك لا تظهر أشرطة سوداء عند اختلاف نسبة أبعاد الهاتف.
+      // ملاحظة مهمة: في وضع RESIZE يتجاهل Phaser الخاصية zoom تماماً (راجع
+      // ScaleManager.updateScale) — لذلك تُضبط الدقة العالية يدوياً عبر
+      // installHighDpiCanvas() بعد الإقلاع.
       mode: Phaser.Scale.RESIZE,
       parent: config.parent ?? 'game-container',
       width: config.width,
       height: config.height,
+      zoom: 1,
     },
     scene: [BootScene, MainScene, ZenScene],
   })
 }
 
 /**
- * إعادة ضبط تكبير القماش عند تغيّر devicePixelRatio (نقل النافذة بين شاشات
- * بمقاسات مختلفة الكثافة). بدونها يبقى القماش بالدقة القديمة.
+ * ضبط قماش اللعبة بدقة عالية (High-DPI) يدوياً.
+ *
+ * في وضع RESIZE يتجاهل Phaser الخاصية scale.zoom تماماً (updateScale يعيد
+ * ضبط أبعاد القماش لأبعاد الـ viewport)، فنضاعف أبعاد backing store يدوياً
+ * بمقدار devicePixelRatio مع إبقاء إحداثيات Phaser منطقية (مطابقة للـ CSS):
+ *   - canvas.width/height  = logical * dpr   (بكسلات فيزيائية حادة)
+ *   - renderer.width/height = logical * dpr   (مصفوفة الإسقاط/viewport)
+ *   - إحداثيات اللمس تبقى 1:1 لأن camera/zoom لا يتغيران.
+ */
+export function installHighDpiCanvas(game: Phaser.Game): void {
+  const apply = (): void => {
+    const dpr = getDevicePixelRatio()
+    const scale = game.scale
+    const renderer = game.renderer as unknown as {
+      width: number
+      height: number
+      resize: (w: number, h: number) => unknown
+      gameContext?: CanvasRenderingContext2D
+      resetTransform?: () => void
+      gl?: WebGLRenderingContext
+      width2?: never
+    } | null
+    if (!renderer) return
+
+    const logicalW = scale.baseSize.width
+    const logicalH = scale.baseSize.height
+    if (!logicalW || !logicalH) return
+
+    const physW = Math.round(logicalW * dpr)
+    const physH = Math.round(logicalH * dpr)
+    const canvas = game.canvas
+    if (canvas.width !== physW || canvas.height !== physH) {
+      // تغيير أبعاد الـ backing store يُعيد ضبط الحالة الافتراضية للسياق،
+      // لذلك نعيد تطبيق المقياس (dpr) على سياق Canvas2D مباشرة بعد التغيير.
+      canvas.width = physW
+      canvas.height = physH
+      if (renderer.gameContext && dpr !== 1) {
+        renderer.gameContext.setTransform(dpr, 0, 0, dpr, 0, 0)
+      }
+    }
+    // مزامنة عرض/ارتفاع المُصيِّر مع الأبعاد الفيزيائية (ضروري لـ WebGL
+    // viewport/projection). عند dpr=1 هذا نداء بلا تغيير.
+    if (renderer.width !== physW || renderer.height !== physH) {
+      renderer.resize(physW, physH)
+    }
+    // إبقاء سياق Canvas2D مقياساً بمقدار dpr بعد أي resetTransform داخلي.
+    if (renderer.gameContext && dpr !== 1) {
+      renderer.gameContext.setTransform(dpr, 0, 0, dpr, 0, 0)
+    }
+  }
+
+  // أول تطبيق بعد اكتمال إقلاع Scale Manager.
+  apply()
+  // إعادة التطبيق عند كل تغيير حجم (تدوير الجهاز/تغيير النافذة).
+  game.scale.on(Phaser.Scale.Events.RESIZE, apply)
+}
+
+/** إعادة ضبط الدقة العالية للقماش عند تغيّر devicePixelRatio (نقل النافذة
+ * بين شاشات بمقاسات مختلفة الكثافة). بدونها يبقى القماش بالدقة القديمة.
  */
 export function refreshGameZoom(game: Phaser.Game): void {
-  // لا نغيّر zoom عند تبدّل DPI؛ الحفاظ على وحدة الإحداثيات يمنع انزياح اللمس.
+  // إعادة تطبيق installHighDpiCanvas عبر حدث RESIZE (يُطلق refresh()).
   game.scale.setZoom(1)
 }

@@ -81,7 +81,7 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     const label = scene.add
       .text(0, 0, options.dhikrName, {
         fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Tahoma, sans-serif',
-        fontSize: '19px',
+        fontSize: '22px',
         fontStyle: 'bold',
         color: '#ffffff',
         align: 'center',

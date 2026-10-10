@@ -201,6 +201,14 @@ export default class MainScene extends Phaser.Scene {
   private restText: Phaser.GameObjects.Text | null = null
   private isResting = false
 
+  /** إحداثيات ومسافة الإصبعين اللذين بدأا الإيماءة (null = لا توجد). */
+  private pinchState: { x1: number; y1: number; x2: number; y2: number; dist: number } | null = null
+
+  /** حدّ التكبير الأقصى للتقريب بإصبعين. */
+  private static readonly PINCH_MAX_ZOOM = 2.5
+  /** أدنى مسافة بين الإصبعين لتفعيل الإيماءة (تجاهل ضجيج اللمس). */
+  private static readonly PINCH_MIN_DIST = 30
+
   constructor() {
     super('MainScene')
   }
@@ -248,6 +256,11 @@ export default class MainScene extends Phaser.Scene {
     this.events.on(Events.DHIKR_COLLECTED, this.onDhikrCollected, this)
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.cleanup, this)
     this.scale.on(Phaser.Scale.Events.RESIZE, this.layoutTopHud, this)
+    // التكبير والتصغير بإصبعين (Pinch-to-Zoom): يبدأ عند لمس إصبعين معاً.
+    this.input.on(Phaser.Input.Events.POINTER_DOWN, this.handlePinchStart, this)
+    this.input.on(Phaser.Input.Events.POINTER_MOVE, this.handlePinchMove, this)
+    this.input.on(Phaser.Input.Events.POINTER_UP, this.handlePinchEnd, this)
+    this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePinchEnd, this)
     window.addEventListener('settings-changed', this.refreshCanvasHeader)
     window.addEventListener('dhikr-counted', this.refreshCanvasHeader)
 
@@ -293,6 +306,83 @@ export default class MainScene extends Phaser.Scene {
     window.addEventListener('open-settings', this.onOpenSettings)
     // زر الإيقاف في TopHeader: المشهد هو مصدر الحقيقة، فنتولى التبديل ونحدّث الشريط.
     window.addEventListener('header-pause-toggle', this.onHeaderPauseToggle)
+  }
+
+  // ------------------------------------------------------------------ 
+  // التكبير والتصغير بإصبعين (Pinch-to-Zoom)
+  // ------------------------------------------------------------------ 
+  /** هل توجد نافذة مفتوحة تمنع التقريب (نصائح/مصحف/أنماط/تخصيص/استراحة/مزرعة/إعدادات)؟ */
+  private get isModalBlocking(): boolean {
+    return (
+      this.modeUIOpen ||
+      this.focusCelebrationOpen ||
+      this.isResting ||
+      document.body.classList.contains('modal-open') ||
+      !this.focusDom?.classList.contains('hidden') ||
+      isFarmModalOpen() ||
+      isSettingsPanelOpen()
+    )
+  }
+
+  private handlePinchStart = (pointer: Phaser.Input.Pointer): void => {
+    if (this.isModalBlocking) return
+    if (!pointer.wasTouch) return
+    // الإصبعان الأول والثاني (activePointers: 3 في إعدادات الإدخال).
+    const pointer1 = this.input.pointer1
+    const pointer2 = this.input.pointer2
+    if (!pointer1 || !pointer2 || !pointer1.isDown || !pointer2.isDown) return
+    this.pinchState = {
+      x1: pointer1.x,
+      y1: pointer1.y,
+      x2: pointer2.x,
+      y2: pointer2.y,
+      dist: Phaser.Math.Distance.Between(pointer1.x, pointer1.y, pointer2.x, pointer2.y),
+    }
+  }
+
+  private handlePinchMove = (): void => {
+    if (!this.pinchState || this.isModalBlocking) return
+    const pointer1 = this.input.pointer1
+    const pointer2 = this.input.pointer2
+    if (!pointer1 || !pointer2 || !pointer1.isDown || !pointer2.isDown) return
+    const nx1 = pointer1.x
+    const ny1 = pointer1.y
+    const nx2 = pointer2.x
+    const ny2 = pointer2.y
+    const newDist = Phaser.Math.Distance.Between(nx1, ny1, nx2, ny2)
+    const oldDist = this.pinchState.dist
+    this.pinchState = { x1: nx1, y1: ny1, x2: nx2, y2: ny2, dist: newDist }
+    if (newDist <= MainScene.PINCH_MIN_DIST || oldDist <= MainScene.PINCH_MIN_DIST) return
+
+    // حساب منتصف الإصبعين قبل وبعد الحركة (النقطة المحايدة للإيماءة).
+    const midX = (this.pinchState.x1 + this.pinchState.x2) / 2
+    const midY = (this.pinchState.y1 + this.pinchState.y2) / 2
+
+    const cam = this.cameras.main
+    const target = Phaser.Math.Clamp(cam.zoom * (newDist / oldDist), 1, MainScene.PINCH_MAX_ZOOM)
+    cam.setZoom(target)
+
+    // إبقاء منتصف الإصبعين ثابتاً بصرياً: نُمرّر الكاميرا بمقدار انزياح نقطة
+    // المنتصف بين لقطتين، مع إعادة ضبط scroll حول المركز عند zoom=1.
+    if (target > 1) {
+      cam.setScroll(midX * (1 - target), midY * (1 - target))
+    } else {
+      cam.centerOn(this.scale.width / 2, this.scale.height / 2)
+    }
+  }
+
+  private handlePinchEnd = (): void => {
+    if (!this.pinchState) return
+    const cam = this.cameras.main
+    // عند انتهاء الإيماءة: إعادة التمرير إلى وضع الاستقرار حول مركز الشاشة
+    // (scroll = center * (1 - zoom)) لضمان ثبات العرض بعد إفلات الإصبع.
+    if (cam.zoom > 1) {
+      cam.setScroll(this.scale.width * (1 - cam.zoom) / 2, this.scale.height * (1 - cam.zoom) / 2)
+    } else {
+      cam.setZoom(1)
+      cam.centerOn(this.scale.width / 2, this.scale.height / 2)
+    }
+    this.pinchState = null
   }
 
   /** زر الإيقاف في الشريط العلوي: نفس منطق togglePause لكن مع مزامنة الشريط. */
@@ -370,12 +460,21 @@ export default class MainScene extends Phaser.Scene {
       fontFamily: 'Consolas, "Courier New", monospace',
       fontSize: '24px',
     }).setOrigin(0, 0.5).setDepth(DEPTH_HUD + 1)
+
+    // أحجام النصوص داخل الشريط متناسبة مع عرضه (نسبة 520 → 15/21/13/24px).
+    // الحدود تمنع ضيق النص على الشاشات الصغيرة جدًا (320px+) وتطغى على الشاشات الكبيرة.
+    const bw = this.bannerWidth()
+    const ratio = bw / 520
+    this.headerLevelText.setFontSize(Math.max(12, 15 * ratio))
+    this.headerLevelValueText.setFontSize(Math.max(17, 21 * ratio))
+    this.headerCountLabel.setFontSize(Math.max(11, 13 * ratio))
+    this.headerCountText.setFontSize(Math.max(18, 24 * ratio))
     this.refreshCanvasHeader()
   }
 
   private layoutTopHud(): void {
     if (!this.topBanner) return
-    const bannerWidth = Math.min(window.innerWidth * 0.94, 520)
+    const bannerWidth = this.bannerWidth()
     const bannerHeight = bannerWidth / 3
     const bannerLeft = (this.scale.width - bannerWidth) / 2
     const bannerTop = 4
@@ -423,7 +522,7 @@ export default class MainScene extends Phaser.Scene {
     this.headerLevelValueText?.setText(String(getGardenState().level))
     this.headerCountText?.setText(String(getTotalGoodDeeds()))
     if (this.topBanner) {
-      const bannerWidth = Math.min(window.innerWidth * 0.94, 520)
+      const bannerWidth = this.bannerWidth()
       const bannerHeight = bannerWidth / 3
       this.layoutHeaderCount(
         (this.scale.width - bannerWidth) / 2,
@@ -433,8 +532,13 @@ export default class MainScene extends Phaser.Scene {
     }
   }
 
+  /** عرض الشريط العلوي المتناسب: 94% من عرض الشاشة بحد أقصى 520px. */
+  private bannerWidth(): number {
+    return Math.min(this.scale.width * 0.94, 520)
+  }
+
   private buildCanvasSidebar(): void {
-    const top = 4 + Math.min(window.innerWidth * 0.94, 520) / 3 + 38
+    const top = 4 + this.bannerWidth() / 3 + 38
     const step = Math.max(82, Math.min(98, this.scale.height * 0.105))
     const sideButton = (
       texture: string,
@@ -446,14 +550,17 @@ export default class MainScene extends Phaser.Scene {
       const button = this.add.container(42, y).setDepth(DEPTH_HUD + 2)
       const image = this.add.image(0, 0, `${texture}-mipped`).setDisplaySize(54, 54)
       onIconCreated?.(image)
+      // بطاقة الاسم أسفل الأيقونة: أضيق (60px) على الشاشات الأعرض من 480px،
+      // ومقاسها الأصلي (78px) على الهواتف النموذجية — مع نص أكبر (16px).
+      const badgeW = this.scale.width > 480 ? 60 : 78
       const badge = this.add.graphics()
       badge.fillStyle(0xd97706, 1)
-      badge.fillRoundedRect(-39, 30, 78, 28, 7)
+      badge.fillRoundedRect(-badgeW / 2, 30, badgeW, 28, 7)
       badge.lineStyle(2, 0xffffff, 1)
-      badge.strokeRoundedRect(-39, 30, 78, 28, 7)
+      badge.strokeRoundedRect(-badgeW / 2, 30, badgeW, 28, 7)
       const caption = this.add.text(0, 44, label, {
         fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
-        fontSize: '14px',
+        fontSize: '16px',
         fontStyle: 'bold',
         color: '#ffffff',
         resolution: Math.min(window.devicePixelRatio || 1, 3),
@@ -1091,7 +1198,7 @@ export default class MainScene extends Phaser.Scene {
     const frameH = frameW
     // البطاقة مثبّتة أعلى اليمين، أسفل الشريط العلوي مباشرة.
     // الشريط عرضه min(94vw, 520px) وارتفاعه = ثلثه ⇒ نحسب أسفله بدل ثابت.
-    const bannerW = Math.min(window.innerWidth * 0.94, 520)
+    const bannerW = this.bannerWidth()
     const bannerBottom = 4 + bannerW / 3
     const x = this.scale.width - Math.round(frameW * 0.62)
     const topY = Math.round(bannerBottom + 10)
@@ -2134,6 +2241,20 @@ export default class MainScene extends Phaser.Scene {
     window.removeEventListener('settings-changed', this.refreshCanvasHeader)
     window.removeEventListener('dhikr-counted', this.refreshCanvasHeader)
     this.scale.off(Phaser.Scale.Events.RESIZE, this.layoutTopHud, this)
+    this.input.off(Phaser.Input.Events.POINTER_DOWN, this.handlePinchStart, this)
+    this.input.off(Phaser.Input.Events.POINTER_MOVE, this.handlePinchMove, this)
+    this.input.off(Phaser.Input.Events.POINTER_UP, this.handlePinchEnd, this)
+    this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePinchEnd, this)
+    this.pinchState = null
+    // إعادة الكاميرا إلى حالتها الافتراضية (تكبير 1 وتمرير صفر) قبل إغلاق المشهد
+    // حتى لا يبقى تأثير التقريب معلّقاً عند العودة إليه لاحقاً.
+    // تنبيه مهم: CameraManager يشغّل معالج SHUTDOWN الخاص به قبل هذه الدالة
+    // (سُجّل عند بدء المشهد قبل create)، فيكون cameras.main قد دُمّر بالفعل
+    // هنا (undefined). استخدام ?. يمنع استثناء TypeError كان يقطع بقية
+    // التنظيف (مستمعات DOM/إدخال وأجسام اللعبة) عند كل انتقال إلى وضع الاستغفار.
+    const cam = this.cameras.main
+    cam?.setZoom(1)
+    cam?.centerOn(this.scale.width / 2, this.scale.height / 2)
     // إزالة مستمعات فتح النوافذ من شريط الأيقونات (DOM).
     window.removeEventListener('open-mode-panel', this.onOpenModePanel)
     window.removeEventListener('open-garden', this.onOpenGarden)
