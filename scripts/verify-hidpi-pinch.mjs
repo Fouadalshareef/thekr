@@ -3,7 +3,7 @@
  *
  * يخدم dist/ عبر خادم محلي ثم يفتح اللعبة في متصفح حقيقي بمقاس هاتف (390×844)
  * مع محاكاة كثافة بكسلين (deviceScaleFactor=2)، ويتحقق من:
- *   1. قماش Phaser يكون أكبر من الـ viewport بمقدار dpr (canvas.width ≈ 390×2).
+ *   1. قماش Phaser يكون بدقة فيزيائية: canvas.width ≈ العرض المنطقي × dpr (390×2=780).
  *   2. التقريب بإصبعين يرفع الكاميرا حتى 2.5 فقط (لا يتجاوز الحد).
  *   3. عند إفلات الإصبعين تعود الكاميرا إلى تكبير 1 وتمرير صفر.
  *   4. عدم وجود أي خطأ JavaScript وقت التشغيل.
@@ -115,14 +115,14 @@ async function main() {
     }
   })
   // ---------- 1) قماش متّسق مع المُصيّر (بلا ربع شاشة) ----------
-  // في وضع RESIZE يدير Phaser أبعاد القماش تلقائياً: مخزن الرسم (backing store)
-  // يطابق المقاس المنطقي (CSS)، والمتصفّح يرفع الدقة على شاشات dpr المرتفعة عبر
-  // الترشيح الخطي. أي تضاعف يدوي لمخزن الرسم يُنتج إطاراً فيزيائياً (مثلاً
-  // 780×1688) مع منفذ عرض/scissor منطقي (390×844) ⇒ لا يُرسم سوى الربع السفلي
-  // الأيسر. الثابت الصحيح: canvas.backing == CSS logical == renderer.
+  // عقد الدقة العالية (High-DPI): مخزن الرسم (backing store) = المقاس المنطقي (CSS) × dpr،
+  // بينما يبقى مقاس العرض CSS منطقياً. هذا يضمن رسم العالم المنطقي (0..390) مكبّراً
+  // على المخزن الفيزيائي (0..780) ⇒ رسم حادّ دون «ربع الشاشة» (نضبط scissor ليطابق
+  // المخزن الفيزيائي داخل installHighDpiCanvas).
   check(
-    Math.abs(canvasInfo.w - canvasInfo.cssW) <= 1 && Math.abs(canvasInfo.h - canvasInfo.cssH) <= 1,
-    `القماش يطابق المقاس المنطقي (بلا تضاعف يدوي): backing=${canvasInfo.w}x${canvasInfo.h} CSS=${canvasInfo.cssW}x${canvasInfo.cssH} (dpr=${canvasInfo.dpr})`,
+    Math.abs(canvasInfo.w - canvasInfo.cssW * canvasInfo.dpr) <= 1 &&
+      Math.abs(canvasInfo.h - canvasInfo.cssH * canvasInfo.dpr) <= 1,
+    `القماش بدقة فيزيائية (backing = CSS × dpr): backing=${canvasInfo.w}x${canvasInfo.h} CSS=${canvasInfo.cssW}x${canvasInfo.cssH} (dpr=${canvasInfo.dpr})`,
   )
   // يجب أن ي 따라 المُصيّر أبعاد الـ backing store وإلا رُسمت اللعبة في ربع الشاشة
   // (كان خللاً: onResize الخاص بـ Phaser يعيد ضبط المُصيّر إلى baseSize بعدنا).
