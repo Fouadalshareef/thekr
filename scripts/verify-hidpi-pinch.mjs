@@ -103,11 +103,32 @@ async function main() {
   const canvasInfo = await page.evaluate(() => {
     const c = document.querySelector('canvas')
     const r = c.getBoundingClientRect()
-    return { w: c.width, h: c.height, cssW: r.width, cssH: r.height, dpr: window.devicePixelRatio }
+    const game = window.__phaserGame
+    return {
+      w: c.width,
+      h: c.height,
+      cssW: r.width,
+      cssH: r.height,
+      dpr: window.devicePixelRatio,
+      rendererW: game?.renderer?.width ?? 0,
+      rendererH: game?.renderer?.height ?? 0,
+    }
   })
+  // ---------- 1) قماش متّسق مع المُصيّر (بلا ربع شاشة) ----------
+  // في وضع RESIZE يدير Phaser أبعاد القماش تلقائياً: مخزن الرسم (backing store)
+  // يطابق المقاس المنطقي (CSS)، والمتصفّح يرفع الدقة على شاشات dpr المرتفعة عبر
+  // الترشيح الخطي. أي تضاعف يدوي لمخزن الرسم يُنتج إطاراً فيزيائياً (مثلاً
+  // 780×1688) مع منفذ عرض/scissor منطقي (390×844) ⇒ لا يُرسم سوى الربع السفلي
+  // الأيسر. الثابت الصحيح: canvas.backing == CSS logical == renderer.
   check(
-    canvasInfo.w > canvasInfo.cssW * 1.5,
-    `قماش عالي الدقة: backing=${canvasInfo.w}px مقابل CSS=${canvasInfo.cssW}px (dpr=${canvasInfo.dpr})`,
+    Math.abs(canvasInfo.w - canvasInfo.cssW) <= 1 && Math.abs(canvasInfo.h - canvasInfo.cssH) <= 1,
+    `القماش يطابق المقاس المنطقي (بلا تضاعف يدوي): backing=${canvasInfo.w}x${canvasInfo.h} CSS=${canvasInfo.cssW}x${canvasInfo.cssH} (dpr=${canvasInfo.dpr})`,
+  )
+  // يجب أن ي 따라 المُصيّر أبعاد الـ backing store وإلا رُسمت اللعبة في ربع الشاشة
+  // (كان خللاً: onResize الخاص بـ Phaser يعيد ضبط المُصيّر إلى baseSize بعدنا).
+  check(
+    canvasInfo.rendererW === canvasInfo.w && canvasInfo.rendererH === canvasInfo.h,
+    `المُصيّر مزامن مع القماش: renderer=${canvasInfo.rendererW}x${canvasInfo.rendererH} backing=${canvasInfo.w}x${canvasInfo.h}`,
   )
 
   // ---------- 2) التقريب بإصبعين ----------

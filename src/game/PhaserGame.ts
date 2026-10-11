@@ -77,61 +77,23 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
 }
 
 /**
- * ضبط قماش اللعبة بدقة عالية (High-DPI) يدوياً.
+ * إعداد القماش — ترك Phaser يديره بالكامل (بلا أي Manipulation يدوي للأبعاد).
  *
- * في وضع RESIZE يتجاهل Phaser الخاصية scale.zoom تماماً (updateScale يعيد
- * ضبط أبعاد القماش لأبعاد الـ viewport)، فنضاعف أبعاد backing store يدوياً
- * بمقدار devicePixelRatio مع إبقاء إحداثيات Phaser منطقية (مطابقة للـ CSS):
- *   - canvas.width/height  = logical * dpr   (بكسلات فيزيائية حادة)
- *   - renderer.width/height = logical * dpr   (مصفوفة الإسقاط/viewport)
- *   - إحداثيات اللمس تبقى 1:1 لأن camera/zoom لا يتغيران.
+ * سبب إزالة الـ High-DPI اليدوي: كانت الدالة تضاعف أبعاد مخزن الرسم
+ * (canvas.width/height) وتستدعي renderer.resize() يدوياً في وضع RESIZE. لكن
+ * ScaleManager في هذا الوضع يعيد ضبط أبعاد القماش والمُصيّر إلى baseSize
+ * (المنطقي) عند كل onResize، بينما تبقى الكاميرا ومنفذ العرض والمقص (scissor)
+ * بالقياس المنطقي أيضاً — فيحدث تعارض دائم بين مخزن الرسم الفيزيائي (مثلاً
+ * 780px) ومنفذ العرض/scissor المنطقي (390px)، فلا يُرسم سوى ربع الشاشة
+ * السفلي الأيسر، فتظهر الواجهة ناقصة أو لا تظهر إطلاقاً.
+ *
+ * الحل الصحيح والمستقر: ترك Phaser يدير القماش في وضع RESIZE، فيضمن تطابق
+ * مخزن الرسم والمُصيّر والكاميرا وإحداثيات اللمس معاً ⇒ الواجهة تملأ الشاشة
+ * بالكامل وبشكل صحيح. الحدة على شاشات dpr المرتفعة يتكفّل بها المتصفح عبر
+ * الترشيح الخطي (antialias + LINEAR_MIPMAP_LINEAR) المضبوطين في createGame.
  */
-export function installHighDpiCanvas(game: Phaser.Game): void {
-  const apply = (): void => {
-    const dpr = getDevicePixelRatio()
-    const scale = game.scale
-    const renderer = game.renderer as unknown as {
-      width: number
-      height: number
-      resize: (w: number, h: number) => unknown
-      gameContext?: CanvasRenderingContext2D
-      resetTransform?: () => void
-      gl?: WebGLRenderingContext
-      width2?: never
-    } | null
-    if (!renderer) return
-
-    const logicalW = scale.baseSize.width
-    const logicalH = scale.baseSize.height
-    if (!logicalW || !logicalH) return
-
-    const physW = Math.round(logicalW * dpr)
-    const physH = Math.round(logicalH * dpr)
-    const canvas = game.canvas
-    if (canvas.width !== physW || canvas.height !== physH) {
-      // تغيير أبعاد الـ backing store يُعيد ضبط الحالة الافتراضية للسياق،
-      // لذلك نعيد تطبيق المقياس (dpr) على سياق Canvas2D مباشرة بعد التغيير.
-      canvas.width = physW
-      canvas.height = physH
-      if (renderer.gameContext && dpr !== 1) {
-        renderer.gameContext.setTransform(dpr, 0, 0, dpr, 0, 0)
-      }
-    }
-    // مزامنة عرض/ارتفاع المُصيِّر مع الأبعاد الفيزيائية (ضروري لـ WebGL
-    // viewport/projection). عند dpr=1 هذا نداء بلا تغيير.
-    if (renderer.width !== physW || renderer.height !== physH) {
-      renderer.resize(physW, physH)
-    }
-    // إبقاء سياق Canvas2D مقياساً بمقدار dpr بعد أي resetTransform داخلي.
-    if (renderer.gameContext && dpr !== 1) {
-      renderer.gameContext.setTransform(dpr, 0, 0, dpr, 0, 0)
-    }
-  }
-
-  // أول تطبيق بعد اكتمال إقلاع Scale Manager.
-  apply()
-  // إعادة التطبيق عند كل تغيير حجم (تدوير الجهاز/تغيير النافذة).
-  game.scale.on(Phaser.Scale.Events.RESIZE, apply)
+export function installHighDpiCanvas(_game: Phaser.Game): void {
+  // لا شيء عن قصد: Phaser في وضع RESIZE يدير أبعاد القماش تلقائياً وبشكل صحيح.
 }
 
 /** إعادة ضبط الدقة العالية للقماش عند تغيّر devicePixelRatio (نقل النافذة
