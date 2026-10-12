@@ -141,14 +141,15 @@ async function main() {
       return cam ? { zoom: cam.zoom, scrollX: cam.scrollX, scrollY: cam.scrollY } : null
     })
 
-  // القاعدة الجديدة للدقة العالية: تكبير الكاميرا = dpr (لأن المخزن الفيزيائي
-  // = المنطقي × dpr)، و«التكبير 1» للمستخدم = dpr. الحد الأقصى = dpr × 2.5.
+  // القاعدة الجديدة للدقة العالية: الكاميرا تبقى **بلا تكبير** (zoom=1) دائماً،
+  // والدقة تأتي من مخزن الرسم الفيزيائي + كاميرا بحجم فيزيائي (للسيزر).
+  // «التكبير 1» لدى المستخدم = zoom 1، والحد الأقصى = 2.5.
   const dpr = canvasInfo.dpr
-  const base = dpr
+  const base = 1
   const before = await getCam()
   check(
-    before && Math.abs(before.zoom - base) < 0.01,
-    `الكاميرا تبدأ بتكبير القاعدة=dpr (zoom=${before?.zoom?.toFixed(3)} dpr=${dpr})`,
+    before && Math.abs(before.zoom - base) < 0.01 && Math.abs(before.scrollX) < 0.5 && Math.abs(before.scrollY) < 0.5,
+    `الكاميرا تبدأ بتكبير 1 وتمرير صفر (zoom=${before?.zoom?.toFixed(3)} scroll=${before?.scrollX?.toFixed(1)},${before?.scrollY?.toFixed(1)})`,
   )
 
   const client = await page.createCDPSession()
@@ -176,11 +177,11 @@ async function main() {
     ],
   })
   await new Promise((r) => setTimeout(r, 150))
-  await spread(80, 500) // إبعاد كبير جداً — يجب أن يُحدَّ عند dpr × 2.5
+  await spread(80, 500) // إبعاد كبير جداً — يجب أن يُحدَّ عند 2.5
   const zoomed = await getCam()
   check(
     zoomed && zoomed.zoom > base * 1.2 && zoomed.zoom <= base * 2.51,
-    `التقريب يعمل ويُحدَّ عند dpr×2.5=${(base * 2.5).toFixed(2)} (zoom=${zoomed?.zoom?.toFixed(3)})`,
+    `التقريب يعمل ويُحدَّ عند 2.5 (zoom=${zoomed?.zoom?.toFixed(3)})`,
   )
 
   await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
@@ -201,24 +202,20 @@ async function main() {
     mid && mid.zoom > base * 1.05 && mid.zoom <= base * 2.51,
     `تقريب معتدل ضمن الحدود (zoom=${mid?.zoom?.toFixed(3)})`,
   )
-  await spread(160, 20) // تصغير قوي — يجب أن يُحدَّ عند dpr
+  await spread(160, 20) // تصغير قوي — يجب أن يُحدَّ عند 1
   const shrunk = await getCam()
-  check(shrunk && shrunk.zoom >= base * 0.99, `التصغير محدّد عند dpr=${base} (zoom=${shrunk?.zoom?.toFixed(3)})`)
+  check(shrunk && shrunk.zoom >= base * 0.99, `التصغير محدّد عند 1 (zoom=${shrunk?.zoom?.toFixed(3)})`)
   await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await new Promise((r) => setTimeout(r, 300))
 
   const after = await getCam()
-  // عند القاعدة (zoom = dpr) تكون الكاميرا متمركزة على مركز العالم، فالتمرير
-  // المتوقع = العرض المنطقي × (1 - dpr) / 2 (سالب) — وليس صفراً كما كان في
-  // التصميم القديم (zoom=1).
-  const expectScrollX = (canvasInfo.cssW * (1 - base)) / 2
-  const expectScrollY = (canvasInfo.cssH * (1 - base)) / 2
+  // عند القاعدة (zoom=1) تكون الكاميرا متمركزة على مركز العالم مع scroll صفري.
   check(
     after &&
       Math.abs(after.zoom - base) < 0.01 &&
-      Math.abs(after.scrollX - expectScrollX) < 2 &&
-      Math.abs(after.scrollY - expectScrollY) < 2,
-    `بعد الإفلات: عودة إلى القاعدة dpr=${base} وتمركز على مركز العالم (zoom=${after?.zoom?.toFixed(3)} scrollX=${after?.scrollX?.toFixed(2)}≠${expectScrollX.toFixed(2)} scrollY=${after?.scrollY?.toFixed(2)}≠${expectScrollY.toFixed(2)})`,
+      Math.abs(after.scrollX) < 1.5 &&
+      Math.abs(after.scrollY) < 1.5,
+    `بعد الإفلات: عودة إلى تكبير 1 وتمرير صفر (zoom=${after?.zoom?.toFixed(3)} scrollX=${after?.scrollX?.toFixed(2)} scrollY=${after?.scrollY?.toFixed(2)})`,
   )
 
   check(errors.length === 0, `لا أخطاء JavaScript وقت التشغيل${errors.length ? ` — ${errors.slice(0, 3).join(' | ')}` : ''}`)

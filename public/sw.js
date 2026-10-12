@@ -19,7 +19,7 @@ const ASSETS = [
   './manifest.json',
   './favicon.svg',
   './icon-512.svg',
-  './icon.jpg?v=1.0.4',
+  './icon.jpg?v=1.0.5',
   // خلفيات اللعبة
   './game/logo.jfif',
   './game/mor.jfif',

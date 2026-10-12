@@ -76,6 +76,9 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
       topOnly: false,
     } as Phaser.Types.Core.InputConfig,
     scale: {
+      // RESIZE: gameSize = displaySize = حجم الحاوية (منطقي/بكسل CSS).
+      // رفع مخزن الرسم للدقة العالية يتم لاحقاً في installHighDpiCanvas عبر
+      // canvas.width + renderer.resize + setProjectionMatrix (بلا تغيير gameSize).
       mode: Phaser.Scale.RESIZE,
       parent: config.parent ?? 'game-container',
       width: config.width,
@@ -90,40 +93,33 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
 /**
  * خطّاف (hook) لتطبيق الدقة العالية (High-DPI) على شاشات الجوال.
  *
- * خلفية: كانت هناك محاولة سابقة لرفع مخزن الرسم يدوياً إلى «المنطقي × dpr»
- * بتعديل canvas.width/height و renderer.width/height و drawingBufferHeight و
- * defaultScissor و gl.viewport/scissor وتغليف pushScissor. هذا غير مدعوم،
- * وأحدث فشلاً عشوائياً (race) في إنشاء إطار WebGL أثناء الإقلاع —
- * «Framebuffer status: Framebuffer Unsupported» (يُرمى من
- * WebGLFramebufferWrapper.createResource) — فيتوقف حلقة الرسم وتظهر شاشة
- * سوداء لا تختفي على بعض الأجهزة/مشغّلات الرسوميات. كما سبّبت أخطاء
- * TypeScript لتعيينها على خصائص للقراءة فقط/غير موجودة (drawingBufferHeight,
- * defaultScissor).
+ * المشكلة: Phaser 3 لا يدعم مخزن رسم بدقة الجهاز (devicePixelRatio) إطلاقاً.
+ * في وضع RESIZE يضبط ScaleManager gameSize = displaySize = parentSize (بكسل
+ * CSS)، و canvas.width = displaySize **بلا** ضرب في dpr (انظر
+ * ScaleManager.updateScale). فكل ما يُرسم داخل القماش — الشريط العلوي، إطار
+ * عدّاد الجلسة، أيقونات HUD — يُرسم بدقة 1× ثم يكبّره المتصفح إلى 2×/3× فيبدو
+ * ناعماً/باهتاً مع تكسّرات على الحواف الرقيقة.
  *
- * لماذا الدقة الافتراضية باهتة؟ في وضع Phaser.Scale.RESIZE يضبط ScaleManager
- * داخلياً مخزن الرسم مساوياً للحجم المنطقي (CSS) **دون** ضربه في
- * devicePixelRatio (انظر ScaleManager.updateScale: this.canvas.width =
- * styleWidth). النتيجة أن كل ما يُرسم داخل القماش — الشريط العلوي، إطار عدّاد
- * الجلسة، وأيقونات HUD — يُرسم بدقة 1× ثم يكبّره المتصفح إلى 2×/3× فيبدو
- * ناعماً/باهتاً على الجوال.
+ * الحل الصحيح (لا يمسّ التخطيط ولا اللمس إطلاقاً):
+ *   • gameSize (و scale.width/height) يبقى **منطقياً** (390×844) ⇒ كل إحداثيات
+ *     اللعبة وأحجامها المطلقة ومواضع اللمس تبقى كما هي بلا أي تغيير.
+ *   • مخزن الرسم الفيزيائي = منطقي × dpr (1170×2532) ⇒ حدّة كاملة.
+ *   • الـ viewport (renderer.width/height) فيزيائي ⇒ يغطّي كامل المخزن.
+ *   • المصفوفة الإسقاطية = **منطقي** (390×844) ⇒ العالم المنطقي يُرسم ممتداً
+ *     على كامل المخزن الفيزيائي (لا «ربع شاشة»)، ووحدة عالم = بكسل CSS واحد.
+ *   • الكاميرا تُضبط بحجم **فيزيائي** (1170×2532) مع zoom=1 — وهذا ضروري
+ *     لسببين: (أ) CameraManager.render يستدعي pushScissor بمستطيل الكاميرا
+ *     فيقصّ الرسم إن كانت أصغر من المخزن؛ (ب) zoom=1 يضمن أن
+ *     camera.getWorldPoint (المستخدمة في تحويل اللمس) تُعيد الإحداثي نفسه
+ *     بلا قسمة ⇒ لا انزياح لمس.
  *
- * القيد الأساسي: ScaleManager في وضع RESIZE يضبط gameSize = displaySize =
- * parentSize (منطقي)، و canvas.width = displaySize **بلا** ضرب في
- * devicePixelRatio. كما أن كل مُصيّر Phaser يقرأ المصفوفة الإسقاطية من
- * renderer.projectionWidth/Height، وكل الحقول الثلاثة (gameSize والـ viewport
- * والإسقاط) مترابطة في `renderer.resize()`؛ أي فصل قسري بينها يُنتج إما «ربع
- * الشاشة» أو انزياح لمس.
- *
- * لذلك نعتمد الأسلوب الآمن والمعياري: نرفع مخزن الرسم (canvas) والمُصيّر إلى
- * الحجم الفيزيائي (منطقي × dpr) **معاً** وبنفس القيم، فيبقى الـ viewport والإسقاط
- * متطابقين (لا ربع شاشة ولا انزياح لمس)، ثم **نُبعد الكاميرا إلى dpr**
- * (cam.setZoom(dpr)) ليملأ العالم المنطقي كامل المخزن الفيزيائي. هذا يُنتج حدّة
- * حقيقية على شاشات 2×/3×، ونظام الإدخال في Phaser يحوّل إحداثيات اللمس عبر الكاميرا
- * تلقائياً فيبقى اللمس دقيقاً ١٠٠٪.
- *
- * تحذير: لا نلمس gl.viewport/defaultScissor/drawingBufferHeight مباشرةً — فذلك
- * كان يسبّب «Framebuffer Unsupported» عشوائياً أثناء الإقلاع. نستخدم الواجهات
- * العامة فقط: renderer.resize().
+ * تنبيه (سبب فشل الحلول السابقة):
+ *   - cam.setZoom(dpr) مع gameSize منطقي: getWorldPoint تقسم على zoom ⇒ ينزاح
+ *     اللمس بمقدار dpr (النقر يعمل بعيداً عن العنصر ×dpr، ويختفي ترس الإعدادات).
+ *   - gameSize فيزيائي + zoom=1/dpr: يعمل لكن يتطلب مضاعفة كل الثوابت المطلقة
+ *     في المشهد (SIDEBAR_X، أحجام الخطوط، البطاقات...) وهي كثيرة ومخاطرة عالية.
+ *   - التعديل المباشر على gl.viewport/defaultScissor/drawingBufferHeight سبّب
+ *     فشلاً عشوائياً في إنشاء إطار WebGL («Framebuffer Unsupported»).
  */
 export function installHighDpiCanvas(game: Phaser.Game): void {
   const applyHighDpi = (): void => {
@@ -133,107 +129,91 @@ export function installHighDpiCanvas(game: Phaser.Game): void {
       | undefined
     if (!renderer || typeof renderer.resize !== 'function') return
 
-    // الحجم المنطقي الفعلي للعبة (بالبكسل CSS) من ScaleManager نفسه.
-    const logicalW = Math.round(game.scale.displaySize.width || game.scale.width)
-    const logicalH = Math.round(game.scale.displaySize.height || game.scale.height)
     const dpr = getDevicePixelRatio()
+    // الحجم المنطقي (CSS) — مرجع اللعبة كله (gameSize يبقى عليه).
+    const logicalW = Math.max(1, Math.round(game.scale.width))
+    const logicalH = Math.max(1, Math.round(game.scale.height))
     const physW = Math.round(logicalW * dpr)
     const physH = Math.round(logicalH * dpr)
 
     const canvas = game.canvas as HTMLCanvasElement | null
     if (!canvas) return
 
-    // حالة الهدف: مخزن ومُصيّر بالحجم الفيزيائي، وكاميرا المشهد النشط بالحجم
-    // الفيزيائي مع zoom=dpr. إن تحققت كلها نخرج فوراً (نداء كل إطار مجاني).
-    const dprNow = getDevicePixelRatio()
     const canvasOk = canvas.width === physW && canvas.height === physH &&
       renderer.width === physW && renderer.height === physH
-    const camOk = isCameraAtDpr(game, dprNow)
+    const camOk = isCameraAtPhysical(game, physW, physH)
     if (canvasOk && camOk) return
 
     if (!canvasOk) {
-      // 1) حجم CSS = منطقي (التخطيط يبقى مطابقاً للشاشة).
+      // 1) حجم القماش CSS = منطقي (التخطيط البصري مطابق للشاشة).
       canvas.style.width = `${logicalW}px`
       canvas.style.height = `${logicalH}px`
-
       // 2) مخزن الرسم الفيزيائي = المنطقي × dpr.
       canvas.width = physW
       canvas.height = physH
-
-      // 3) الـ viewport والمصفوفة الإسقاطية معاً على الحجم الفيزيائي (نفس ما
-      //    يفعله Phaser في Renderer.onResize) — لا «ربع شاشة» ولا انزياح لمس.
+      // 3) viewport = الحجم الفيزيائي (يغطّي كامل المخزن) + إسقاطه الفيزيائي
+      //    مؤقتاً (سنعيده لمنطقي في الخطوة التالية).
       renderer.resize(physW, physH)
+      // 4) الإسقاط = الحجم المنطقي ⇒ العالم يُرسم ممتداً على كامل المخزن،
+      //    ووحدة عالم واحدة = بكسل CSS واحد.
+      ;(renderer as { setProjectionMatrix?: (w: number, h: number) => void })
+        .setProjectionMatrix?.(logicalW, logicalH)
     }
 
-    // 4) نُبعد كاميرا المشهد النشط إلى dpr ليملأ العالم المنطقي كامل المخزن
-    //    الفيزيائي. (نظام الإدخال يحوّل اللمس عبر الكاميرا تلقائياً.)
-    applyCameraDpr(game, dpr)
+    // 5) كاميرا كل مشهد نشط بحجم فيزيائي وzoom=1 (سيزر كامل + لمس سليم).
+    applyCameraPhysical(game, physW, physH)
   }
 
-  // مهم: يجب التطبيق **بعد** أن يُنهي ScaleManager دورته الخاصة.
-  // ScaleManager.updateScale() يضبط canvas.width = الحجم المنطقي في نهاية كل
-  // refresh، فأي رفع للمخزن داخل مستمع RESIZE نفسه يُلغى فوراً بعده. لذلك
-  // نؤجّل التطبيق إلى ما بعد الدورة الحالية (microtask) فيكون آخر من يكتب
-  // في canvas.width/height، ويبقى القماش الفيزيائي ثابتاً حتى الـ resize التالي.
+  // التطبيق الأول بعد اكتمال الإقلاع، ثم عند كل تغيير حجم/تدوير، ثم كل إطار
+  // (لأن كل مشهد جديد يُنشئ كاميرا/مقياساً جديدين). الفحص idempotent رخيص.
   const scheduleHighDpi = (): void => {
     queueMicrotask(applyHighDpi)
   }
-
-  // التطبيق الأول بعد اكتمال الإقلاع، ثم عند كل تغيير حجم/تدوير.
   game.events.once(Phaser.Core.Events.READY, scheduleHighDpi)
   game.scale.on(Phaser.Scale.Events.RESIZE, scheduleHighDpi)
-
-  // الأهم: كل مشهد جديد (BootScene → MainScene → ZenScene) يُنشئ كاميرا جديدة
-  // بzoom=1 ومقاس منطقي، فلا يكفي التطبيق عند الإقلاع/الـ resize فقط.
-  // لا نعتمد على حدث CREATE لأنه قد يقع قبل ربط المستمع، فنُطبّق في نهاية كل
-  // إطار عبر POST_STEP، مع حماية idempotent داخل applyHighDpi (تُخرج مبكراً إن
-  // كان المخزن والمُصيّر والكاميرا بالفعل بالحجم الصحيح) — فلا تكلفة تُذكر.
   game.events.on(Phaser.Core.Events.POST_STEP, applyHighDpi)
   scheduleHighDpi()
 }
 
 /**
- * إبعاد كاميرا كل مشهد نشط إلى dpr حتى يملأ العالم المنطقي (0..logical)
- * كامل المخزن الفيزيائي (0..logical×dpr).
+ * ضبط كاميرا كل مشهد نشط بحجم **فيزيائي** مع zoom=1.
  *
- * يُستدعى من installHighDpiCanvas عند الإقلاع/الـ resize. الكاميرا مضبوطة أصلاً
- * على zoom=1 (ومعها التقريب بإصبعين يبدل من 1 حتى 2.5) — نضرب في dpr ليبقى
- * «zoom=1» للمستخدم مكافئاً للملء الكامل للشاشة. لا تُشغَّل هذه الدالة إلا إذا
- * لم يكن المستخدم في حالة تقريب (zoom مضبوط على قيمة القاعدة).
+ * لماذا؟
+ *   • الحجم الفيزيائي يجعل مستطيل الكاميرا يغطّي كامل مخزن الرسم، فلا يقصّ
+ *     CameraManager.pushScissor الرسم على ربع الشاشة.
+ *   • zoom=1 يضمن أن camera.getWorldPoint (المستخدمة في تحويل لمس الشاشة إلى
+ *     إحداثيات عالمية) تُعيد الإحداثي نفسه بلا قسمة ⇒ لا انزياح لمس إطلاقاً.
+ *
+ * ملاحظة: scroll يبقى صفراً لأن الإسقاط المنطقي (المضبوط في installHighDpiCanvas)
+ * يجعل الإحداثي العالمي x يُرسم عند البكسل x×dpr داخل المخزن = x بكسل CSS.
  */
-function applyCameraDpr(game: Phaser.Game, dpr: number): void {
-  // "القاعدة" المسجَّلة = تكبير المستخدم اليدوي فوق الـ dpr (1 = لا تقريب).
-  const userZoom = game.registry.get('hdpi-user-zoom')
-  const pinchActive = typeof userZoom === 'number' && userZoom > 1.0001
-  game.registry.set('hdpi-dpr', dpr)
-  // الحجم المنطقي للعالم (بكسل CSS) — مرجع ثابت لا يعتمد على حالة الكاميرا.
-  const logicalW = Math.round(game.scale.displaySize.width || game.scale.width)
-  const logicalH = Math.round(game.scale.displaySize.height || game.scale.height)
+function applyCameraPhysical(game: Phaser.Game, physW: number, physH: number): void {
+  // لا نُصفّر تقريب المستخدم اليدوي (pinch) أثناء إيماءته.
+  const pinch = game.registry.get('hdpi-pinch-active') === true
   for (const scene of game.scene.getScenes(true)) {
     const cam = (scene as Phaser.Scene).cameras?.main
     if (!cam) continue
-    // مقاس الكاميرا = الحجم الفيزيائي للمخزن، مع zoom=dpr ⇒ المساحة المرئية
-    // بالوحدات العالمية = فيزيائي/dpr = منطقي = العالم كامل بالضبط.
-    cam.setSize(Math.round(logicalW * dpr), Math.round(logicalH * dpr))
-    cam.centerOn(logicalW / 2, logicalH / 2)
-    // إن كان المستخدم مُكبّراً يدوياً لا نُصفّر تقريبه؛ نُحدّث فقط عند غياب التقريب.
-    if (!pinchActive) cam.setZoom(dpr)
+    if (cam.width !== physW || cam.height !== physH) cam.setSize(physW, physH)
+    if (pinch) continue
+    if (Math.abs(cam.zoom - 1) > 0.0001) cam.setZoom(1)
+    if (cam.scrollX !== 0 || cam.scrollY !== 0) cam.setScroll(0, 0)
   }
 }
 
-/** هل كاميرا المشهد النشط مضبوطة أصلاً على الحجم الفيزيائي مع zoom=dpr؟ */
-function isCameraAtDpr(game: Phaser.Game, dpr: number): boolean {
-  const logicalW = Math.round(game.scale.displaySize.width || game.scale.width)
-  const logicalH = Math.round(game.scale.displaySize.height || game.scale.height)
+/** هل كاميرا كل مشهد نشط بحجم فيزيائي وzoom=1 وscroll صفري؟ */
+function isCameraAtPhysical(game: Phaser.Game, physW: number, physH: number): boolean {
+  if (game.registry.get('hdpi-pinch-active') === true) return true
   const scenes = game.scene.getScenes(true)
   if (scenes.length === 0) return true
   for (const scene of scenes) {
     const cam = (scene as Phaser.Scene).cameras?.main
     if (!cam) continue
     if (
-      cam.width !== Math.round(logicalW * dpr) ||
-      cam.height !== Math.round(logicalH * dpr) ||
-      Math.abs(cam.zoom - dpr) > 0.0001
+      cam.width !== physW ||
+      cam.height !== physH ||
+      Math.abs(cam.zoom - 1) > 0.0001 ||
+      Math.abs(cam.scrollX) > 0.5 ||
+      Math.abs(cam.scrollY) > 0.5
     ) {
       return false
     }
@@ -241,11 +221,10 @@ function isCameraAtDpr(game: Phaser.Game, dpr: number): boolean {
   return true
 }
 
-/** القيمة الأساسية لتكبير الكاميرا (devicePixelRatio) — يستعملها نظام التقريب
- *  ليجعل zoom=1 للمستخدم مكافئاً للملء الكامل مع المخزن الفيزيائي. */
+/** القيمة الأساسية لتكبير الكاميرا (1 = بلا تكبير).
+ *  الدقة العالية تأتي من مخزن الرسم الفيزيائي، لا من تكبير الكاميرا. */
 export function getBaseCameraZoom(): number {
-  const dpr = getDevicePixelRatio()
-  return dpr
+  return 1
 }
 
 /** إعادة ضبط الدقة العالية للقماش عند تغيّر devicePixelRatio (نقل النافذة

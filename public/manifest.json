@@ -5,7 +5,7 @@
   "description": "لعبة أذكار تفاعلية هادئة: فقاعات الأذكار، حديقة الحسنات، ونمط الاستغفار التأملي.",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./?v=1.0.4",
+  "start_url": "./?v=1.0.5",
   "scope": "./",
   "display": "fullscreen",
   "orientation": "portrait",
@@ -13,13 +13,13 @@
   "theme_color": "#10b981",
   "icons": [
     {
-      "src": "./icon.jpg?v=1.0.4",
+      "src": "./icon.jpg?v=1.0.5",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any"
     },
     {
-      "src": "./icon.jpg?v=1.0.4",
+      "src": "./icon.jpg?v=1.0.5",
       "sizes": "512x512",
       "type": "image/jpeg",
       "purpose": "any"

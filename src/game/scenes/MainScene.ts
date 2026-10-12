@@ -332,6 +332,8 @@ export default class MainScene extends Phaser.Scene {
     const pointer1 = this.input.pointer1
     const pointer2 = this.input.pointer2
     if (!pointer1 || !pointer2 || !pointer1.isDown || !pointer2.isDown) return
+    // نُعلم نظام الدقة العالية أن المستخدم يُكبّر يدوياً حتى لا يُصفّر تقريبه.
+    this.game.registry.set('hdpi-pinch-active', true)
     this.pinchState = {
       x1: pointer1.x,
       y1: pointer1.y,
@@ -360,11 +362,10 @@ export default class MainScene extends Phaser.Scene {
     const midY = (this.pinchState.y1 + this.pinchState.y2) / 2
 
     const cam = this.cameras.main
-    // القاعدة = dpr (لأن المخزن الفيزيائي = المنطقي × dpr)، والحد الأقصى = dpr×2.5.
+    // القاعدة = 1 (الدقة تأتي من المخزن الفيزيائي لا من تكبير الكاميرا).
     const base = getBaseCameraZoom()
     const target = Phaser.Math.Clamp(cam.zoom * (newDist / oldDist), base, base * MainScene.PINCH_MAX_ZOOM)
     cam.setZoom(target)
-    // نُعلم installHighDpiCanvas بتكبير المستخدم اليدوي حتى لا يُصفّره.
     this.game.registry.set('hdpi-user-zoom', target / base)
 
     // إبقاء منتصف الإصبعين ثابتاً بصرياً: نُمرّر الكاميرا بمقدار انزياح نقطة
@@ -372,7 +373,7 @@ export default class MainScene extends Phaser.Scene {
     if (target > base) {
       cam.setScroll(midX * (1 - target), midY * (1 - target))
     } else {
-      cam.centerOn(this.scale.width / 2, this.scale.height / 2)
+      cam.setScroll(0, 0)
     }
   }
 
@@ -380,17 +381,25 @@ export default class MainScene extends Phaser.Scene {
     if (!this.pinchState) return
     const cam = this.cameras.main
     const base = getBaseCameraZoom()
-    // عند انتهاء الإيماءة: إعادة التمرير إلى وضع الاستقرار حول مركز الشاشة
-    // (scroll = center * (1 - zoom)) لضمان ثبات العرض بعد إفلات الإصبع.
+    // عند انتهاء الإيماءة: إعادة التمرير إلى وضع الاستقرار حول مركز العالم.
+    // المعادلة القياسية للتقريب حول المركز: scroll = center × (1 - zoom).
+    // (عند القاعدة zoom=1 ⇒ scroll=0 وهو الوضع الطبيعي الكامل للشاشة.)
+    const centerScroll = (): void => {
+      cam.setScroll(
+        this.scale.width / 2 * (1 - cam.zoom),
+        this.scale.height / 2 * (1 - cam.zoom),
+      )
+    }
     if (cam.zoom > base) {
-      cam.setScroll(this.scale.width * (1 - cam.zoom) / 2, this.scale.height * (1 - cam.zoom) / 2)
+      centerScroll()
       this.game.registry.set('hdpi-user-zoom', cam.zoom / base)
     } else {
       cam.setZoom(base)
-      cam.centerOn(this.scale.width / 2, this.scale.height / 2)
+      centerScroll()
       this.game.registry.set('hdpi-user-zoom', 1)
     }
     this.pinchState = null
+    this.game.registry.set('hdpi-pinch-active', false)
   }
 
   /** زر الإيقاف في الشريط العلوي: نفس منطق togglePause لكن مع مزامنة الشريط. */
@@ -2267,8 +2276,12 @@ export default class MainScene extends Phaser.Scene {
     // التنظيف (مستمعات DOM/إدخال وأجسام اللعبة) عند كل انتقال إلى وضع الاستغفار.
     const cam = this.cameras.main
     cam?.setZoom(getBaseCameraZoom())
-    cam?.centerOn(this.scale.width / 2, this.scale.height / 2)
+    // scroll صحيح مع zoom≠1: centerWorld - (camSize/2)/zoom (centerOn لا تقسم على zoom).
+    if (cam) {
+      cam.setScroll(0, 0)
+    }
     this.game.registry.set('hdpi-user-zoom', 1)
+    this.game.registry.set('hdpi-pinch-active', false)
     // إزالة مستمعات فتح النوافذ من شريط الأيقونات (DOM).
     window.removeEventListener('open-mode-panel', this.onOpenModePanel)
     window.removeEventListener('open-garden', this.onOpenGarden)
