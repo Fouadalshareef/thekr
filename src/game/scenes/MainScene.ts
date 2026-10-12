@@ -491,7 +491,7 @@ export default class MainScene extends Phaser.Scene {
     this.headerSettingsButton.setSize(pauseSize * 1.5, pauseSize * 1.5)
     this.headerSettingsIcon.setDisplaySize(pauseSize, pauseSize)
     this.headerSettingsButton.input!.hitArea.setTo(-pauseSize * 0.75, -pauseSize * 0.75, pauseSize * 1.5, pauseSize * 1.5)
-    this.layoutCanvasSidebar(bannerTop + bannerHeight + 38)
+    this.layoutCanvasSidebar(bannerTop + bannerHeight + 32)
   }
 
   private layoutHeaderCount(bannerLeft: number, bannerWidth: number, y: number): void {
@@ -510,7 +510,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private layoutCanvasSidebar(top: number): void {
-    const step = Math.max(82, Math.min(98, this.scale.height * 0.105))
+    const step = Math.max(78, Math.min(90, this.scale.height * 0.1))
     for (const [index, button] of [this.btnSliders, this.btnLeaf, this.btnQuran, this.sidebarPauseButton].entries()) {
       button?.setPosition(42, top + index * step)
       button?.setData('homeY', top + index * step)
@@ -538,8 +538,8 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private buildCanvasSidebar(): void {
-    const top = 4 + this.bannerWidth() / 3 + 38
-    const step = Math.max(82, Math.min(98, this.scale.height * 0.105))
+    const top = 4 + this.bannerWidth() / 3 + 32
+    const step = Math.max(78, Math.min(90, this.scale.height * 0.1))
     const sideButton = (
       texture: string,
       label: string,
@@ -548,27 +548,30 @@ export default class MainScene extends Phaser.Scene {
       onIconCreated?: (icon: Phaser.GameObjects.Image) => void,
     ): Phaser.GameObjects.Container => {
       const button = this.add.container(42, y).setDepth(DEPTH_HUD + 2)
-      const image = this.add.image(0, 0, `${texture}-mipped`).setDisplaySize(54, 54)
+      // أيقونة أصغر بصرياً (46px) — الأصل عالي الدقة (-mipped) فيبقى حاداً.
+      const image = this.add.image(0, 0, `${texture}-mipped`).setDisplaySize(46, 46)
       onIconCreated?.(image)
-      // بطاقة الاسم أسفل الأيقونة: أضيق (60px) على الشاشات الأعرض من 480px،
-      // ومقاسها الأصلي (78px) على الهواتف النموذجية — مع نص أكبر (16px).
-      const badgeW = this.scale.width > 480 ? 60 : 78
+      // بطاقة الاسم أسفل الأيقونة: أصغر وأضيق (56px على الهواتف، 52px على الأعراض)
+      // مع نص أصغر (12px) لتتناسق مع الأيقونة المصغّرة.
+      const badgeW = this.scale.width > 480 ? 52 : 56
+      const badgeH = 20
       const badge = this.add.graphics()
       badge.fillStyle(0xd97706, 1)
-      badge.fillRoundedRect(-badgeW / 2, 30, badgeW, 28, 7)
+      badge.fillRoundedRect(-badgeW / 2, 26, badgeW, badgeH, 5)
       badge.lineStyle(2, 0xffffff, 1)
-      badge.strokeRoundedRect(-badgeW / 2, 30, badgeW, 28, 7)
-      const caption = this.add.text(0, 44, label, {
+      badge.strokeRoundedRect(-badgeW / 2, 26, badgeW, badgeH, 5)
+      const caption = this.add.text(0, 26 + badgeH / 2, label, {
         fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
-        fontSize: '16px',
+        fontSize: '12px',
         fontStyle: 'bold',
         color: '#ffffff',
         resolution: Math.min(window.devicePixelRatio || 1, 3),
       }).setOrigin(0.5)
-      caption.setShadow(0, 1, 'rgba(0,0,0,0.8)', 2, false, true)
+      // ظل نصّي خفيف جداً: يرفع التباين قليلاً دون تُثقيل الحواف (كما في المرجع).
+      caption.setShadow(0, 1, 'rgba(0,0,0,0.35)', 1, false, true)
       button.add([image, badge, caption])
-      button.setSize(80, 60)
-      button.setInteractive(new Phaser.Geom.Rectangle(-40, -27, 80, 60), Phaser.Geom.Rectangle.Contains)
+      button.setSize(72, 52)
+      button.setInteractive(new Phaser.Geom.Rectangle(-36, -23, 72, 52), Phaser.Geom.Rectangle.Contains)
       button.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, action)
       return button
     }
@@ -1157,7 +1160,7 @@ export default class MainScene extends Phaser.Scene {
   private refreshPauseIcon(): void {
     if (!this.sidebarPauseIcon) return
     this.sidebarPauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
-    this.sidebarPauseIcon.setDisplaySize(54, 54)
+    this.sidebarPauseIcon.setDisplaySize(46, 46)
     const label = this.sidebarPauseButton?.list[2] as Phaser.GameObjects.Text | undefined
     label?.setText(this.paused ? 'استئناف' : 'إيقاف')
   }
@@ -1194,7 +1197,9 @@ export default class MainScene extends Phaser.Scene {
    */
   private buildSessionCounter(): void {
     // الأصل مربّع 1024×1024 ⇒ frameH = frameW.
-    const frameW = Math.round(Math.min(190, Math.max(160, this.scale.width * 0.42)))
+    // حاوية الجلسة أصبحت أصغر بصرياً (120..150px) مع الحفاظ على حدة الأصل
+    // عالي الدقة (يُصغّر بترشيح LINEAR + mipmaps، فلا تتأثر الدقة).
+    const frameW = Math.round(Math.min(150, Math.max(120, this.scale.width * 0.33)))
     const frameH = frameW
     // البطاقة مثبّتة أعلى اليمين، أسفل الشريط العلوي مباشرة.
     // الشريط عرضه min(94vw, 520px) وارتفاعه = ثلثه ⇒ نحسب أسفله بدل ثابت.

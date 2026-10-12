@@ -112,34 +112,34 @@ export function initSidebar(): void {
 
       <!-- النمط -->
       <div class="flex flex-col items-center">
-        <button id="btn-pattern" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
-          <img src="icons/icon-pattern.png" alt="Pattern" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" />
+        <button id="btn-pattern" class="w-[44px] h-[44px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
+          <img src="icons/icon-pattern.png" alt="Pattern" class="w-10 h-10 object-contain pointer-events-none drop-shadow-md" />
         </button>
-        <span class="label-badge mt-[-6px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap">النمط</span>
+        <span class="label-badge mt-[-6px] z-10 px-1.5 py-0.5 rounded-md text-[10px] shadow-sm whitespace-nowrap">النمط</span>
       </div>
 
       <!-- المزرعة -->
       <div class="flex flex-col items-center">
-        <button id="btn-farm" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
-          <img src="icons/icon-farm.png" alt="Farm" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" />
+        <button id="btn-farm" class="w-[44px] h-[44px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
+          <img src="icons/icon-farm.png" alt="Farm" class="w-10 h-10 object-contain pointer-events-none drop-shadow-md" />
         </button>
-        <span class="label-badge mt-[-6px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap">المزرعة</span>
+        <span class="label-badge mt-[-6px] z-10 px-1.5 py-0.5 rounded-md text-[10px] shadow-sm whitespace-nowrap">المزرعة</span>
       </div>
 
       <!-- المصحف -->
       <div class="flex flex-col items-center">
-        <button id="btn-quran" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
-          <img src="icons/icon-quran.png" alt="Quran" class="w-12 h-12 object-contain pointer-events-none drop-shadow-md" />
+        <button id="btn-quran" class="w-[44px] h-[44px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
+          <img src="icons/icon-quran.png" alt="Quran" class="w-10 h-10 object-contain pointer-events-none drop-shadow-md" />
         </button>
-        <span class="label-badge mt-[-6px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap">المصحف</span>
+        <span class="label-badge mt-[-6px] z-10 px-1.5 py-0.5 rounded-md text-[10px] shadow-sm whitespace-nowrap">المصحف</span>
       </div>
 
       <!-- الإعدادات -->
       <div class="flex flex-col items-center relative">
-        <button id="btn-settings" class="w-[52px] h-[52px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
-          <img src="game/icons/settings-gbtn.svg" alt="Settings" class="w-[46px] h-[46px] object-contain pointer-events-none drop-shadow-md" />
+        <button id="btn-settings" class="w-[44px] h-[44px] relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto">
+          <img src="game/icons/settings-gbtn.svg" alt="Settings" class="w-[38px] h-[38px] object-contain pointer-events-none drop-shadow-md" />
         </button>
-        <span class="label-badge mt-[-6px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap">الإعدادات</span>
+        <span class="label-badge mt-[-6px] z-10 px-1.5 py-0.5 rounded-md text-[10px] shadow-sm whitespace-nowrap">الإعدادات</span>
         <!-- شارة التحديث -->
         <div id="dom-update-badge" class="absolute top-0 right-0 w-[16px] h-[16px] rounded-full bg-red-500 border-2 border-white shadow-md hidden pointer-events-none" style="animation: badge-pulse 0.6s ease-in-out infinite alternate;">
            <span class="absolute inset-0 flex items-center justify-center text-white text-[10px] font-bold">!</span>
