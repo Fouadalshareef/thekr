@@ -5,9 +5,11 @@ import { setTopHeaderVisible } from '../../components/TopHeader'
 // كاش قديم من Service Worker عند استبدال الأصل، كما أنه يعمل مع base:'./'.
 import SESSION_FRAME_URL from '../../assets/session-frame.png'
 import BANNER_URL from '../../assets/rk-banner.png'
-// فقاعة «سبحان الله» — الصورة المولّدة pi/Bubbles/sobhanallah.png مُنسوخة
-// إلى src/assets/bubbles/ (استيراد Vite المجزّأ ببصمة المحتوى).
-import SOBHAN_ALLAH_BUBBLE_URL from '../../assets/bubbles/sobhanallah.png'
+// صور فقاعات الأذكار (استيراد Vite المجزّأ ببصمة المحتوى).
+import SOBHAN_ALLAH_BUBBLE_URL from '../../../pi/Bubbles/sobhanallah.png'
+import ALHAMDULILLAH_BUBBLE_URL from '../../../pi/Bubbles/alhamdulillah.png'
+import ALLAHU_AKBAR_BUBBLE_URL from '../../../pi/Bubbles/allahu_akbar.png'
+import HAWQALA_BUBBLE_URL from '../../../pi/Bubbles/hawqala.png'
 
 /**
  * BootScene — شاشة بدء التجربة.
@@ -45,11 +47,23 @@ export default class BootScene extends Phaser.Scene {
     // يُستورد بمسار Vite المجزّأ ليبقى خارج كاش Service Worker القديم.
     this.load.image('session-frame', SESSION_FRAME_URL)
     this.load.image('hud-banner', BANNER_URL)
-    // جسم فقاعة «سبحان الله» — صورة مولّدة بخلفية شفافة (بصمة Vite).
+    // صور فقاعات الأذكار — تُحمّل من أصول PNG مباشرةً مع بصمة Vite.
     this.load.image('bubble-subhanallah', SOBHAN_ALLAH_BUBBLE_URL)
+    this.load.image('bubble-alhamdulillah', ALHAMDULILLAH_BUBBLE_URL)
+    this.load.image('bubble-allahu-akbar', ALLAHU_AKBAR_BUBBLE_URL)
+    this.load.image('bubble-la-hawla', HAWQALA_BUBBLE_URL)
   }
 
   create(): void {
+    for (const key of [
+      'bubble-subhanallah',
+      'bubble-alhamdulillah',
+      'bubble-allahu-akbar',
+      'bubble-la-hawla',
+    ]) {
+      this.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR)
+    }
+
     this.createHudTextures()
 
     // شاشة الترحيب: يُخفى سهم القائمة الجانبية تماماً (يُعاد إظهاره في MainScene).

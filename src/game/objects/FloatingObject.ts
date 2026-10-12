@@ -34,6 +34,8 @@ export interface FloatingObjectOptions {
   popPitch: number
   /** نصف قطر منطقة اللمس. */
   hitRadius: number
+  /** إظهار النصوص التي تُعرض فوق الجسم (اسم الذكر ورسالة الكومبو). */
+  showTextOverlays?: boolean
 }
 
 export abstract class FloatingObject extends Phaser.GameObjects.Container {
@@ -69,28 +71,30 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
 
     // إضاءة Glow ناعمة خلف الجسم لإبرازه في الشاشة
     this.buildGlow(options.hitRadius)
-    // نص تشجيعي فوق الفقاعة عند وجود كومبو فعّال
-    const combo = Number(scene.data.get('combo') || 0)
-    if (combo >= 10 && (combo % 10 === 0 || combo >= 20)) {
-      this.add(scene.add.text(0, -options.hitRadius - 22, combo >= 50 ? 'الذكر المتواصل ✨' : 'ممتاز! 🌟', {
-        fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif', fontSize: '14px', fontStyle: 'bold', color: '#fef3c7',
-      }).setOrigin(0.5).setDepth(2))
-    }
+    if (options.showTextOverlays !== false) {
+      // نص تشجيعي فوق الفقاعة عند وجود كومبو فعّال
+      const combo = Number(scene.data.get('combo') || 0)
+      if (combo >= 10 && (combo % 10 === 0 || combo >= 20)) {
+        this.add(scene.add.text(0, -options.hitRadius - 22, combo >= 50 ? 'الذكر المتواصل ✨' : 'ممتاز! 🌟', {
+          fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif', fontSize: '14px', fontStyle: 'bold', color: '#fef3c7',
+        }).setOrigin(0.5).setDepth(2))
+      }
 
-    // نص الذكر في منتصف الجسم — خط عربي رشيق مع ظل ناعم
-    const label = scene.add
-      .text(0, 0, options.dhikrName, {
-        fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Tahoma, sans-serif',
-        fontSize: '22px',
-        fontStyle: 'bold',
-        color: '#ffffff',
-        align: 'center',
-        wordWrap: { width: 115, useAdvancedWrap: true },
-      })
-      .setOrigin(0.5, 0.5)
-    label.setShadow(0, 1, 'rgba(0,0,0,0.7)', 4, true, true)
-    label.setStroke('#0a0f1e', 2)
-    this.add(label)
+      // نص الذكر في منتصف الجسم — خط عربي رشيق مع ظل ناعم
+      const label = scene.add
+        .text(0, 0, options.dhikrName, {
+          fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Tahoma, sans-serif',
+          fontSize: '22px',
+          fontStyle: 'bold',
+          color: '#ffffff',
+          align: 'center',
+          wordWrap: { width: 115, useAdvancedWrap: true },
+        })
+        .setOrigin(0.5, 0.5)
+      label.setShadow(0, 1, 'rgba(0,0,0,0.7)', 4, true, true)
+      label.setStroke('#0a0f1e', 2)
+      this.add(label)
+    }
 
     // منطقة لمس دائرية مركزة 100% على مركز المجسم (بلا إزاحة علوية):
     // الحاوية هنا بلا setSize (عرض/ارتفاع = 0) لذا displayOrigin = (0,0) ومركز
