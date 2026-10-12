@@ -63,9 +63,10 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
     scale: {
       // اجعل مساحة الرسم مطابقة للـ viewport الفعلي بدلاً من احتواء مقاس
       // ثابت داخلها؛ بذلك لا تظهر أشرطة سوداء عند اختلاف نسبة أبعاد الهاتف.
-      // ملاحظة مهمة: في وضع RESIZE يتجاهل Phaser الخاصية zoom تماماً (راجع
-      // ScaleManager.updateScale) — لذلك تُضبط الدقة العالية يدوياً عبر
-      // installHighDpiCanvas() بعد الإقلاع.
+      // ملاحظة: في وضع RESIZE يتجاهل Phaser الخاصية zoom تماماً (راجع
+      // ScaleManager.updateScale)، وهو كذلك يتكفّل بمقاس مخزن الرسم (backing
+      // store) ومزامنة المُصيّر والكاميرا وإحداثيات اللمس. لا نعدّل أي شيء
+      // يدوياً (انظر installHighDpiCanvas).
       mode: Phaser.Scale.RESIZE,
       parent: config.parent ?? 'game-container',
       width: config.width,
@@ -77,88 +78,36 @@ export function createGame(config: PhaserGameConfig = { width: 480, height: 854 
 }
 
 /**
- * تفعيل الدقة العالية (High-DPI) بشكل صحيح على شاشات الجوال.
+ * خطّاف (hook) لتطبيق الدقة العالية (High-DPI) على شاشات الجوال.
  *
- * الفكرة: نُبقي «عالم» اللعبة منطقياً بالكامل (إحداثيات 390×844، كاميرا منطقية،
- * تكبير أساسه 1، إسقاط ortho منطقي، إحداثيات لمس منطقية) — أي لا يتغيّر أي شيء
- * في كود المشاهد أو التخطيط أو التقريب بإصبعين. ثم نُكبّر «طبقة WebGL» فقط إلى
- * الدقة الفيزيائية للجهاز:
- *   • مخزن الرسم (canvas.width/height)  = المقاس المنطقي × dpr
- *   • مقاس العرض CSS (style)            = المقاس المنطقي (كما هو)
- *   • gl.viewport + gl.scissor          = المقاس الفيزيائي الكامل
+ * قرار تصميمي: نترك قماش Phaser بإدارة ScaleManager الذاتية بالكامل (وضع
+ * RESIZE)، ولا نلمس أي حالة داخلية للمُصيّر.
  *
- * وبما أن إسقاط ortho يبقى منطقياً (0..390) بينما منفذ العرض فيزيائي (0..780)،
- * فإن العالم المنطقي يُمدّد ليملأ المخزن الفيزيائي بالكامل بتكبير dpr ⇒ رسم
- * حادّ بلا تهتّؤ (بلا الأشرطة السوداء أو «ربع الشاشة»).
+ * خلفية: كانت هناك محاولة سابقة لرفع مخزن الرسم يدوياً إلى «المنطقي × dpr»
+ * بتعديل canvas.width/height و renderer.width/height و drawingBufferHeight و
+ * defaultScissor و gl.viewport/scissor وتغليف pushScissor. هذا غير مدعوم،
+ * وأحدث فشلاً عشوائياً (race) في إنشاء إطار WebGL أثناء الإقلاع —
+ * «Framebuffer status: Framebuffer Unsupported» (يُرمى من
+ * WebGLFramebufferWrapper.createResource) — فيتوقف حلقة الرسم وتظهر شاشة
+ * سوداء لا تختفي على بعض الأجهزة/مشغّلات الرسوميات. كما سبّبت أخطاء
+ * TypeScript لتعيينها على خصائص للقراءة فقط/غير موجودة (drawingBufferHeight,
+ * defaultScissor).
  *
- * سبب مشكلة «ربع الشاشة» السابقة: في وضع RESIZE يدفع Phaser مقصّ (scissor)
- * الكاميرا كل إطار بمقاسها المنطقي (390×844). إذا كبّرنا المخزن إلى فيزيائي
- * دون تعديل ذلك المقصّ، يُقتطع الرسم على الربع السفلي الأيسر. الحل هنا هو
- * تغليف pushScissor ليضرب أبعاده في dpr، فيبقى المقصّ مطابقاً للمخزن الفيزيائي.
+ * الحدّة على الشاشات عالية الكثافة تأتي الآن من:
+ *   • خيار antialias: true + mipmapFilter: 'LINEAR_MIPMAP_LINEAR' في createGame،
+ *   • ترشيح المتصفح الخطي عند تكبير القماش.
+ * وهذا يحفظ تزامن المخزن والمُصيّر والكاميرا وإحداثيات اللمس، فلا شاشة سوداء.
  *
- * لا نفعل شيئاً في مُصيّر Canvas (بلا gl) — هناك يتكفّل المتصفح بالترشيح.
+ * تبقى الدالة موجودة (معتمدة من main.ts) كي تُتيح لاحقاً أي معالجة آمنة عبر
+ * واجهات ScaleManager العامة فقط.
  */
-export function installHighDpiCanvas(game: Phaser.Game): void {
-  const renderer = game.renderer as Phaser.Renderer.WebGL.WebGLRenderer | undefined
-  const gl = renderer && 'gl' in renderer ? (renderer as unknown as { gl?: WebGLRenderingContext }).gl : undefined
-  if (!renderer || !gl) return
-
-  // نضبط مقصّ الكاميرا (وسائر المقصّات كالأقنعة) ليطابق المخزن الفيزيائي:
-  // نضرب الإحداثيات في dpr ونمرّر drawingBufferHeight الفيزيائي.
-  const originalPushScissor = renderer.pushScissor.bind(renderer)
-  renderer.pushScissor = function pushScissorHiDpi(
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    drawingBufferHeight?: number,
-  ): number[] {
-    const dpr = getDevicePixelRatio()
-    return originalPushScissor(
-      x * dpr,
-      y * dpr,
-      width * dpr,
-      height * dpr,
-      drawingBufferHeight ?? renderer.drawingBufferHeight,
-    )
-  }
-
-  const apply = (): void => {
-    const dpr = getDevicePixelRatio()
-    if (dpr <= 1) return
-
-    // المقاس المنطقي (CSS) الذي يحسب به Phaser العالم واللمس.
-    const cssW = game.scale.gameSize.width
-    const cssH = game.scale.gameSize.height
-    if (!cssW || !cssH) return
-
-    const physW = Math.round(cssW * dpr)
-    const physH = Math.round(cssH * dpr)
-
-    // 1) مخزن الرسم فيزيائي، أما مقاس العرض CSS فيبقى منطقياً.
-    if (game.canvas.width !== physW) game.canvas.width = physW
-    if (game.canvas.height !== physH) game.canvas.height = physH
-    game.canvas.style.width = `${cssW}px`
-    game.canvas.style.height = `${cssH}px`
-
-    // 2) دفتر المُصيّر وحدوده الافتراضية بالقياس الفيزيائي.
-    renderer.width = physW
-    renderer.height = physH
-    renderer.drawingBufferHeight = gl.drawingBufferHeight
-    renderer.defaultScissor = [0, 0, physW, physH]
-
-    // 3) الإسقاط يبقى منطقياً (تمّ ضبطه داخل renderer.resize باستخدام baseSize)،
-    //    لكن منفذ العرض والمقصّ يغطّيان المخزن الفيزيائي بالكامل.
-    gl.viewport(0, 0, physW, physH)
-    gl.scissor(0, 0, physW, physH)
-    renderer.currentScissor = renderer.defaultScissor
-  }
-
-  // نُعيد التطبيق بعد أي تغيير حجم يُجريه Phaser نفسه (تدوير، تغيّر نافذة،
-  // أو تغيّر devicePixelRatio). الحدث يأتي من renderer.resize في نهاية onResize،
-  // فنكون دائماً «آخر من يلمس» حالة WebGL ⇒ مستقل عن ترتيب المعالجات.
-  renderer.on(Phaser.Renderer.Events.RESIZE, apply)
-  apply()
+export function installHighDpiCanvas(_game: Phaser.Game): void {
+  // لا شيء مقصود: وضع RESIZE يتكفّل بإدارة القماش.
+  // أي تعديل يدوي على حالة المُصيّر (canvas.width, renderer.width/height,
+  // drawingBufferHeight, defaultScissor, gl.viewport/scissor) يسبّب فشلاً
+  // عشوائياً في إنشاء إطار WebGL أثناء الإقلاع
+  // («Framebuffer status: Framebuffer Unsupported») فيتوقف حلقة الرسم وتظهر
+  // شاشة سوداء. لذلك نترك Phaser يدير كل شيء.
 }
 
 /** إعادة ضبط الدقة العالية للقماش عند تغيّر devicePixelRatio (نقل النافذة

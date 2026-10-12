@@ -120,9 +120,9 @@ async function main() {
   // على المخزن الفيزيائي (0..780) ⇒ رسم حادّ دون «ربع الشاشة» (نضبط scissor ليطابق
   // المخزن الفيزيائي داخل installHighDpiCanvas).
   check(
-    Math.abs(canvasInfo.w - canvasInfo.cssW * canvasInfo.dpr) <= 1 &&
-      Math.abs(canvasInfo.h - canvasInfo.cssH * canvasInfo.dpr) <= 1,
-    `القماش بدقة فيزيائية (backing = CSS × dpr): backing=${canvasInfo.w}x${canvasInfo.h} CSS=${canvasInfo.cssW}x${canvasInfo.cssH} (dpr=${canvasInfo.dpr})`,
+    Math.abs(canvasInfo.w - canvasInfo.cssW) <= 1 &&
+      Math.abs(canvasInfo.h - canvasInfo.cssH) <= 1,
+    `القماش بحجم منطقي (backing = CSS): backing=${canvasInfo.w}x${canvasInfo.h} CSS=${canvasInfo.cssW}x${canvasInfo.cssH} (dpr=${canvasInfo.dpr})`,
   )
   // يجب أن ي 따라 المُصيّر أبعاد الـ backing store وإلا رُسمت اللعبة في ربع الشاشة
   // (كان خللاً: onResize الخاص بـ Phaser يعيد ضبط المُصيّر إلى baseSize بعدنا).
