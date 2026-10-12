@@ -968,6 +968,18 @@ body.modal-open {
 
 /* شريط تقدّم العنصر القادم */
 .crisp-bar {
+  height: 12px;
+  border-radius: 999px;
+  background: #e6f4ec;
+  overflow: hidden;
+  margin-top: 10px;
+}
+.crisp-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #34d399 0%, #059669 100%);
+  transition: width 0.35s ease;
+}
 
 /* ------------------------------------------------------------------ */
 /* عناصر لوحة الإعدادات                                                 */
@@ -1119,19 +1131,6 @@ body.modal-open {
 .crisp-stat-line span { color: #14532d; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .crisp-stat-line b { color: #047857; font-family: Consolas, 'Courier New', monospace; font-size: 1rem; direction: ltr; }
 .crisp-empty { margin: 0; color: #6b7d75; font-size: 0.9rem; text-align: center; padding: 10px 0; }
-
-  height: 12px;
-  border-radius: 999px;
-  background: #e6f4ec;
-  overflow: hidden;
-  margin-top: 10px;
-}
-.crisp-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #34d399 0%, #059669 100%);
-  transition: width 0.35s ease;
-}
 
 /* شبكة عناصر المزرعة */
 .crisp-grid {

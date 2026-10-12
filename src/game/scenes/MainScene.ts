@@ -38,6 +38,7 @@ import {
   type HudIcon,
 } from '../ui/GameButtonSkin'
 import { setCircleHitArea } from '../ui/hitArea'
+import { getBaseCameraZoom } from '../PhaserGame'
 import {
   DEPTH_HUD,
   DEPTH_MODAL,
@@ -359,12 +360,16 @@ export default class MainScene extends Phaser.Scene {
     const midY = (this.pinchState.y1 + this.pinchState.y2) / 2
 
     const cam = this.cameras.main
-    const target = Phaser.Math.Clamp(cam.zoom * (newDist / oldDist), 1, MainScene.PINCH_MAX_ZOOM)
+    // القاعدة = dpr (لأن المخزن الفيزيائي = المنطقي × dpr)، والحد الأقصى = dpr×2.5.
+    const base = getBaseCameraZoom()
+    const target = Phaser.Math.Clamp(cam.zoom * (newDist / oldDist), base, base * MainScene.PINCH_MAX_ZOOM)
     cam.setZoom(target)
+    // نُعلم installHighDpiCanvas بتكبير المستخدم اليدوي حتى لا يُصفّره.
+    this.game.registry.set('hdpi-user-zoom', target / base)
 
     // إبقاء منتصف الإصبعين ثابتاً بصرياً: نُمرّر الكاميرا بمقدار انزياح نقطة
-    // المنتصف بين لقطتين، مع إعادة ضبط scroll حول المركز عند zoom=1.
-    if (target > 1) {
+    // المنتصف بين لقطتين، مع إعادة ضبط scroll حول المركز عند zoom=base.
+    if (target > base) {
       cam.setScroll(midX * (1 - target), midY * (1 - target))
     } else {
       cam.centerOn(this.scale.width / 2, this.scale.height / 2)
@@ -374,13 +379,16 @@ export default class MainScene extends Phaser.Scene {
   private handlePinchEnd = (): void => {
     if (!this.pinchState) return
     const cam = this.cameras.main
+    const base = getBaseCameraZoom()
     // عند انتهاء الإيماءة: إعادة التمرير إلى وضع الاستقرار حول مركز الشاشة
     // (scroll = center * (1 - zoom)) لضمان ثبات العرض بعد إفلات الإصبع.
-    if (cam.zoom > 1) {
+    if (cam.zoom > base) {
       cam.setScroll(this.scale.width * (1 - cam.zoom) / 2, this.scale.height * (1 - cam.zoom) / 2)
+      this.game.registry.set('hdpi-user-zoom', cam.zoom / base)
     } else {
-      cam.setZoom(1)
+      cam.setZoom(base)
       cam.centerOn(this.scale.width / 2, this.scale.height / 2)
+      this.game.registry.set('hdpi-user-zoom', 1)
     }
     this.pinchState = null
   }
@@ -2251,15 +2259,16 @@ export default class MainScene extends Phaser.Scene {
     this.input.off(Phaser.Input.Events.POINTER_UP, this.handlePinchEnd, this)
     this.input.off(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handlePinchEnd, this)
     this.pinchState = null
-    // إعادة الكاميرا إلى حالتها الافتراضية (تكبير 1 وتمرير صفر) قبل إغلاق المشهد
-    // حتى لا يبقى تأثير التقريب معلّقاً عند العودة إليه لاحقاً.
+    // إعادة الكاميرا إلى حالتها الافتراضية (تكبير القاعدة=dpr وتمركز على العالم)
+    // قبل إغلاق المشهد حتى لا يبقى تأثير التقريب معلّقاً عند العودة إليه لاحقاً.
     // تنبيه مهم: CameraManager يشغّل معالج SHUTDOWN الخاص به قبل هذه الدالة
     // (سُجّل عند بدء المشهد قبل create)، فيكون cameras.main قد دُمّر بالفعل
     // هنا (undefined). استخدام ?. يمنع استثناء TypeError كان يقطع بقية
     // التنظيف (مستمعات DOM/إدخال وأجسام اللعبة) عند كل انتقال إلى وضع الاستغفار.
     const cam = this.cameras.main
-    cam?.setZoom(1)
+    cam?.setZoom(getBaseCameraZoom())
     cam?.centerOn(this.scale.width / 2, this.scale.height / 2)
+    this.game.registry.set('hdpi-user-zoom', 1)
     // إزالة مستمعات فتح النوافذ من شريط الأيقونات (DOM).
     window.removeEventListener('open-mode-panel', this.onOpenModePanel)
     window.removeEventListener('open-garden', this.onOpenGarden)

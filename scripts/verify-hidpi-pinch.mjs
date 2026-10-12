@@ -114,15 +114,15 @@ async function main() {
       rendererH: game?.renderer?.height ?? 0,
     }
   })
-  // ---------- 1) قماش متّسق مع المُصيّر (بلا ربع شاشة) ----------
+  // ---------- 1) قماش متّسق مع المُصيّر بدقة عالية حقيقية ----------
   // عقد الدقة العالية (High-DPI): مخزن الرسم (backing store) = المقاس المنطقي (CSS) × dpr،
-  // بينما يبقى مقاس العرض CSS منطقياً. هذا يضمن رسم العالم المنطقي (0..390) مكبّراً
-  // على المخزن الفيزيائي (0..780) ⇒ رسم حادّ دون «ربع الشاشة» (نضبط scissor ليطابق
-  // المخزن الفيزيائي داخل installHighDpiCanvas).
+  // بينما يبقى مقاس العرض CSS منطقياً. هذا يضمن رسم العالم المنطقي (0..390) على
+  // المخزن الفيزيائي (0..780) ⇒ رسم حادّ على شاشات 2×/3× بدل تكبير المتصفح الباهت.
+  // (يُطبَّق في installHighDpiCanvas عبر canvas.width/height + renderer.resize).
   check(
-    Math.abs(canvasInfo.w - canvasInfo.cssW) <= 1 &&
-      Math.abs(canvasInfo.h - canvasInfo.cssH) <= 1,
-    `القماش بحجم منطقي (backing = CSS): backing=${canvasInfo.w}x${canvasInfo.h} CSS=${canvasInfo.cssW}x${canvasInfo.cssH} (dpr=${canvasInfo.dpr})`,
+    Math.abs(canvasInfo.w - canvasInfo.cssW * canvasInfo.dpr) <= 1 &&
+      Math.abs(canvasInfo.h - canvasInfo.cssH * canvasInfo.dpr) <= 1,
+    `القماش بدقة فيزيائية (backing = CSS × dpr): backing=${canvasInfo.w}x${canvasInfo.h} CSS=${canvasInfo.cssW}x${canvasInfo.cssH} dpr=${canvasInfo.dpr}`,
   )
   // يجب أن ي 따라 المُصيّر أبعاد الـ backing store وإلا رُسمت اللعبة في ربع الشاشة
   // (كان خللاً: onResize الخاص بـ Phaser يعيد ضبط المُصيّر إلى baseSize بعدنا).
@@ -141,8 +141,15 @@ async function main() {
       return cam ? { zoom: cam.zoom, scrollX: cam.scrollX, scrollY: cam.scrollY } : null
     })
 
+  // القاعدة الجديدة للدقة العالية: تكبير الكاميرا = dpr (لأن المخزن الفيزيائي
+  // = المنطقي × dpr)، و«التكبير 1» للمستخدم = dpr. الحد الأقصى = dpr × 2.5.
+  const dpr = canvasInfo.dpr
+  const base = dpr
   const before = await getCam()
-  check(before && Math.abs(before.zoom - 1) < 0.01, `الكاميرا تبدأ بتكبير 1 (zoom=${before?.zoom?.toFixed(3)})`)
+  check(
+    before && Math.abs(before.zoom - base) < 0.01,
+    `الكاميرا تبدأ بتكبير القاعدة=dpr (zoom=${before?.zoom?.toFixed(3)} dpr=${dpr})`,
+  )
 
   const client = await page.createCDPSession()
   const cx = 195
@@ -169,11 +176,11 @@ async function main() {
     ],
   })
   await new Promise((r) => setTimeout(r, 150))
-  await spread(80, 500) // إبعاد كبير جداً — يجب أن يُحدَّ عند 2.5
+  await spread(80, 500) // إبعاد كبير جداً — يجب أن يُحدَّ عند dpr × 2.5
   const zoomed = await getCam()
   check(
-    zoomed && zoomed.zoom > 1.2 && zoomed.zoom <= 2.51,
-    `التقريب يعمل ويُحدَّ عند 2.5 (zoom=${zoomed?.zoom?.toFixed(3)})`,
+    zoomed && zoomed.zoom > base * 1.2 && zoomed.zoom <= base * 2.51,
+    `التقريب يعمل ويُحدَّ عند dpr×2.5=${(base * 2.5).toFixed(2)} (zoom=${zoomed?.zoom?.toFixed(3)})`,
   )
 
   await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
@@ -190,17 +197,28 @@ async function main() {
   await new Promise((r) => setTimeout(r, 120))
   await spread(80, 160) // تقريب معتدل
   const mid = await getCam()
-  check(mid && mid.zoom > 1.05 && mid.zoom <= 2.51, `تقريب معتدل ضمن الحدود (zoom=${mid?.zoom?.toFixed(3)})`)
-  await spread(160, 20) // تصغير قوي — يجب أن يُحدَّ عند 1
+  check(
+    mid && mid.zoom > base * 1.05 && mid.zoom <= base * 2.51,
+    `تقريب معتدل ضمن الحدود (zoom=${mid?.zoom?.toFixed(3)})`,
+  )
+  await spread(160, 20) // تصغير قوي — يجب أن يُحدَّ عند dpr
   const shrunk = await getCam()
-  check(shrunk && shrunk.zoom >= 0.99, `التصغير محدّد عند 1 (zoom=${shrunk?.zoom?.toFixed(3)})`)
+  check(shrunk && shrunk.zoom >= base * 0.99, `التصغير محدّد عند dpr=${base} (zoom=${shrunk?.zoom?.toFixed(3)})`)
   await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await new Promise((r) => setTimeout(r, 300))
 
   const after = await getCam()
+  // عند القاعدة (zoom = dpr) تكون الكاميرا متمركزة على مركز العالم، فالتمرير
+  // المتوقع = العرض المنطقي × (1 - dpr) / 2 (سالب) — وليس صفراً كما كان في
+  // التصميم القديم (zoom=1).
+  const expectScrollX = (canvasInfo.cssW * (1 - base)) / 2
+  const expectScrollY = (canvasInfo.cssH * (1 - base)) / 2
   check(
-    after && Math.abs(after.zoom - 1) < 0.01 && Math.abs(after.scrollX) < 1.5 && Math.abs(after.scrollY) < 1.5,
-    `بعد الإفلات: العودة إلى تكبير 1 وتمرير صفر (zoom=${after?.zoom?.toFixed(3)} scrollX=${after?.scrollX?.toFixed(2)} scrollY=${after?.scrollY?.toFixed(2)})`,
+    after &&
+      Math.abs(after.zoom - base) < 0.01 &&
+      Math.abs(after.scrollX - expectScrollX) < 2 &&
+      Math.abs(after.scrollY - expectScrollY) < 2,
+    `بعد الإفلات: عودة إلى القاعدة dpr=${base} وتمركز على مركز العالم (zoom=${after?.zoom?.toFixed(3)} scrollX=${after?.scrollX?.toFixed(2)}≠${expectScrollX.toFixed(2)} scrollY=${after?.scrollY?.toFixed(2)}≠${expectScrollY.toFixed(2)})`,
   )
 
   check(errors.length === 0, `لا أخطاء JavaScript وقت التشغيل${errors.length ? ` — ${errors.slice(0, 3).join(' | ')}` : ''}`)
