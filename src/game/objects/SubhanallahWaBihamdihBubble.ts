@@ -26,6 +26,11 @@ export default class SubhanallahWaBihamdihBubble extends FloatingObject {
     return 0x22d3ee // فيروزي متوهج
   }
 
+  /** حدود الجسم ترسم نفسها — لا حلقة حافة بيضاء إضافية حول الفقاعة. */
+  protected showEdgeRing(): boolean {
+    return false
+  }
+
   protected buildBody(): void {
     const g = this.scene.add.graphics()
 

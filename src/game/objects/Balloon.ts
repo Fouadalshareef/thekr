@@ -28,6 +28,11 @@ export default class Balloon extends FloatingObject {
     return 0xffe600 // ذهبي فسفوري نيون
   }
 
+  /** الصورة الجاهزة ترسم حدودها بنفسها — لا حلقة حافة بيضاء فوقها. */
+  protected showEdgeRing(): boolean {
+    return false
+  }
+
   protected buildBody(): void {
     const image = this.scene.add.image(0, 0, ALHAMDULILLAH_BUBBLE_TEXTURE)
     image.setDisplaySize(IMG_SIZE, (IMG_SIZE * image.height) / image.width)

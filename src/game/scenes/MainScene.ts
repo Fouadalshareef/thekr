@@ -63,8 +63,10 @@ const NEXT_DELAY = 150
 const WELCOME_SCENE = 'BootScene'
 /** موضع عمود الأزرار الجانبية أفقياً (كل الأزرار على نفس الخط الرأسي). */
 const SIDEBAR_X = 42
-/** قطر الحاضنة/الحاوية الثابتة (46px) — width/height/flex-shrink/position/overflow. */
-const SIDE_CRADLE_SIZE = 46
+/** قطر الحاضنة/الحاوية الثابتة (58px) — width/height/flex-shrink/position/overflow.
+ *  ملاحظة: منطقة اللمس تعتمد على نصف القطر (SIDE_TOUCH_RADIUS) وليس على هذا القياس،
+ *  لذلك تكبير الحاضنة لا يغيّر مساحة اللمس إطلاقاً. */
+const SIDE_CRADLE_SIZE = 58
 /**
  * قياس الأيقونة داخل الحاضنة: تملأ الحاوية بالكامل (width/height: 100%).
  * الصور مربّعة 256×256 ⇒ العرض = الارتفاع ⇒ مكافئ تماماً لـ object-fit: contain
@@ -76,6 +78,11 @@ const SIDE_BADGE_W = 58
 const SIDE_BADGE_H = 18
 /** تداخل بطاقة الاسم مع أسفل الحاضنة الدائرية (margin-top: -8px في المواصفة). */
 const SIDE_BADGE_GAP = -8
+/**
+ * نصف قطر منطقة اللمس للزر المجرّد — ثابت مستقلّ عن حجم الحاضنة المرئية.
+ * يُحافظ على دقة الاستجابة اللمسية كما كانت تماماً (23 = 46/2) حتى لو كُبِّرت الأيقونة.
+ */
+const SIDE_TOUCH_RADIUS = 23
 
 interface CollectPayload {
   id: string
@@ -309,9 +316,9 @@ export default class MainScene extends Phaser.Scene {
     window.addEventListener('header-pause-toggle', this.onHeaderPauseToggle)
   }
 
-  // ------------------------------------------------------------------ 
+  // ------------------------------------------------------------------
   // التكبير والتصغير بإصبعين (Pinch-to-Zoom)
-  // ------------------------------------------------------------------ 
+  // ------------------------------------------------------------------
   /** هل توجد نافذة مفتوحة تمنع التقريب (نصائح/مصحف/أنماط/تخصيص/استراحة/مزرعة/إعدادات)؟ */
   private get isModalBlocking(): boolean {
     return (
@@ -565,19 +572,19 @@ export default class MainScene extends Phaser.Scene {
       onIconCreated?: (icon: Phaser.GameObjects.Image) => void,
     ): Phaser.GameObjects.Container => {
       const button = this.add.container(42, y).setDepth(DEPTH_HUD + 2)
-      // أيقونة أصغر بصرياً (46px) — الأصل عالي الدقة (-mipped) فيبقى حاداً.
-      const image = this.add.image(0, 0, `${texture}-mipped`).setDisplaySize(46, 46)
+      // تكبير بصري للأيقونة (58px) — طلب المستخدم مع بقاء منطقة اللمس كما هي
+      // (72×52 أدناه) فلا يتغير سلوك اللمس إطلاقاً.
+      const image = this.add.image(0, 0, `${texture}-mipped`).setDisplaySize(58, 58)
       onIconCreated?.(image)
-      // بطاقة الاسم أسفل الأيقونة: أصغر وأضيق (56px على الهواتف، 52px على الأعراض)
-      // مع نص أصغر (12px) لتتناسق مع الأيقونة المصغّرة.
-      const badgeW = this.scale.width > 480 ? 52 : 56
+      // بطاقة الاسم أسفل الأيقونة: أوسع قليلاً لتوازن الأيقونة المكبّرة.
+      const badgeW = this.scale.width > 480 ? 58 : 62
       const badgeH = 20
       const badge = this.add.graphics()
       badge.fillStyle(0xd97706, 1)
-      badge.fillRoundedRect(-badgeW / 2, 26, badgeW, badgeH, 5)
+      badge.fillRoundedRect(-badgeW / 2, 32, badgeW, badgeH, 5)
       badge.lineStyle(2, 0xffffff, 1)
-      badge.strokeRoundedRect(-badgeW / 2, 26, badgeW, badgeH, 5)
-      const caption = this.add.text(0, 26 + badgeH / 2, label, {
+      badge.strokeRoundedRect(-badgeW / 2, 32, badgeW, badgeH, 5)
+      const caption = this.add.text(0, 32 + badgeH / 2, label, {
         fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
         fontSize: '12px',
         fontStyle: 'bold',
@@ -1064,9 +1071,11 @@ export default class MainScene extends Phaser.Scene {
     // pointer-events — أطفال الحاوية لا يعترضون اللمس أبداً، والقرار كله لمنطقة
     // اللمس هذه. لا توجد أي طبقة Overlay فوق الأزرار بعمق 2000.
     btn.setSize(size, bare ? SIDE_CRADLE_SIZE : size)
-    // الأيقونات المجرّدة داخل حاضنة دائرية ⇒ منطقة لمس دائرية تغطّي القرص كاملاً
+    // الأيقونات المجرّدة داخل حاضنة دائرية ⇒ منطقة لمس دائرية تغطّي القرص كاملاً.
+    // نستخدم SIDE_TOUCH_RADIUS الثابت (لا نصف قطر الحاضنة) حتى تبقى دقة اللمس
+    // كما كانت قبل تكبير الأيقونة — التكبير بصري فقط.
     if (bare) {
-      setCircleHitArea(btn, SIDE_CRADLE_SIZE / 2 + BTN_TOUCH_PADDING, true)
+      setCircleHitArea(btn, SIDE_TOUCH_RADIUS + BTN_TOUCH_PADDING, true)
     } else {
       setCircleHitArea(btn, radius + BTN_TOUCH_PADDING, true)
     }

@@ -28,6 +28,11 @@ export default class Lantern extends FloatingObject {
     return 0xff3355 // أحمر فسفوري متوهج للقنديل
   }
 
+  /** الصورة الجاهزة ترسم حدودها بنفسها — لا حلقة حافة بيضاء فوقها. */
+  protected showEdgeRing(): boolean {
+    return false
+  }
+
   protected buildBody(): void {
     const image = this.scene.add.image(0, 0, ALLAHU_AKBAR_BUBBLE_TEXTURE)
     image.setDisplaySize(IMG_SIZE, (IMG_SIZE * image.height) / image.width)

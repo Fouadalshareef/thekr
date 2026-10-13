@@ -18,7 +18,11 @@ function injectPrecache() {
     name: 'vite-plugin-precache',
     apply: 'build' as const,
     closeBundle() {
-      const distDir = resolve(__dirname, 'dist')
+      // import.meta.dirname بدل __dirname: Vite 8 سيحوّل configLoader إلى
+      // 'native' افتراضياً ولا يوفر __dirname في ملف الإعداد، فيظهر تحذير
+      // "unsupported by configLoader: 'native'". استخدام البديل الرسمي
+      // يزيل التحذير ويعمل مع أي نسخة Vite 6+.
+      const distDir = resolve(import.meta.dirname, 'dist')
       const swPath = resolve(distDir, 'sw.js')
       let sw: string
       try {
@@ -77,5 +81,22 @@ function injectPrecache() {
 export default defineConfig({
   // يعمل محليًا وعلى GitHub Pages (تحت المسار /thekr/) وعلى نطاق مخصص
   base: './',
+  build: {
+    // Phaser (~1.2MB) هو أكبر حزمة في المشروع. فصل محرك الألعاب في chunk
+    // مستقل لا يُصغّر الحجم الكلي، لكنه يجعل الكاش طويل الأجل فعّالاً: تعديل
+    // كود اللعبة لا يُبطل تحميل محرك Phaser من جديد. رفع حد التحذير يمنع
+    // رسالة "Some chunks are larger than 500 kB" المتوقعة لبقية الكود.
+    chunkSizeWarningLimit: 1600,
+    rolldownOptions: {
+      output: {
+        // Rolldown (محرّك Vite 8) يقبل manualChunks كدالة فقط، بخلاف الكائن
+        // الذي كان يقبله Rollup. إسناد "phaser" لحزمة واحدة بنفسه يفصل
+        // المحرك عن بقية الكود دون كتابة أسماء ملفات هشة.
+        manualChunks(id: string) {
+          if (id.includes('node_modules/phaser')) return 'phaser'
+        },
+      },
+    },
+  },
   plugins: [tailwindcss(), injectPrecache()],
 })

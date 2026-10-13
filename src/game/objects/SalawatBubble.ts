@@ -25,6 +25,11 @@ export default class SalawatBubble extends FloatingObject {
     return 0xfacc15 // ذهبي فخم
   }
 
+  /** حدود الجسم ترسم نفسها — لا حلقة حافة بيضاء إضافية حول الفقاعة. */
+  protected showEdgeRing(): boolean {
+    return false
+  }
+
   protected buildBody(): void {
     const g = this.scene.add.graphics()
 

@@ -170,40 +170,19 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     this.scene.add.particles(this.x, this.y, 'pixel-glow', { speed: { min: 30, max: 85 }, angle: { min: 0, max: 360 }, lifespan: 650, scale: { start: 0.28, end: 0 }, tint: color, quantity: 1, frequency: 180, blendMode: 'ADD' }).setDepth(DEPTH_GAMEPLAY_PARTICLE)
   }
 
-  /** هالة توهج ناعمة خلف الجسم لإبرازه بصرياً — تُرسم بعد buildBody. */
+  /**
+   * تُستدعى بعد buildBody. أُزيلت الهالة المتوهجة (الدائرتان المضيئتان ونبضها)
+   * بناءً على طلب المستخدم لإزالة الهالة الظاهرة حول الأذكار. تبقى حلقة الحافة
+   * البيضاء فقط للأجسام التي ترسم حدودها بنفسها (انظر showEdgeRing).
+   */
   protected buildGlow(hitRadius: number): void {
-    const glowColor = this.getGlowColor()
-    const glow = this.scene.add.graphics()
-    // طبقتان من التوهج: داخلية كثيفة وخارجية شفيفة
-    glow.fillStyle(glowColor, 0.30)
-    glow.fillCircle(0, 0, hitRadius * 0.85)
-    glow.fillStyle(glowColor, 0.12)
-    glow.fillCircle(0, 0, hitRadius * 1.25)
-    // إضافة الـ glow كأول طبقة (أسفل الجميع داخل الـ Container)
-    this.addAt(glow, 0)
-
-    // حلقة بيضاء رفيعة أنيقة حول حافة الجسم — تُطفأ للفقاعات التي تأتي
-    // بصورة جاهزة ترسم حدودها بنفسها (فقاعة سبحان الله المرسومة كصورة).
-    if (this.showEdgeRing()) {
-      const outline = this.scene.add.graphics()
-      outline.lineStyle(3, 0xffffff, 0.88)
-      outline.strokeCircle(0, 0, hitRadius * 1.0)
-      outline.lineStyle(1, 0xffffff, 0.35)
-      outline.strokeCircle(0, 0, hitRadius * 1.1)
-      this.addAt(outline, 1)
-    }
-
-    // نبض خفيف ناعم للهالة
-    this.scene.tweens.add({
-      targets: glow,
-      alpha: { from: 0.9, to: 0.4 },
-      scale: { from: 1, to: 1.1 },
-      yoyo: true,
-      repeat: -1,
-      duration: 2000,
-      ease: 'Sine.easeInOut',
-      delay: Phaser.Math.Between(0, 900),
-    })
+    if (!this.showEdgeRing()) return
+    const outline = this.scene.add.graphics()
+    outline.lineStyle(3, 0xffffff, 0.88)
+    outline.strokeCircle(0, 0, hitRadius * 1.0)
+    outline.lineStyle(1, 0xffffff, 0.35)
+    outline.strokeCircle(0, 0, hitRadius * 1.1)
+    this.addAt(outline, 1)
   }
 
   /** لون هالة الإضاءة — كل نوع يستطيع تجاوزه؛ الافتراضي أخضر فسفوري زاهٍ جداً. */
