@@ -67,6 +67,7 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
 
     // رسم الشكل الخاص بكل نوع
     this.buildBody()
+    this.addWhiteBacking()
     this.buildComboVisual()
 
     // إضاءة Glow ناعمة خلف الجسم لإبرازه في الشاشة
@@ -117,6 +118,27 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     this.once(Phaser.GameObjects.Events.DESTROY, () => {
       if (this.scene) this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.onUpdate, this)
     })
+  }
+
+  /**
+   * يضيف طبقة بيضاء صلبة (قرص/كبسولة) خلف صورة الجسم لإصلاح الفراغات والثقوب
+   * الناتجة عن إزالة الخلفية البيضاء من صور الفقاعات، فيبقى الخط العربي الداخلي
+   * وجسم الفقاعة اللامع صلبين وواضحين دون أي شفافية. الشكل مطابق لأبعاد الصورة
+   * بالضبط: نصف قطر = نصف الضلع الأصغر ⇒ دائرة للصور المربعة وكبسولة للعريضة،
+   * وتُدرج في الخلف (index 0) لتبقى الهالات والحدود أعلى منها.
+   */
+  private addWhiteBacking(): void {
+    const body = this.list.find(
+      (child) => child instanceof Phaser.GameObjects.Image,
+    ) as Phaser.GameObjects.Image | undefined
+    if (!body) return
+    const w = body.displayWidth
+    const h = body.displayHeight
+    if (w <= 0 || h <= 0) return
+    const backing = this.scene.add.graphics()
+    backing.fillStyle(0xffffff, 1)
+    backing.fillRoundedRect(-w / 2, -h / 2, w, h, Math.min(w, h) / 2)
+    this.addAt(backing, 0)
   }
 
   /** تعطيل/إعادة تفعيل لمس الفقاعة أثناء الإيقاف المؤقت مع الحفاظ على منطقة اللمس الموسعة. */

@@ -98,6 +98,13 @@ type FloatingClass = new (
   override?: Partial<FloatingObjectOptions>,
 ) => FloatingObject
 
+/**
+ * مسافة ثابتة بين أزرار الشريط الجانبي (بالبكسل المنطقي).
+ * قيمته ثابتة (لا تعتمد على ارتفاع الشاشة) لمنع قفز الأزرار عمودياً
+ * بين مختلف أحجام/أنواع الأجهزة عند تغيير حجم النافذة.
+ */
+const SIDEBAR_STEP = 84
+
 /** ربط كل ذكر بنوع الجسم العائم الخاص به. */
 const CLASS_BY_DHIKR: Record<string, FloatingClass> = {
   subhanallah: Bubble,
@@ -536,7 +543,9 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private layoutCanvasSidebar(top: number): void {
-    const step = Math.max(78, Math.min(90, this.scale.height * 0.1))
+    // مسافة ثابتة بين أزرار الشريط الجانبي (بدون اعتماد على ارتفاع الشاشة)
+    // حتى لا تقفز الأزرار عمودياً بين الأجهزة/الأحجام المختلفة.
+    const step = SIDEBAR_STEP
     for (const [index, button] of [this.btnSliders, this.btnLeaf, this.btnQuran, this.sidebarPauseButton].entries()) {
       button?.setPosition(42, top + index * step)
       button?.setData('homeY', top + index * step)
@@ -565,7 +574,7 @@ export default class MainScene extends Phaser.Scene {
 
   private buildCanvasSidebar(): void {
     const top = 4 + this.bannerWidth() / 3 + 32
-    const step = Math.max(78, Math.min(90, this.scale.height * 0.1))
+    const step = SIDEBAR_STEP
     const sideButton = (
       texture: string,
       label: string,

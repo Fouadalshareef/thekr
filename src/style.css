@@ -619,8 +619,8 @@ body.modal-open {
 .virtue-card { max-width: 760px; margin: 4vh auto 0; padding: clamp(24px, 5vw, 50px); border-radius: 12px; background: #fff; box-shadow: 0 10px 35px rgba(31, 91, 65, .12); text-align: right; }
 .virtue-target { display: inline-block; margin: 12px 0 24px; padding: 10px 14px; border-radius: 10px; background: #ecfdf5; color: #047857; }
 .virtue-card blockquote { margin: 0 0 28px; padding: 20px; border-right: 4px solid #34d399; border-radius: 8px; background: #f4fdf8; color: #28483d; font-size: clamp(1.05rem, 2.2vw, 1.3rem); line-height: 2; }
-.focus-dom-start { display: block; width: 100%; padding: 14px 20px; border: 0; border-radius: 12px; background: #059669; color: #fff; font: inherit; font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: 0 8px 18px rgba(5, 150, 105, .22); }
-.focus-dom-start:hover { background: #047857; }
+.focus-dom-start { display: block; width: 100%; padding: 14px 20px; border: 0; border-radius: 12px; background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: #fff; font: inherit; font-weight: 700; font-size: 1.1rem; cursor: pointer; box-shadow: 0 8px 18px rgba(245, 158, 11, .28); }
+.focus-dom-start:hover { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
 
 /* ------------------------------------------------------------------ */
 /* نافذة "اختر النمط" — واجهة فاتحة كاملة الشاشة مطابقة لنافذة التخصيص */
@@ -1092,21 +1092,21 @@ body.modal-open {
   padding: 11px 20px;
   border: 0;
   border-radius: 8px;
-  background: linear-gradient(180deg, #28645a 0%, #1b4e49 100%);
-  color: #ffffff;
+  background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+  color: #422006;
   font-family: inherit;
   font-size: 0.95rem;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 3px 0 #123935, 0 6px 14px rgba(24, 70, 63, 0.18);
+  box-shadow: 0 3px 0 #b45309, 0 6px 14px rgba(245, 158, 11, 0.3);
   -webkit-tap-highlight-color: transparent;
   transition: transform 0.1s ease, filter 0.15s ease;
 }
 .crisp-action:hover { filter: brightness(1.07); }
-.crisp-action:active { transform: translateY(2px); box-shadow: 0 1px 0 #123935; }
+.crisp-action:active { transform: translateY(2px); box-shadow: 0 1px 0 #b45309; }
 .crisp-action:disabled { opacity: 0.55; cursor: not-allowed; filter: none; }
-.crisp-action:focus-visible { outline: 2px solid #047857; outline-offset: 2px; }
-.crisp-action-icon { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 248, 226, 0.16); color: #f1d38c; font: 700 19px/1 'Segoe UI', sans-serif; }
+.crisp-action:focus-visible { outline: 2px solid #d97706; outline-offset: 2px; }
+.crisp-action-icon { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(255, 255, 255, 0.28); color: #422006; font: 700 19px/1 'Segoe UI', sans-serif; }
 .crisp-actions { display: grid; gap: 12px; }
 .crisp-action-update { justify-content: center; width: 100%; min-height: 48px; }
 .crisp-install-action { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 15px; border: 1px solid #e3d4ae; border-radius: 9px; background: rgba(255, 253, 247, 0.9); }
