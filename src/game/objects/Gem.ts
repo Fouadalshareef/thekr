@@ -1,8 +1,18 @@
 /**
- * Gem — جوهرة بلورية ماسية (Diamond Violet) لذكر: "لَا إِلَٰهَ إِلَّا الله".
+ * Gem — فقاعة ذكر «لَا إِلَٰهَ إِلَّا الله»: جسمها الرئيسي الآن صورة مولّدة
+ * (la_ilaha_illallah.png) بدل الرسم البرمجي. النص العربي مضمّن في الصورة ثلاثية الأبعاد،
+ * لذا تُعرض الصورة فقط دون أي طبقة نصية برمجية فوقها.
  */
 import Phaser from 'phaser'
 import { FloatingObject, type FloatingObjectOptions } from './FloatingObject'
+
+/**
+ * مفتاح نسيج فقاعة «لا إله إلا الله» — الصورة المولّدة la_ilaha_illallah.png
+ * (pi/Bubbles/la_ilaha_illallah.png) وحُمِّلت في BootScene قبل هذه المشاهد.
+ */
+const LA_ILAHA_ILLALLAH_BUBBLE_TEXTURE = 'bubble-la-ilaha-illa-allah'
+
+const IMG_W = 96
 
 export default class Gem extends FloatingObject {
   constructor(scene: Phaser.Scene, x: number, y: number, override?: Partial<FloatingObjectOptions>) {
@@ -15,8 +25,10 @@ export default class Gem extends FloatingObject {
       wiggleAmp: 24,
       wiggleFreq: 2.2,
       popPitch: -2,
-      hitRadius: 40,
+      hitRadius: 42,
       ...override,
+      // النص العربي مضمّن في الصورة — تعطيل أي طبقة نصية برمجية فوقها.
+      showTextOverlays: false,
     })
   }
 
@@ -24,48 +36,15 @@ export default class Gem extends FloatingObject {
     return 0xbf5cff // بنفسجي فسفوري متوهج للجوهرة
   }
 
+  /** حدود الجسم ترسم نفسها — لا حلقة حافة بيضاء إضافية حول الفقاعة. */
+  protected showEdgeRing(): boolean {
+    return false
+  }
+
   protected buildBody(): void {
-    const g = this.scene.add.graphics()
-
-    // هالة بنفسجية ناعمة
-    g.fillStyle(0x8b5cf6, 0.16)
-    g.fillCircle(0, 0, 44)
-
-    const top = [
-      { x: 0, y: -34 },
-      { x: 26, y: 0 },
-      { x: 0, y: 0 },
-      { x: -26, y: 0 },
-    ]
-    const bottom = [
-      { x: 0, y: 0 },
-      { x: 26, y: 0 },
-      { x: 0, y: 34 },
-      { x: -26, y: 0 },
-    ]
-    const outline = [
-      { x: 0, y: -34 },
-      { x: 26, y: 0 },
-      { x: 0, y: 34 },
-      { x: -26, y: 0 },
-    ]
-
-    // النصف العلوي أفتح، والنصف السفلي أغمق (إحساس بصري)
-    g.fillStyle(0x8b5cf6, 1)
-    g.fillPoints(top, true)
-    g.fillStyle(0x7c3aed, 1)
-    g.fillPoints(bottom, true)
-
-    // حد خارجي مضيء سميك (4px) أبيض ناصع
-    g.lineStyle(4, 0xffffff, 1)
-    g.strokePoints(outline, true)
-
-    // خطوط الأوجه
-    g.lineStyle(1.5, 0xc4b5fd, 0.9)
-    g.lineBetween(-26, 0, 0, -14)
-    g.lineBetween(26, 0, 0, -14)
-    g.lineBetween(0, -34, 0, 0)
-
-    this.add(g)
+    // الصورة المولّدة بديل كامل عن الرسم البرمجي — النص مدمج داخلها.
+    const img = this.scene.add.image(0, 0, LA_ILAHA_ILLALLAH_BUBBLE_TEXTURE)
+    img.setDisplaySize(IMG_W, (IMG_W * img.height) / img.width)
+    this.add(img)
   }
 }

@@ -10,6 +10,15 @@ import SOBHAN_ALLAH_BUBBLE_URL from '../../../pi/Bubbles/sobhanallah.png'
 import ALHAMDULILLAH_BUBBLE_URL from '../../../pi/Bubbles/alhamdulillah.png'
 import ALLAHU_AKBAR_BUBBLE_URL from '../../../pi/Bubbles/allahu_akbar.png'
 import HAWQALA_BUBBLE_URL from '../../../pi/Bubbles/hawqala.png'
+// فقاعات الأذكار الطويلة (النص مضمّن في الصورة ثلاثية الأبعاد):
+//   albaqiyatalsalihat.png   -> «سبحان الله وبحمده سبحان الله العظيم»
+//   salawat.png              -> «اللهم صل على نبينا محمد»
+//   la_ilaha_illallah.png    -> «لا إله إلا الله وحده لا شريك له...»
+//   sobhlaoabhsobal.png      -> «سبحان الله والحمد لله ولا إله إلا الله والله أكبر»
+import ALBAQIYAT_ALSALIHAT_BUBBLE_URL from '../../../pi/Bubbles/albaqiyatalsalihat.png'
+import SALAWAT_BUBBLE_URL from '../../../pi/Bubbles/salawat.png'
+import LA_ILAHA_ILLALLAH_BUBBLE_URL from '../../../pi/Bubbles/la_ilaha_illallah.png'
+import SOBHLAOABHSOBAL_BUBBLE_URL from '../../../pi/Bubbles/sobhlaoabhsobal.png'
 
 /**
  * BootScene — شاشة بدء التجربة.
@@ -52,6 +61,11 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('bubble-alhamdulillah', ALHAMDULILLAH_BUBBLE_URL)
     this.load.image('bubble-allahu-akbar', ALLAHU_AKBAR_BUBBLE_URL)
     this.load.image('bubble-la-hawla', HAWQALA_BUBBLE_URL)
+    // فقاعات الأذكار الطويلة — النص مضمّن داخل الصورة ثلاثية الأبعاد.
+    this.load.image('bubble-subhanallah-wa-bihamdih', ALBAQIYAT_ALSALIHAT_BUBBLE_URL)
+    this.load.image('bubble-salawat', SALAWAT_BUBBLE_URL)
+    this.load.image('bubble-la-ilaha-illa-allah', LA_ILAHA_ILLALLAH_BUBBLE_URL)
+    this.load.image('bubble-four-phrases', SOBHLAOABHSOBAL_BUBBLE_URL)
   }
 
   create(): void {
@@ -60,6 +74,10 @@ export default class BootScene extends Phaser.Scene {
       'bubble-alhamdulillah',
       'bubble-allahu-akbar',
       'bubble-la-hawla',
+      'bubble-subhanallah-wa-bihamdih',
+      'bubble-salawat',
+      'bubble-la-ilaha-illa-allah',
+      'bubble-four-phrases',
     ]) {
       this.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR)
     }

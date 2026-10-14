@@ -13,6 +13,7 @@ import Lantern from '../objects/Lantern'
 import SalawatBubble from '../objects/SalawatBubble'
 import LaHawlaBubble from '../objects/LaHawlaBubble'
 import SubhanallahWaBihamdihBubble from '../objects/SubhanallahWaBihamdihBubble'
+import FourPhrasesBubble from '../objects/FourPhrasesBubble'
 import AzkarBubble from '../objects/AzkarBubble'
 import { emitGoldBurst, ensurePixelTexture } from '../objects/ParticleBurst'
 import GardenLayer from '../objects/GardenLayer'
@@ -105,10 +106,11 @@ const CLASS_BY_DHIKR: Record<string, FloatingClass> = {
   'la-ilaha-illa-allah': Gem,
   'la-hawla': LaHawlaBubble,
   'subhanallah-wa-bihamdih': SubhanallahWaBihamdihBubble,
+  'four-phrases': FourPhrasesBubble,
   salawat: SalawatBubble,
 }
 
-const ALL_CLASSES: FloatingClass[] = [Bubble, Balloon, Gem, Lantern, LaHawlaBubble, SubhanallahWaBihamdihBubble, SalawatBubble]
+const ALL_CLASSES: FloatingClass[] = [Bubble, Balloon, Gem, Lantern, LaHawlaBubble, SubhanallahWaBihamdihBubble, FourPhrasesBubble, SalawatBubble]
 
 /** خيارات قائمة اختيار الأنماط (نصوص فقط — بلا إيموجي). */
 const MODE_OPTIONS: { mode: GameMode | 'zen'; label: string }[] = [
