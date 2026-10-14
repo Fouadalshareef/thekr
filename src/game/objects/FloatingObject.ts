@@ -12,8 +12,8 @@ import { getSpeed } from '../../services/SettingsService'
 import { setCircleHitArea } from '../ui/hitArea'
 import { DEPTH_GAMEPLAY, DEPTH_GAMEPLAY_PARTICLE } from '../ui/depths'
 
-/** معامل تكبير الأجسام العائمة — 2.0 يعطي حجماً مريحاً للمس دون طغيان على الشاشة. */
-const BODY_SCALE = 2.25
+/** معامل تكبير الأجسام العائمة — يجعل كل الفقاعات أكبر قليلاً لتظهر الأذكار الطويلة بوضوح بصري. */
+const BODY_SCALE = 2.5
 
 export interface FloatingObjectOptions {
   /** معرف الذكر (مثال: "subhanallah"). */
