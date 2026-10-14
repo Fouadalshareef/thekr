@@ -80,6 +80,7 @@ export default class BootScene extends Phaser.Scene {
       'bubble-four-phrases',
     ]) {
       this.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR)
+      this.createBubbleWhiteSilhouette(key)
     }
 
     this.createHudTextures()
@@ -221,6 +222,55 @@ export default class BootScene extends Phaser.Scene {
         this.time.delayedCall(400, () => this.scene.start('MainScene'))
       }
     })
+  }
+
+  /**
+   * يبني نسخة بيضاء صلبة («سيلويت») من صورة الفقاعة: نفس قناة الشفافية تماماً
+   * مع تحويل كل لمعان إلى أبيض ناصع. تُرسم هذه النسخة خلف صورة الفقاعة فتغلق
+   * الفراغات الداخلية والثقوب الناتجة عن شفافية الخط العربي، **دون أن تتجاوز
+   * حدود العنصر ولو ببكسل واحد** — لأنها مشتقّة من ألفا الصورة نفسها لا من شكل
+   * هندسي تقريبي (دائرة/كبسولة) كان يتضخم 17–63% خارج الحدود.
+   *
+   * النسيج الناتج يُحفظ باسم `${key}-white` ويستهلكه FloatingObject.addWhiteBacking.
+   */
+  private createBubbleWhiteSilhouette(key: string): void {
+    const whiteKey = `${key}-white`
+    if (this.textures.exists(whiteKey)) return
+
+    const texture = this.textures.get(key)
+    if (!texture || texture.key === '__MISSING') return
+
+    // مصدر الصورة: قد يكون HTMLImageElement أو HTMLCanvasElement
+    const source = texture.getSourceImage() as CanvasImageSource & { width: number; height: number }
+    const w = source.width
+    const h = source.height
+    if (!w || !h) return
+
+    const canvas = this.textures.createCanvas(whiteKey, w, h)
+    if (!canvas) return
+    const ctx = canvas.getContext()
+    if (!ctx) return
+
+    // 1) نسخ ألفا الصورة كما هي (ونسخ الألوان مؤقتاً؛ سيُستبدل كلها بالأبيض)
+    ctx.clearRect(0, 0, w, h)
+    ctx.drawImage(source, 0, 0)
+
+    // 2) تبييض كل بكسلات مرئية مع الحفاظ على ألفا الأصلي بدقة
+    const image = ctx.getImageData(0, 0, w, h)
+    const data = image.data
+    for (let i = 0; i < data.length; i += 4) {
+      const a = data[i + 3]
+      if (a === 0) continue
+      // إبقاء الحواف نصف الشفافة كما هي يمنع ظهور «هالة» بيضاء خشنة على المحيط،
+      // بينما تصبح كل المناطق المعتمة بيضاء ناصعة.
+      data[i] = 255
+      data[i + 1] = 255
+      data[i + 2] = 255
+    }
+    ctx.putImageData(image, 0, 0)
+
+    canvas.refresh()
+    canvas.setFilter(Phaser.Textures.FilterMode.LINEAR)
   }
 
   private createHudTextures(): void {

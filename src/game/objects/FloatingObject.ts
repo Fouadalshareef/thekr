@@ -121,23 +121,53 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   }
 
   /**
-   * يضيف طبقة بيضاء صلبة (قرص/كبسولة) خلف صورة الجسم لإصلاح الفراغات والثقوب
-   * الناتجة عن إزالة الخلفية البيضاء من صور الفقاعات، فيبقى الخط العربي الداخلي
-   * وجسم الفقاعة اللامع صلبين وواضحين دون أي شفافية. الشكل مطابق لأبعاد الصورة
-   * بالضبط: نصف قطر = نصف الضلع الأصغر ⇒ دائرة للصور المربعة وكبسولة للعريضة،
-   * وتُدرج في الخلف (index 0) لتبقى الهالات والحدود أعلى منها.
+   * يضيف طبقة بيضاء صلبة خلف صورة الجسم لإغلاق الفراغات والثقوب الناتجة عن
+   * شفافية صور الفقاعات، فيبقى الخط العربي الداخلي وجسم الفقاعة اللامع صلبين
+   * وواضحين دون أي ثقوب.
+   *
+   * الطبقة **مطابقة لحدود العنصر بالبكسل**: إن وُجد نسيج «سيلويت» أبيض جاهز
+   * (`${مفتاح الصورة}-white`، يُبنى في BootScene من قناة ألفا الصورة نفسها)
+   * نستخدمه كما هو بنفس أبعاد الصورة وعرضها — فلا تظهر البياض خارج حدود الفقاعة
+   * إطلاقاً. أما إن لم يوجد (أجسام مرسومة برمجياً) فنرجع لمستطيل دائري محسوب
+   * من أبعاد الجسم نفسه.
+   *
+   * تُدرج الطبقة في الخلف (index 0) لتبقى الهالات وحلقة الحافة أعلى منها.
    */
   private addWhiteBacking(): void {
     const body = this.list.find(
       (child) => child instanceof Phaser.GameObjects.Image,
     ) as Phaser.GameObjects.Image | undefined
     if (!body) return
+
     const w = body.displayWidth
     const h = body.displayHeight
     if (w <= 0 || h <= 0) return
+
+    // المفضل: سيلويت أبيض مطابق لألفا الصورة — حدود مطابقة تماماً للعنصر
+    const whiteKey = `${body.texture.key}-white`
+    if (this.scene.textures.exists(whiteKey)) {
+      const backing = this.scene.add.image(body.x, body.y, whiteKey)
+      backing.setOrigin(body.originX, body.originY)
+      backing.setDisplaySize(w, h)
+      // نطابق أي دوران/قلب مطبّق على صورة الجسم حتى يبقى البياض تحتها بالضبط
+      backing.setFlipX(body.flipX)
+      backing.setFlipY(body.flipY)
+      this.addAt(backing, 0)
+      return
+    }
+
+    // احتياط: شكل هندسي مبني على أبعاد الجسم (يُقلَّص 2% لئلا يتضخم خارج الحدود)
     const backing = this.scene.add.graphics()
     backing.fillStyle(0xffffff, 1)
-    backing.fillRoundedRect(-w / 2, -h / 2, w, h, Math.min(w, h) / 2)
+    const iw = w * 0.98
+    const ih = h * 0.98
+    backing.fillRoundedRect(
+      body.x - iw / 2,
+      body.y - ih / 2,
+      iw,
+      ih,
+      Math.min(iw, ih) / 2,
+    )
     this.addAt(backing, 0)
   }
 
