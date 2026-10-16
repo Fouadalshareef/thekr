@@ -12,7 +12,8 @@ import { FloatingObject, type FloatingObjectOptions } from './FloatingObject'
  */
 export const SALAWAT_BUBBLE_TEXTURE = 'bubble-salawat'
 
-const IMG_W = 96
+const IMG_W = 138
+const HIT_R = 48
 
 export default class SalawatBubble extends FloatingObject {
   constructor(scene: Phaser.Scene, x: number, y: number, override?: Partial<FloatingObjectOptions>) {
@@ -25,7 +26,7 @@ export default class SalawatBubble extends FloatingObject {
       wiggleAmp: 14,
       wiggleFreq: 1.0,
       popPitch: 4,
-      hitRadius: 44,
+      hitRadius: HIT_R,
       ...override,
       // النص العربي مضمّن في الصورة — تعطيل أي طبقة نصية برمجية فوقها.
       showTextOverlays: false,

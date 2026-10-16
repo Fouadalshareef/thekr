@@ -7,7 +7,8 @@ import Phaser from 'phaser'
 import { FloatingObject, type FloatingObjectOptions } from './FloatingObject'
 
 const HAWQALA_BUBBLE_TEXTURE = 'bubble-la-hawla'
-const IMG_SIZE = 110
+const IMG_SIZE = 148
+const HIT_R = 48
 
 export default class LaHawlaBubble extends FloatingObject {
   constructor(scene: Phaser.Scene, x: number, y: number, override?: Partial<FloatingObjectOptions>) {
@@ -20,7 +21,7 @@ export default class LaHawlaBubble extends FloatingObject {
       wiggleAmp: 20,
       wiggleFreq: 1.6,
       popPitch: -3,
-      hitRadius: 42,
+      hitRadius: HIT_R,
       ...override,
       showTextOverlays: false,
     })

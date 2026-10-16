@@ -12,7 +12,8 @@ import { FloatingObject, type FloatingObjectOptions } from './FloatingObject'
  */
 const LA_ILAHA_ILLALLAH_BUBBLE_TEXTURE = 'bubble-la-ilaha-illa-allah'
 
-const IMG_W = 96
+const IMG_W = 138
+const HIT_R = 48
 
 export default class Gem extends FloatingObject {
   constructor(scene: Phaser.Scene, x: number, y: number, override?: Partial<FloatingObjectOptions>) {
@@ -25,7 +26,7 @@ export default class Gem extends FloatingObject {
       wiggleAmp: 24,
       wiggleFreq: 2.2,
       popPitch: -2,
-      hitRadius: 42,
+      hitRadius: HIT_R,
       ...override,
       // النص العربي مضمّن في الصورة — تعطيل أي طبقة نصية برمجية فوقها.
       showTextOverlays: false,

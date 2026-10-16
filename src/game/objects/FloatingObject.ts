@@ -121,59 +121,35 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   }
 
   /**
-   * يضيف طبقة بيضاء صلبة خلف صورة الذكر لإغلاق أي فراغات وثقوب شفافة داخل الخط العربي.
+   * يضيف طبقة بيضاء صلبة خلف صورة الفقاعة الدائرية لإغلاق أي فراغات وثقوب شفافة.
    *
-   * يتم تحديد الشكل ديناميكياً بناءً على نسبة أبعاد الأصل (Aspect Ratio):
-   *  - للأصول العريضة (اللوحات/الكبسولات مثل la_ilaha_illallah, albaqiyatalsalihat, salawat...):
-   *    يُرسم مستطيل مستدير بحواف دائرية (Pill / Capsule) بنصف قطر = الارتفاع / 2 مع هامش أمان داخلي (inset)
-   *    ليظل البياض محصوراً بدقة 100% داخل الإطار الأفقي دون أن يبرز من الأطراف أو الأعلى/الأسفل.
-   *  - للأصول الدائرية (مثل سبحان الله، الحمد لله، الله أكبر):
-   *    يُرسم قرص دائري متمركز بنصف قطر آمن (hitRadius × 0.80).
+   * ملاحظة: اللفيفات واللوحات الأفقية العريضة (مثل سبحان الله وبحمده، الباقيات الصالحات،
+   * لا إله إلا الله، الحوقلة، الصلاة على النبي) هي صور معتمة ومصممة بأطر زخرفية مقوسة خاصة
+   * بها، ورسم أي شكل خلفها يتسبب في بروزه خارج منحنيات اللفيفة.
+   * لذلك لا تحتاج اللفيفات إلى أي خلفية برمجية، وتُطبق الخلفية البيضاء حصراً على الفقاعات الدائرية.
    */
   private addWhiteBacking(): void {
     const body = this.list.find(
       (child) => child instanceof Phaser.GameObjects.Image,
     ) as Phaser.GameObjects.Image | undefined
 
-    const backing = this.scene.add.graphics()
-    backing.fillStyle(0xffffff, 1)
-
     if (body && body.displayWidth > 0 && body.displayHeight > 0) {
       const w = body.displayWidth
       const h = body.displayHeight
       const aspectRatio = w / h
 
-      // إذا كان العنصر عريضاً (لوحة أفقية / كبسولة مثل لا إله إلا الله، الباقيات، الصلوات)
+      // اللفيفات واللوحات العريضة: لا تُرسم لها خلفية بيضاء لتظل حدودها الزخرفية نظيفة تماماً بلا أي بقع خارجها
       if (aspectRatio > 1.25) {
-        // نستخدم هامش أمان داخلي بنسبة 8% حتى لا يتعدى البياض حدود اللوحة مطلقاً
-        const padX = w * 0.08
-        const padY = h * 0.08
-        const pillW = Math.max(0, w - padX * 2)
-        const pillH = Math.max(0, h - padY * 2)
-        const cornerRadius = pillH / 2
-        backing.fillRoundedRect(
-          body.x - pillW / 2,
-          body.y - pillH / 2,
-          pillW,
-          pillH,
-          cornerRadius,
-        )
-        this.addAt(backing, 0)
         return
       }
 
-      // إذا كان العنصر دائرياً أو شبه مربع
+      // الفقاعات الدائرية فقط (سبحان الله، الحمد لله، الله أكبر): قرص داخلي آمن
+      const backing = this.scene.add.graphics()
+      backing.fillStyle(0xffffff, 1)
       const r = Math.min(w, h) * 0.40
       backing.fillCircle(body.x, body.y, r)
       this.addAt(backing, 0)
       return
-    }
-
-    // احتياط في حال عدم وجود صورة
-    const r = this.opts.hitRadius * 0.78
-    if (r > 0) {
-      backing.fillCircle(0, 0, r)
-      this.addAt(backing, 0)
     }
   }
 

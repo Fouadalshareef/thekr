@@ -12,7 +12,8 @@ import { FloatingObject, type FloatingObjectOptions } from './FloatingObject'
  */
 export const SUBHANALLAH_WA_BIHAMDIH_BUBBLE_TEXTURE = 'bubble-subhanallah-wa-bihamdih'
 
-const IMG_W = 92
+const IMG_W = 138
+const HIT_R = 48
 
 export default class SubhanallahWaBihamdihBubble extends FloatingObject {
   constructor(scene: Phaser.Scene, x: number, y: number, override?: Partial<FloatingObjectOptions>) {
@@ -25,7 +26,7 @@ export default class SubhanallahWaBihamdihBubble extends FloatingObject {
       wiggleAmp: 24,
       wiggleFreq: 2.0,
       popPitch: 2,
-      hitRadius: 42,
+      hitRadius: HIT_R,
       ...override,
       // النص العربي مضمّن في الصورة — تعطيل أي طبقة نصية برمجية فوقها.
       showTextOverlays: false,

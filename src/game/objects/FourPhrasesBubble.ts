@@ -13,7 +13,8 @@ import { FloatingObject, type FloatingObjectOptions } from './FloatingObject'
  */
 export const FOUR_PHRASES_BUBBLE_TEXTURE = 'bubble-four-phrases'
 
-const IMG_W = 100
+const IMG_W = 142
+const HIT_R = 48
 
 export default class FourPhrasesBubble extends FloatingObject {
   constructor(scene: Phaser.Scene, x: number, y: number, override?: Partial<FloatingObjectOptions>) {
@@ -26,7 +27,7 @@ export default class FourPhrasesBubble extends FloatingObject {
       wiggleAmp: 20,
       wiggleFreq: 1.6,
       popPitch: 1,
-      hitRadius: 44,
+      hitRadius: HIT_R,
       ...override,
       // النص العربي مضمّن في الصورة — تعطيل أي طبقة نصية برمجية فوقها.
       showTextOverlays: false,

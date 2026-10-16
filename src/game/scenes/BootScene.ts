@@ -96,59 +96,17 @@ export default class BootScene extends Phaser.Scene {
     this.scale.refresh()
     const { width, height } = this.scale
     const cx = width / 2
-
-    // 1) خلفية مضيئة بتدرج عاجي وذهبي متناسق مع واجهة اللعبة.
-    const background = this.add.graphics()
-    background.fillGradientStyle(0xfff8e8, 0xfff8e8, 0xf4dfad, 0xe9c36f, 1)
-    background.fillRect(0, 0, width, height)
-
-    // 2) زخارف هندسية ذهبية رقيقة في الخلفية.
-    const decor = this.add.graphics()
-    decor.lineStyle(1, 0x98702d, 0.1)
-    for (let i = 0; i < 12; i++) {
-      decor.strokeCircle(cx, height * 0.42, 120 + i * 55)
-    }
-
-    // 3) توهج علوي خفيف جداً (بدون أشرطة داكنة علوية/سفلية — تغطية كاملة 100%)
-    void 0
-
-    // 4) هالة ضوئية ذهبية ناعمة خلف البطاقة
-    const glow = this.add.graphics()
-    glow.fillStyle(0xe4b64f, 0.08)
-    glow.fillCircle(cx, height * 0.38, 210)
-    glow.fillStyle(0xfff6dd, 0.24)
-    glow.fillCircle(cx, height * 0.38, 110)
-
-    // 5) عرض صورة واجهة البداية begin.png بشكل متجاوب وأنيق في المنتصف
-    const splashImg = this.add.image(cx, height * 0.46, 'splash-begin')
-    // احتواء الصورة ضمن أبعاد الشاشة بأعلى وضوح ونسبة أبعاد متناسقة
-    const maxSplashW = width * 0.94
-    const maxSplashH = height * 0.72
-    const scaleRatio = Math.min(maxSplashW / splashImg.width, maxSplashH / splashImg.height, 1)
-    splashImg.setScale(scaleRatio)
+    // 1) صورة واجهة البداية begin.png بكامل حجم الشاشة 100% بدلاً من الواجهة القديمة
+    const splashImg = this.add.image(cx, height / 2, 'splash-begin')
+    // تغطية الشاشة بالكامل (Full Screen Cover)
+    const scaleX = width / splashImg.width
+    const scaleY = height / splashImg.height
+    const fullCoverScale = Math.max(scaleX, scaleY)
+    splashImg.setScale(fullCoverScale)
     splashImg.setAlpha(0)
 
-    // 6) نص "اضغط في أي مكان للبدء" نابض أسفل الشاشة
-    const startText = this.add
-      .text(cx, height - 70, '« اضغط في أي مكان للبدء »', {
-        fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
-        fontSize: '22px',
-        color: '#28564d',
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-
-    // حركات دخول متسلسلة راقية
-    this.tweens.add({ targets: splashImg, alpha: 1, duration: 1000, ease: 'Power2' })
-    this.tweens.add({
-      targets: startText,
-      alpha: { from: 0.2, to: 1 },
-      yoyo: true,
-      repeat: -1,
-      duration: 1200,
-      delay: 500,
-      ease: 'Sine.easeInOut',
-    })
+    // حركة ظهور ناعمة للصورة
+    this.tweens.add({ targets: splashImg, alpha: 1, duration: 800, ease: 'Power2' })
 
     // الانتقال إلى شاشة اللعب: بالضغط في أي مكان مع تأثير انتقال ناعم
     this.input.once('pointerdown', () => {
