@@ -412,7 +412,7 @@ body.modal-open {
     inset 0 -3px 0 rgba(0, 0, 0, 0.18);
 }
 
-/* زر بدء الأذكار في شاشة الترحيب. */
+/* زر بدء الأذكار في شاشة الترحيب — لون برتقالي ذهبي مبهج. */
 .advice-start-btn {
   display: grid;
   grid-template-columns: 28px 1fr 28px;
@@ -420,16 +420,16 @@ body.modal-open {
   width: 100%;
   margin: auto 0 0;
   padding: 13px 16px;
-  border: 1px solid #f0d58f;
-  border-radius: 8px;
-  background: linear-gradient(180deg, #24564e 0%, #1b443f 55%, #153733 100%);
-  box-shadow: 0 4px 0 #0d2928, inset 0 1px 0 rgba(255,255,255,.22), 0 9px 24px rgba(0,0,0,.2);
-  color: #fff5d9;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-radius: 9999px;
+  background: linear-gradient(180deg, #ffbe3d 0%, #f97316 55%, #e05c00 100%);
+  box-shadow: 0 5px 0 #b84200, inset 0 3px 0 rgba(255,255,255,0.5), inset 0 -3px 0 rgba(0,0,0,0.18), 0 9px 24px rgba(249,115,22,.35);
+  color: #fff;
   font-family: 'Amiri', 'Scheherazade New', 'Segoe UI', serif;
   font-weight: bold;
   font-size: 20px;
   text-align: center;
-  text-shadow: 0 1px 1px rgba(0,0,0,.24);
+  text-shadow: 0 1px 2px rgba(0,0,0,.35);
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -438,18 +438,18 @@ body.modal-open {
 .advice-start-icon {
   font-size: 18px;
   line-height: 1;
-  color: #fff7dc;
-  text-shadow: 0 1px 2px rgba(60, 38, 8, 0.5);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(80, 30, 0, 0.5);
 }
 .advice-start-btn:hover {
   filter: brightness(1.08);
-  box-shadow: 0 5px 0 #0d2928, inset 0 1px 0 rgba(255,255,255,.28), 0 11px 26px rgba(0,0,0,.24);
+  box-shadow: 0 6px 0 #b84200, inset 0 3px 0 rgba(255,255,255,0.5), inset 0 -3px 0 rgba(0,0,0,0.18), 0 12px 28px rgba(249,115,22,.4);
 }
 .advice-start-btn:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #0d2928, inset 0 1px 0 rgba(255,255,255,.25);
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #b84200, inset 0 3px 0 rgba(255,255,255,0.5), inset 0 -3px 0 rgba(0,0,0,0.18);
 }
-.advice-start-arrow { color: #f1d28a; font-family: 'Segoe UI', sans-serif; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.advice-start-arrow { color: #fff; font-family: 'Segoe UI', sans-serif; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
 
 @media (max-width: 420px) {
   #advice-modal #advice-scroll { gap: 12px; padding: 14px 18px 14px; }
@@ -831,9 +831,9 @@ body.modal-open {
   gap: 6px;
   padding: 6px 16px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #34d399 0%, #059669 100%);
+  background: linear-gradient(180deg, #ffbe3d 0%, #f97316 100%);
   border: 1.5px solid #ffffff;
-  box-shadow: 0 3px 12px rgba(2, 44, 34, 0.28);
+  box-shadow: 0 3px 12px rgba(180, 66, 0, 0.28);
   color: #ffffff;
   font-weight: 800;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
@@ -1326,11 +1326,11 @@ body.modal-open {
 /* قيمة top محسوبة من ارتفاع اللوحة نفسها: اللوحة بنسبة 3:1 ⇒          */
 /* ارتفاعها = عرضها/3. نُبقيها على خط واحد مع الهيدر (لا فراغ كبير).   */
 #dom-sidebar {
-  /* أسفل الشريط العلوي + هامش مريح (12px). تُقاس من عرض اللوحة الفعلي. */
-  --rk-banner-w: min(94vw, 520px);
-  --rk-banner-h: calc(var(--rk-banner-w) / 3);
-  --rk-sidebar-top: calc(4px + var(--rk-banner-h) + 12px);
-  top: var(--rk-sidebar-top);
+  /* موضع ثابت أسفل الشريط العلوي بهامش 10px.
+     اللوحة بنسبة 3:1 وعرضها min(94vw, 520px)⇒ ارتفاعها min(31.3vw, 173px).
+     نستخدم clamp لتثبيت top في نطاق آمن لجميع الأجهزة بدون حسابات
+     ديناميكية تتأثر بتغيّر العرض. */
+  top: clamp(80px, calc(min(94vw, 520px) / 3 + 16px), 196px);
   transition: top 0.22s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 /* وضع التخصيص: الهيدر مخفي وشريط التقدّم يحلّ محلّه ⇒ نقرّب الأيقونات للأعلى. */
