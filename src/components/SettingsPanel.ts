@@ -1,4 +1,4 @@
-﻿/**
+/**
  * SettingsPanel — نافذة «الإعدادات» الفاتحة (HTML/DOM بدل لوحة Phaser).
  *
  * تُفتح بالحدث 'open-settings'. تحتوي على إحصائيات اليوم، منزلق السرعة،
@@ -12,11 +12,13 @@
  */
 import {
   getSpeed,
+  getOscillationSpeed,
   getTodayStats,
   isSoundEnabled,
   isVibrationEnabled,
   setSoundEnabled,
   setSpeed,
+  setOscillationSpeed,
   setVibrationEnabled,
 } from '../services/SettingsService'
 import { getTotalGoodDeeds } from '../services/GardenService'
@@ -33,6 +35,16 @@ const SPEED_OPTIONS: { value: number; label: string }[] = [
 
 /** قيم السرعة الصالحة (لمطابقة القيمة المخزّنة عند الإقلاع). */
 const SPEED_VALUES = SPEED_OPTIONS.map((o) => o.value)
+
+/** خيارات سرعة تردد وتماوج الفقاعات (أفقي). */
+const OSCILLATION_OPTIONS: { value: number; label: string }[] = [
+  { value: 0.3, label: 'بطيء جداً' },
+  { value: 0.6, label: 'هادئ' },
+  { value: 1.0, label: 'عادي' },
+  { value: 1.5, label: 'سريع' },
+]
+
+const OSCILLATION_VALUES = OSCILLATION_OPTIONS.map((o) => o.value)
 
 /** حدث beforeinstallprompt (غير قياسي، لذا نعرّفه محلياً). */
 interface BeforeInstallPromptEvent extends Event {
@@ -82,13 +94,13 @@ function renderTodayStats(): void {
   const todayTotal = entries.reduce((sum, [, n]) => sum + n, 0)
 
   const cards = `
-    <div class="crisp-stats">
+    <div class="crisp-stats mb-4">
       <div class="crisp-stat"><b>${todayTotal}</b><span>ذكر اليوم</span></div>
       <div class="crisp-stat"><b>${getTotalGoodDeeds()}</b><span>الإجمالي الكلي</span></div>
     </div>`
 
   const detail = entries.length
-    ? `<div class="crisp-card">
+    ? `<div class="crisp-card mt-3">
          <h3>تفصيل أذكار اليوم</h3>
          <div class="crisp-stat-list">${entries
            .map(
@@ -97,7 +109,7 @@ function renderTodayStats(): void {
            )
            .join('')}</div>
        </div>`
-    : `<div class="crisp-card">
+    : `<div class="crisp-card mt-3">
          <h3>تفصيل أذكار اليوم</h3>
          <p class="crisp-empty">لم تبدأ أذكار اليوم بعد — اضغط الفقاعات لتبدأ.</p>
        </div>`
@@ -121,6 +133,19 @@ function syncAll(): void {
     slider.style.setProperty('--speed-progress', `${((normalizedSpeed - 0.5) / 1.5) * 100}%`)
   }
   if (speedValue) speedValue.textContent = SPEED_OPTIONS.find((option) => option.value === normalizedSpeed)?.label ?? 'عادي'
+
+  const oscSpeed = getOscillationSpeed()
+  const normalizedOsc = OSCILLATION_VALUES.includes(oscSpeed) ? oscSpeed : 1.0
+  const oscSlider = root?.querySelector<HTMLInputElement>('#settings-oscillation')
+  const oscValue = root?.querySelector<HTMLOutputElement>('#settings-oscillation-value')
+  if (oscSlider) {
+    const idx = OSCILLATION_VALUES.indexOf(normalizedOsc)
+    const validIdx = idx >= 0 ? idx : 2
+    const progress = (validIdx / (OSCILLATION_VALUES.length - 1)) * 100
+    oscSlider.value = String(validIdx)
+    oscSlider.style.setProperty('--speed-progress', `${progress}%`)
+  }
+  if (oscValue) oscValue.textContent = OSCILLATION_OPTIONS.find((option) => option.value === normalizedOsc)?.label ?? 'عادي'
 
   syncToggle('#settings-sound', isSoundEnabled())
   syncToggle('#settings-vibrate', isVibrationEnabled())
@@ -217,6 +242,17 @@ export function initSettingsPanel(): void {
           </div>
         </div>
 
+        <div class="crisp-row crisp-speed-row">
+          <div class="crisp-row-text">
+            <strong>سرعة تردد الفقاعات</strong>
+            <output id="settings-oscillation-value" for="settings-oscillation">عادي</output>
+          </div>
+          <div class="crisp-speed-control">
+            <input id="settings-oscillation" class="crisp-range" type="range" min="0" max="3" step="1" value="2" aria-label="سرعة تردد الفقاعات" />
+            <div class="crisp-speed-labels" aria-hidden="true"><span>بطيء جداً</span><span>هادئ</span><span>عادي</span><span>سريع</span></div>
+          </div>
+        </div>
+
         <div class="crisp-row">
           <div class="crisp-row-text">
             <strong>الأصوات</strong>
@@ -276,6 +312,20 @@ export function initSettingsPanel(): void {
     slider.style.setProperty('--speed-progress', `${((v - 0.5) / 1.5) * 100}%`)
     const speedValue = root?.querySelector<HTMLOutputElement>('#settings-speed-value')
     if (speedValue) speedValue.textContent = SPEED_OPTIONS.find((option) => option.value === v)?.label ?? 'عادي'
+    notifyChanged()
+  })
+
+  root.querySelector('#settings-oscillation')?.addEventListener('input', (e) => {
+    const slider = e.target as HTMLInputElement
+    const idx = Math.round(Number(slider.value))
+    if (!Number.isFinite(idx) || idx < 0 || idx >= OSCILLATION_OPTIONS.length) return
+    const opt = OSCILLATION_OPTIONS[idx]
+    setOscillationSpeed(opt.value)
+    const progress = (idx / (OSCILLATION_OPTIONS.length - 1)) * 100
+    slider.style.setProperty('--speed-progress', `${progress}%`)
+    const oscValue = root?.querySelector<HTMLOutputElement>('#settings-oscillation-value')
+    if (oscValue) oscValue.textContent = opt.label
+    notifyChanged()
   })
 
   bindToggle('#settings-sound', setSoundEnabled)

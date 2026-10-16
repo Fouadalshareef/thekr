@@ -103,7 +103,7 @@ type FloatingClass = new (
  * قيمته ثابتة (لا تعتمد على ارتفاع الشاشة) لمنع قفز الأزرار عمودياً
  * بين مختلف أحجام/أنواع الأجهزة عند تغيير حجم النافذة.
  */
-const SIDEBAR_STEP = 84
+const SIDEBAR_STEP = 96
 
 /** ربط كل ذكر بنوع الجسم العائم الخاص به. */
 const CLASS_BY_DHIKR: Record<string, FloatingClass> = {
@@ -521,10 +521,11 @@ export default class MainScene extends Phaser.Scene {
 
     const pauseSize = Math.min(48, bannerWidth * 0.105)
     this.headerSettingsButton.setPosition(bannerLeft + bannerWidth * 0.9006, bannerTop + bannerHeight * 0.4896)
-    this.headerSettingsButton.setSize(pauseSize * 1.5, pauseSize * 1.5)
+    const hitAreaSize = Math.max(64, pauseSize * 1.6)
+    this.headerSettingsButton.setSize(hitAreaSize, hitAreaSize)
     this.headerSettingsIcon.setDisplaySize(pauseSize, pauseSize)
-    this.headerSettingsButton.input!.hitArea.setTo(-pauseSize * 0.75, -pauseSize * 0.75, pauseSize * 1.5, pauseSize * 1.5)
-    this.layoutCanvasSidebar(bannerTop + bannerHeight + 32)
+    this.headerSettingsButton.input!.hitArea.setTo(-hitAreaSize / 2, -hitAreaSize / 2, hitAreaSize, hitAreaSize)
+    this.layoutCanvasSidebar(bannerTop + bannerHeight + 44)
   }
 
   private layoutHeaderCount(bannerLeft: number, bannerWidth: number, y: number): void {
@@ -573,7 +574,7 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private buildCanvasSidebar(): void {
-    const top = 4 + this.bannerWidth() / 3 + 32
+    const top = 4 + this.bannerWidth() / 3 + 44
     const step = SIDEBAR_STEP
     const sideButton = (
       texture: string,
@@ -583,8 +584,7 @@ export default class MainScene extends Phaser.Scene {
       onIconCreated?: (icon: Phaser.GameObjects.Image) => void,
     ): Phaser.GameObjects.Container => {
       const button = this.add.container(42, y).setDepth(DEPTH_HUD + 2)
-      // تكبير بصري للأيقونة (58px) — طلب المستخدم مع بقاء منطقة اللمس كما هي
-      // (72×52 أدناه) فلا يتغير سلوك اللمس إطلاقاً.
+      // تكبير بصري للأيقونة (58px)
       const image = this.add.image(0, 0, `${texture}-mipped`).setDisplaySize(58, 58)
       onIconCreated?.(image)
       // بطاقة الاسم أسفل الأيقونة: أوسع قليلاً لتوازن الأيقونة المكبّرة.
@@ -602,11 +602,12 @@ export default class MainScene extends Phaser.Scene {
         color: '#ffffff',
         resolution: Math.min(window.devicePixelRatio || 1, 3),
       }).setOrigin(0.5)
-      // ظل نصّي خفيف جداً: يرفع التباين قليلاً دون تُثقيل الحواف (كما في المرجع).
+      // ظل نصّي خفيف جداً
       caption.setShadow(0, 1, 'rgba(0,0,0,0.35)', 1, false, true)
       button.add([image, badge, caption])
-      button.setSize(72, 52)
-      button.setInteractive(new Phaser.Geom.Rectangle(-36, -23, 72, 52), Phaser.Geom.Rectangle.Contains)
+      // توسيع مساحة النقر لتغطي الأيقونة والبطاقة بالكامل بسلاسة وسهولة (76×76)
+      button.setSize(76, 76)
+      button.setInteractive(new Phaser.Geom.Rectangle(-38, -32, 76, 76), Phaser.Geom.Rectangle.Contains)
       button.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, action)
       return button
     }
@@ -1187,8 +1188,8 @@ export default class MainScene extends Phaser.Scene {
     this.headerSettingsButton = this.add.container(0, 0).setDepth(DEPTH_HUD + 2)
     this.headerSettingsIcon = this.add.image(0, 0, 'hud-settings').setTint(0x4a2306)
     this.headerSettingsButton.add(this.headerSettingsIcon)
-    this.headerSettingsButton.setSize(56, 56)
-    this.headerSettingsButton.setInteractive(new Phaser.Geom.Rectangle(-28, -28, 56, 56), Phaser.Geom.Rectangle.Contains)
+    this.headerSettingsButton.setSize(68, 68)
+    this.headerSettingsButton.setInteractive(new Phaser.Geom.Rectangle(-34, -34, 68, 68), Phaser.Geom.Rectangle.Contains)
     this.headerSettingsButton.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.onOpenSettings)
     this.headerSettingsButton.setScrollFactor(0)
   }

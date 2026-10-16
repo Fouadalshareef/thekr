@@ -44,11 +44,35 @@ async function openSurah(id: number, focusVerse?: number): Promise<void> {
     const json = await response.json() as { data?: { ayahs?: { numberInSurah: number; text: string }[] } }
     const ayahs = json.data?.ayahs || []
     const mark = getBookmark()
-    const flow = ayahs.map(a => {
+
+    let basmalaHtml = ''
+    const processedAyahs = ayahs.map((a, idx) => {
+      let verseText = a.text
+      // تنظيف BOM أو علامات غير مرئية
+      verseText = verseText.replace(/^\uFEFF/, '').trim()
+
+      // في سور القرآن (باستثناء الفاتحة والتوبة)، السطر الأول يحتوي على البسملة مدموجة في أول آية
+      if (idx === 0 && id !== 9) {
+        if (id === 1) {
+          // في الفاتحة: الآية 1 هي البسملة نفسها
+          basmalaHtml = `<div class="quran-basmala my-4 text-center font-bold text-2xl text-emerald-950 font-serif leading-loose">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ <span class="verse-number text-emerald-800 text-lg">﴿١﴾</span></div>`
+          return null
+        } else {
+          // بقية السور: نزيل البسملة من أول الآية ونعرضها منعزلة في الأعلى
+          const basmalaPrefix = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ'
+          if (verseText.startsWith(basmalaPrefix)) {
+            verseText = verseText.slice(basmalaPrefix.length).trim()
+          }
+          basmalaHtml = `<div class="quran-basmala my-4 text-center font-bold text-2xl text-emerald-950 font-serif leading-loose">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>`
+        }
+      }
+
       const saved = mark?.surah_id === id && mark.verse_id === a.numberInSurah
-      return `<span id="ayah-${a.numberInSurah}" data-ayah="${a.numberInSurah}" tabindex="0" role="button" class="quran-verse cursor-pointer rounded px-1 transition-colors ${saved ? 'bg-amber-100 ring-1 ring-amber-300' : ''}">${a.text} <span class="verse-number text-emerald-800">﴿${arabicDigits(a.numberInSurah)}﴾</span><span class="verse-mark ${saved ? '' : 'hidden'} text-amber-700" aria-label="علامة توقف"> ✔</span> </span>`
-    }).join('')
-    viewer.innerHTML = `<div class="flex items-center justify-between"><button id="quran-back" class="rounded-lg bg-slate-100 px-3 py-2 text-slate-700">الفهرس</button><h3 class="text-xl font-bold text-emerald-900">${currentSurah.name}</h3></div><p class="quran-flow rounded-xl bg-white p-5 text-center text-xl leading-[2.35] text-slate-900 shadow-sm">${flow}</p><p class="text-center text-xs text-slate-500">النص الإملائي القياسي من مصدر موثوق عبر واجهة <code>quran-simple</code>، مع الحفاظ على أرقام الآيات.</p>`
+      return `<span id="ayah-${a.numberInSurah}" data-ayah="${a.numberInSurah}" tabindex="0" role="button" class="quran-verse cursor-pointer rounded px-1 transition-colors ${saved ? 'bg-amber-100 ring-1 ring-amber-300' : ''}">${verseText} <span class="verse-number text-emerald-800">﴿${arabicDigits(a.numberInSurah)}﴾</span><span class="verse-mark ${saved ? '' : 'hidden'} text-amber-700" aria-label="علامة توقف"> ✔</span> </span>`
+    }).filter(Boolean)
+
+    const flow = processedAyahs.join('')
+    viewer.innerHTML = `<div class="flex items-center justify-between"><button id="quran-back" class="rounded-lg bg-slate-100 px-3 py-2 text-slate-700">الفهرس</button><h3 class="text-xl font-bold text-emerald-900">${currentSurah.name}</h3></div><div class="quran-flow rounded-xl bg-white p-5 text-center text-xl leading-[2.35] text-slate-900 shadow-sm">${basmalaHtml}<div class="mt-3 text-justify leading-[2.4] [text-align-last:center]">${flow}</div></div><p class="text-center text-xs text-slate-500">النص الإملائي القياسي من مصدر موثوق عبر واجهة <code>quran-simple</code>، مع الحفاظ على أرقام الآيات.</p>`
     viewer.querySelector<HTMLButtonElement>('#quran-back')!.onclick = renderIndex
     viewer.querySelectorAll<HTMLElement>('[data-ayah]').forEach(verse => verse.addEventListener('click', () => {
       const verseId = Number(verse.dataset.ayah)

@@ -17,6 +17,7 @@ export interface DailyStats {
 
 export interface SettingsData {
   speed: number
+  oscillationSpeed: number
   username: string
   startDate: string
   stats: DailyStats
@@ -28,6 +29,7 @@ function todayKey(): string {
 
 const DEFAULT_SETTINGS: SettingsData = {
   speed: 1,
+  oscillationSpeed: 1,
   username: '',
   startDate: new Date().toISOString(),
   stats: { counts: {}, day: todayKey() },
@@ -44,6 +46,7 @@ export function loadSettings(): SettingsData {
         : { counts: {}, day: todayKey() }
     return {
       speed: typeof parsed.speed === 'number' ? parsed.speed : 1,
+      oscillationSpeed: typeof parsed.oscillationSpeed === 'number' ? parsed.oscillationSpeed : 1,
       username: typeof parsed.username === 'string' ? parsed.username : '',
       startDate:
         typeof parsed.startDate === 'string' ? parsed.startDate : DEFAULT_SETTINGS.startDate,
@@ -67,6 +70,18 @@ export function getSpeed(): number {
 export function setSpeed(speed: number): void {
   const data = loadSettings()
   data.speed = Math.min(2, Math.max(0.5, speed))
+  save(data)
+}
+
+/** سرعة تردد وتماوج الفقاعات الحالية (مضاعف: 0.3 → 1.5). */
+export function getOscillationSpeed(): number {
+  return loadSettings().oscillationSpeed ?? 1
+}
+
+/** تعديل سرعة تردد الفقاعات وحفظها. */
+export function setOscillationSpeed(oscillationSpeed: number): void {
+  const data = loadSettings()
+  data.oscillationSpeed = Math.min(1.5, Math.max(0.3, oscillationSpeed))
   save(data)
 }
 

@@ -8,7 +8,7 @@ import { playDhikrSound } from '../../services/audio'
 import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
-import { getSpeed } from '../../services/SettingsService'
+import { getSpeed, getOscillationSpeed } from '../../services/SettingsService'
 import { setCircleHitArea } from '../ui/hitArea'
 import { DEPTH_GAMEPLAY, DEPTH_GAMEPLAY_PARTICLE } from '../ui/depths'
 
@@ -227,10 +227,11 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     // تصاعد سلس نحو الأعلى
     this.y -= this.opts.speedBase * getSpeed() * dt
 
-    // تماوج أفقي جيبي
-    this.phase += this.opts.wiggleFreq * dt
+    // تماوج أفقي جيبي بسرعة تردد قابلة للتحكم
+    const oscSpeed = getOscillationSpeed()
+    this.phase += this.opts.wiggleFreq * oscSpeed * dt
     this.x = this.startX + Math.sin(this.phase * Math.PI * 2) * this.opts.wiggleAmp
-    this.rotation = Math.sin(this.phase * Math.PI * 2) * 0.05
+    this.rotation = Math.sin(this.phase * Math.PI * 2) * 0.05 * oscSpeed
 
     // تستمر الفقاعة بالصعود عبر الواجهة حتى تتجاوز أعلى الشاشة بالكامل.
     if (this.y < -this.opts.hitRadius * 3) {
