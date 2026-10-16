@@ -121,21 +121,60 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   }
 
   /**
-   * يرسم قرصاً أبيض صلباً خلف صورة الفقاعة لملء الثقوب الداخلية الشفافة
-   * (الخط العربي المحفور في الصورة) دون أن يتجاوز حدود الفقاعة أبداً.
+   * يضيف طبقة بيضاء صلبة خلف صورة الذكر لإغلاق أي فراغات وثقوب شفافة داخل الخط العربي.
    *
-   * المنطق: نصف القطر = hitRadius × 0.82 (داخل الحد البصري الفعلي للفقاعة
-   * بفارق أمان يمنع الخروج حتى على الحواف المتدرجة للصورة).
-   * القرص يظهر فقط عبر البكسلات الشفافة للصورة التي تعلوه تماماً؛
-   * أي تدرج في حواف الصورة يخفيه تدريجياً، فلا يبرز البياض خارج الشكل ولو ببكسل.
+   * يتم تحديد الشكل ديناميكياً بناءً على نسبة أبعاد الأصل (Aspect Ratio):
+   *  - للأصول العريضة (اللوحات/الكبسولات مثل la_ilaha_illallah, albaqiyatalsalihat, salawat...):
+   *    يُرسم مستطيل مستدير بحواف دائرية (Pill / Capsule) بنصف قطر = الارتفاع / 2 مع هامش أمان داخلي (inset)
+   *    ليظل البياض محصوراً بدقة 100% داخل الإطار الأفقي دون أن يبرز من الأطراف أو الأعلى/الأسفل.
+   *  - للأصول الدائرية (مثل سبحان الله، الحمد لله، الله أكبر):
+   *    يُرسم قرص دائري متمركز بنصف قطر آمن (hitRadius × 0.80).
    */
   private addWhiteBacking(): void {
-    const r = this.opts.hitRadius * 0.82
-    if (r <= 0) return
+    const body = this.list.find(
+      (child) => child instanceof Phaser.GameObjects.Image,
+    ) as Phaser.GameObjects.Image | undefined
+
     const backing = this.scene.add.graphics()
     backing.fillStyle(0xffffff, 1)
-    backing.fillCircle(0, 0, r)
-    this.addAt(backing, 0)
+
+    if (body && body.displayWidth > 0 && body.displayHeight > 0) {
+      const w = body.displayWidth
+      const h = body.displayHeight
+      const aspectRatio = w / h
+
+      // إذا كان العنصر عريضاً (لوحة أفقية / كبسولة مثل لا إله إلا الله، الباقيات، الصلوات)
+      if (aspectRatio > 1.25) {
+        // نستخدم هامش أمان داخلي بنسبة 8% حتى لا يتعدى البياض حدود اللوحة مطلقاً
+        const padX = w * 0.08
+        const padY = h * 0.08
+        const pillW = Math.max(0, w - padX * 2)
+        const pillH = Math.max(0, h - padY * 2)
+        const cornerRadius = pillH / 2
+        backing.fillRoundedRect(
+          body.x - pillW / 2,
+          body.y - pillH / 2,
+          pillW,
+          pillH,
+          cornerRadius,
+        )
+        this.addAt(backing, 0)
+        return
+      }
+
+      // إذا كان العنصر دائرياً أو شبه مربع
+      const r = Math.min(w, h) * 0.40
+      backing.fillCircle(body.x, body.y, r)
+      this.addAt(backing, 0)
+      return
+    }
+
+    // احتياط في حال عدم وجود صورة
+    const r = this.opts.hitRadius * 0.78
+    if (r > 0) {
+      backing.fillCircle(0, 0, r)
+      this.addAt(backing, 0)
+    }
   }
 
   /** تعطيل/إعادة تفعيل لمس الفقاعة أثناء الإيقاف المؤقت مع الحفاظ على منطقة اللمس الموسعة. */

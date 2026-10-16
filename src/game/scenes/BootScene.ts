@@ -5,6 +5,7 @@ import { setTopHeaderVisible } from '../../components/TopHeader'
 // كاش قديم من Service Worker عند استبدال الأصل، كما أنه يعمل مع base:'./'.
 import SESSION_FRAME_URL from '../../assets/session-frame.png'
 import BANNER_URL from '../../assets/rk-banner.png'
+import BEGIN_SPLASH_URL from '../../assets/begin.png'
 // صور فقاعات الأذكار (استيراد Vite المجزّأ ببصمة المحتوى).
 import SOBHAN_ALLAH_BUBBLE_URL from '../../../pi/Bubbles/sobhanallah.png'
 import ALHAMDULILLAH_BUBBLE_URL from '../../../pi/Bubbles/alhamdulillah.png'
@@ -56,6 +57,7 @@ export default class BootScene extends Phaser.Scene {
     // يُستورد بمسار Vite المجزّأ ليبقى خارج كاش Service Worker القديم.
     this.load.image('session-frame', SESSION_FRAME_URL)
     this.load.image('hud-banner', BANNER_URL)
+    this.load.image('splash-begin', BEGIN_SPLASH_URL)
     // صور فقاعات الأذكار — تُحمّل من أصول PNG مباشرةً مع بصمة Vite.
     this.load.image('bubble-subhanallah', SOBHAN_ALLAH_BUBBLE_URL)
     this.load.image('bubble-alhamdulillah', ALHAMDULILLAH_BUBBLE_URL)
@@ -117,77 +119,18 @@ export default class BootScene extends Phaser.Scene {
     glow.fillStyle(0xfff6dd, 0.24)
     glow.fillCircle(cx, height * 0.38, 110)
 
-    // 5) بطاقة ترحيب مركزية أنيقة بحواف مائلة (عرض أوسع لاحتواء العنوان)
-    const cardW = Math.min(width * 0.92, 440)
-    const cardH = 300
-    const cardY = height * 0.38
-    const cardPadding = 24
-    const card = this.add.graphics()
-    card.fillStyle(0xfffcf3, 0.96)
-    card.fillRoundedRect(cx - cardW / 2, cardY - cardH / 2, cardW, cardH, 24)
-    card.lineStyle(2.5, 0xb88a37, 0.9)
-    card.strokeRoundedRect(cx - cardW / 2, cardY - cardH / 2, cardW, cardH, 24)
-    card.lineStyle(1, 0xd8bd7a, 0.5)
-    card.strokeRoundedRect(cx - cardW / 2 + 8, cardY - cardH / 2 + 8, cardW - 16, cardH - 16, 18)
+    // 5) عرض صورة واجهة البداية begin.png بشكل متجاوب وأنيق في المنتصف
+    const splashImg = this.add.image(cx, height * 0.46, 'splash-begin')
+    // احتواء الصورة ضمن أبعاد الشاشة بأعلى وضوح ونسبة أبعاد متناسقة
+    const maxSplashW = width * 0.94
+    const maxSplashH = height * 0.72
+    const scaleRatio = Math.min(maxSplashW / splashImg.width, maxSplashH / splashImg.height, 1)
+    splashImg.setScale(scaleRatio)
+    splashImg.setAlpha(0)
 
-    // 6) البسملة أعلى البطاقة
-    const bismillah = this.add
-      .text(cx, cardY - cardH / 2 + 40, 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ', {
-        fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Arial, sans-serif',
-        fontSize: '24px',
-        color: '#765a24',
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-
-    // 7) فاصل زخرفي ذهبي (خط + معين) — فاصل مستقل بين البسملة والعنوان
-    //    بهوامش رأسية مريحة (≥ 16px) وخطان أبعد عن النقطة المركزية لمنع التداخل
-    const dividerY = cardY - 48
-    const divider = this.add.graphics()
-    divider.lineStyle(1.5, 0xb88a37, 0.72)
-    divider.lineBetween(cx - 95, dividerY, cx - 20, dividerY)
-    divider.lineBetween(cx + 20, dividerY, cx + 95, dividerY)
-    divider.fillStyle(0xc4953c, 0.95)
-    divider.fillPoints(
-      [
-        { x: cx, y: dividerY - 7 },
-        { x: cx + 7, y: dividerY },
-        { x: cx, y: dividerY + 7 },
-        { x: cx - 7, y: dividerY },
-      ],
-      true,
-    )
-
-    // 8) عنوان التطبيق بخط عربي فاخر وتأثير ذهبي (حجم متجاوب مع لفظ تلقائي)
-    const titleFontSize = Math.min(Math.max(Math.floor(cardW * 0.1), 28), 48)
-    const title = this.add
-      .text(cx, cardY + 8, 'الباقيات الصالحات', {
-        fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Arial, sans-serif',
-        fontSize: `${titleFontSize}px`,
-        fontStyle: 'bold',
-        color: '#193b4e',
-        align: 'center',
-        wordWrap: { width: cardW - cardPadding * 2, useAdvancedWrap: true },
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-      .setShadow(0, 2, 'rgba(91,66,24,0.16)', 5, true, true)
-    title.setStroke('#fff7e4', 1.5)
-
-    // 9) رسالة ترحيبية هادئة
-    const subtitle = this.add
-      .text(cx, cardY + cardH / 2 - 42, 'طمأنينة القلوب بذكر الله', {
-        fontFamily: '"Amiri", "Scheherazade New", "Segoe UI", Arial, sans-serif',
-        fontSize: '24px',
-        color: '#3e6268',
-      })
-      .setOrigin(0.5)
-      .setAlpha(0)
-    subtitle.setShadow(0, 1, 'rgba(255,255,255,0.75)', 3, true, true)
-
-    // 10) نص "اضغط للبدء" نابض أسفل الشاشة
+    // 6) نص "اضغط في أي مكان للبدء" نابض أسفل الشاشة
     const startText = this.add
-      .text(cx, height - 110, '« اضغط في أي مكان للبدء »', {
+      .text(cx, height - 70, '« اضغط في أي مكان للبدء »', {
         fontFamily: '"Amiri", "Segoe UI", Tahoma, sans-serif',
         fontSize: '22px',
         color: '#28564d',
@@ -195,21 +138,19 @@ export default class BootScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setAlpha(0)
 
-    // حركات دخول متسلسلة راقية (Fade In متدرج + طفو خفيف)
-    this.tweens.add({ targets: bismillah, alpha: 1, y: '-=8', duration: 1100, ease: 'Power2' })
-    this.tweens.add({ targets: title, y: '-=6', alpha: 1, duration: 1400, delay: 400, ease: 'Power3' })
-    this.tweens.add({ targets: subtitle, alpha: 1, y: '-=6', duration: 1200, delay: 900, ease: 'Power3' })
+    // حركات دخول متسلسلة راقية
+    this.tweens.add({ targets: splashImg, alpha: 1, duration: 1000, ease: 'Power2' })
     this.tweens.add({
       targets: startText,
       alpha: { from: 0.2, to: 1 },
       yoyo: true,
       repeat: -1,
       duration: 1200,
-      delay: 1600,
+      delay: 500,
       ease: 'Sine.easeInOut',
     })
 
-    // الانتقال إلى شاشة اللعب: بالضغط مع تأثير انتقال ناعم
+    // الانتقال إلى شاشة اللعب: بالضغط في أي مكان مع تأثير انتقال ناعم
     this.input.once('pointerdown', () => {
       this.cameras.main.fadeOut(400, 231, 195, 119)
       this.time.delayedCall(400, () => this.scene.start('MainScene'))
