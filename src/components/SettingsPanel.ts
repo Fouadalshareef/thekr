@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SettingsPanel — نافذة «الإعدادات» الفاتحة (HTML/DOM بدل لوحة Phaser).
  *
  * تُفتح بالحدث 'open-settings'. تحتوي على إحصائيات اليوم، منزلق السرعة،
@@ -23,6 +23,7 @@ import {
 } from '../services/SettingsService'
 import { getTotalGoodDeeds } from '../services/GardenService'
 import { forceAppUpdate, UPDATE_STATUS } from '../services/AppUpdateActions'
+import { hasPendingUpdate } from '../services/AppVersion'
 import { SEQUENCE_DHIKRS } from '../services/gameMode'
 
 /** خيارات السرعة المتاحة (مضاعف سرعة تصاعد الفقاعات). */
@@ -161,6 +162,9 @@ function syncAll(): void {
         : 'التنزيل المباشر غير متاح في هذا المتصفح'
   }
 
+  // تحديث حالة شارة التحديث في كل مرة تُفتح فيها النافذة
+  const badge = root?.querySelector<HTMLElement>('#settings-update-badge')
+  if (badge) badge.style.display = hasPendingUpdate() ? 'block' : 'none'
   renderTodayStats()
 }
 
@@ -272,8 +276,10 @@ export function initSettingsPanel(): void {
         </div>
 
         <div class="crisp-actions">
-          <button id="settings-update" class="crisp-action crisp-action-update" type="button">
-            <span class="crisp-action-icon" aria-hidden="true">↻</span><span>تحديث التطبيق</span>
+          <button id="settings-update" class="crisp-action crisp-action-update" type="button" style="position:relative">
+            <span class="crisp-action-icon" aria-hidden="true">&#x21BB;</span>
+            <span>&#x62A;&#x62D;&#x62F;&#x64A;&#x62B; &#x627;&#x644;&#x62A;&#x637;&#x628;&#x64A;&#x642;</span>
+            <span id="settings-update-badge" class="crisp-update-badge" aria-hidden="true" style="display:none"></span>
           </button>
 
           <div id="settings-install-row" class="crisp-install-action" style="display:none">
@@ -295,6 +301,11 @@ export function initSettingsPanel(): void {
   document.body.appendChild(panel)
 
   statusEl = panel.querySelector('#settings-status')
+  // عرض الشارة الحمراء على زر التحديث إذا كان هناك تحديث معلّق
+  const updateBadgeEl = panel.querySelector<HTMLElement>('#settings-update-badge')
+  if (updateBadgeEl) {
+    updateBadgeEl.style.display = hasPendingUpdate() ? 'block' : 'none'
+  }
   installRow = panel.querySelector('#settings-install-row')
   installBtn = panel.querySelector('#settings-install')
   todayHost = panel.querySelector('#settings-today')

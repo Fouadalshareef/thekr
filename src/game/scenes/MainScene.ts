@@ -1246,7 +1246,8 @@ export default class MainScene extends Phaser.Scene {
     const x = this.scale.width - Math.round(frameW * 0.60)
     const topY = Math.round(bannerBottom + 6)
     // مركز المربّع الكريمي الداخلي كنسبة من أبعاد الإطار (0.588 — مقيس من الأصل المربّع)
-    const innerY = 0.72
+    // مركز الدائرة الكريمية المخصصة للرقم: مقاس بدقة من 600 إلى 1050 بكسل من أصل 1278 (المركز = 825 / 1278 ≈ 0.646)
+    const innerYCenter = 0.646
     const hasFrame = this.textures.exists('session-frame')
 
     // الإطار الأصلي عالي الدقة يُصغّر بترشيح LINEAR ناعم؛ إعداد mipmapFilter
@@ -1276,7 +1277,7 @@ export default class MainScene extends Phaser.Scene {
     // الرقم داخل المربّع الكريمي، متمركز تماماً: حجم نسبي لحجم الإطار
     // (يبقى مقروءاً من الهاتف إلى الحاسوب) + ظل فاتح يرفع التباين.
     this.sessionText = this.add
-      .text(x, topY + frameH * innerY, '0', {
+      .text(x, topY + frameH * innerYCenter, '0', {
         fontFamily: '"Segoe UI", Tahoma, Arial, sans-serif',
         fontSize: `${Math.round(frameH * 0.2)}px`,
         fontStyle: 'bold',
@@ -1284,7 +1285,7 @@ export default class MainScene extends Phaser.Scene {
         align: 'center',
         resolution: Math.min(window.devicePixelRatio || 1, 3),
       })
-      .setOrigin(0.5)
+      .setOrigin(0.5, 0.5)
       .setDepth(DEPTH_SESSION_COUNTER + 1)
     this.sessionText.setShadow(0, 1, 'rgba(255,255,255,0.9)', 4, true, true)
   }
