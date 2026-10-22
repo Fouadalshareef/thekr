@@ -1,4 +1,4 @@
-/**
+﻿/**
  * MainScene — الشاشة الرئيسية للعبة.
  * تصميم جديد: أيقونات جانبية خفيفة، عداد جلسة، وتوليد فردي متسلسل
  * (فقاعة واحدة فقط تُستبدل عند التفجير، مع أنماط: مترابط/شامل/مخصص/استغفار).
@@ -1236,16 +1236,17 @@ export default class MainScene extends Phaser.Scene {
   private buildSessionCounter(): void {
     // الأصل مربّع (1:1) ⇒ الإرتفاع يساوي العرض، فلا تشويه ولا ضغط أفقي.
     // حُجم أصغر قليلاً (110..135px) ليكون مربّعاً أنيقاً غير طاغٍ على الشريط العلوي.
-    const frameW = Math.round(Math.min(135, Math.max(110, this.scale.width * 0.30)))
-    const frameH = frameW
+    const frameW = Math.round(Math.min(120, Math.max(96, this.scale.width * 0.26)))
+    // نسبة الارتفاع من الصورة الجديدة session.png (1278/1230 ≈ 1.039)
+    const frameH = Math.round(frameW * (1278 / 1230))
     // البطاقة مثبّتة أعلى اليمين، أسفل الشريط العلوي مباشرة.
     // الشريط عرضه min(94vw, 520px) وارتفاعه = ثلثه ⇒ نحسب أسفله بدل ثابت.
     const bannerW = this.bannerWidth()
     const bannerBottom = 4 + bannerW / 3
-    const x = this.scale.width - Math.round(frameW * 0.62)
-    const topY = Math.round(bannerBottom + 10)
+    const x = this.scale.width - Math.round(frameW * 0.60)
+    const topY = Math.round(bannerBottom + 6)
     // مركز المربّع الكريمي الداخلي كنسبة من أبعاد الإطار (0.588 — مقيس من الأصل المربّع)
-    const innerY = 0.588
+    const innerY = 0.72
     const hasFrame = this.textures.exists('session-frame')
 
     // الإطار الأصلي عالي الدقة يُصغّر بترشيح LINEAR ناعم؛ إعداد mipmapFilter
