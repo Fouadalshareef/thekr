@@ -10,7 +10,7 @@ import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
 import type { AzkarItem } from '../../services/AzkarDB'
-import { getSpeed } from '../../services/SettingsService'
+import { getSpeed, getOscillationSpeed } from '../../services/SettingsService'
 import { DEPTH_GAMEPLAY } from '../ui/depths'
 
 export default class AzkarBubble extends Phaser.GameObjects.Container {
@@ -20,6 +20,7 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
   private counterLabel!: Phaser.GameObjects.Text
   private cardW!: number
   private cardH!: number
+  private phase = Phaser.Math.FloatBetween(0, Math.PI * 2)
 
   constructor(scene: Phaser.Scene, x: number, y: number, item: AzkarItem) {
     super(scene, x, y)
@@ -128,8 +129,26 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
     if (!this.active || this.scene.data.get('paused') === true) return
 
     const centerY = this.scene.scale.height / 2
-    this.x = this.scene.scale.width / 2
-    this.y = Math.max(centerY, this.y - 78 * getSpeed() * (delta / 1000))
+    const centerX = this.scene.scale.width / 2
+    if (this.y <= centerY) {
+      this.x = centerX
+      this.y = centerY
+      this.rotation = 0
+      return
+    }
+
+    this.y = Math.max(centerY, this.y - 78 * getSpeed() * 2.5 * (delta / 1000))
+    if (this.y === centerY) {
+      this.x = centerX
+      this.rotation = 0
+      return
+    }
+
+    const oscillationSpeed = getOscillationSpeed()
+    this.phase += 1.8 * oscillationSpeed * (delta / 1000)
+    const sway = Math.sin(this.phase * Math.PI * 2)
+    this.x = centerX + sway * 18
+    this.rotation = sway * 0.05 * oscillationSpeed
   }
 
   private getCounterText(): string {

@@ -8,7 +8,7 @@ import { playDhikrSound } from '../../services/audio'
 import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
-import { getSpeed } from '../../services/SettingsService'
+import { getSpeed, getOscillationSpeed } from '../../services/SettingsService'
 import { setCircleHitArea } from '../ui/hitArea'
 import { DEPTH_GAMEPLAY, DEPTH_GAMEPLAY_PARTICLE } from '../ui/depths'
 
@@ -43,10 +43,12 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
 
   private popped = false
   private readonly localHitRadius: number
+  private phase: number
   constructor(scene: Phaser.Scene, x: number, y: number, options: FloatingObjectOptions) {
     super(scene, x, y)
 
     this.opts = options
+    this.phase = Phaser.Math.FloatBetween(0, Math.PI * 2)
 
     // تكبير واضح للجسم ليسهل لمسه
     this.setScale(BODY_SCALE)
@@ -203,9 +205,27 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     if (this.scene.data.get('paused') === true) return
     const dt = delta / 1000
 
-    this.x = this.scene.scale.width / 2
+    const centerX = this.scene.scale.width / 2
     const centerY = this.scene.scale.height / 2
-    this.y = Math.max(centerY, this.y - this.opts.speedBase * getSpeed() * dt)
+    if (this.y <= centerY) {
+      this.x = centerX
+      this.y = centerY
+      this.rotation = 0
+      return
+    }
+
+    this.y = Math.max(centerY, this.y - this.opts.speedBase * getSpeed() * 2.5 * dt)
+    if (this.y === centerY) {
+      this.x = centerX
+      this.rotation = 0
+      return
+    }
+
+    const oscillationSpeed = getOscillationSpeed()
+    this.phase += this.opts.wiggleFreq * oscillationSpeed * dt
+    const sway = Math.sin(this.phase * Math.PI * 2)
+    this.x = centerX + sway * this.opts.wiggleAmp
+    this.rotation = sway * 0.05 * oscillationSpeed
   }
 
   private handlePointerDown(): void {

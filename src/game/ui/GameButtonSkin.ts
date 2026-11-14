@@ -100,7 +100,7 @@ export type HudIcon = 'gear' | 'sliders' | 'leaf' | 'quran' | 'pause' | 'play' |
 
 /** ربط كل أيقونة بنمطها اللوني (نفس توزيع الحزمة: الإعدادات/الترس = steel …). */
 export const ICON_THEME: Record<HudIcon, ButtonThemeKey> = {
-  gear: 'steel',
+  gear: 'gold',
   sliders: 'sunset',
   leaf: 'leaf',
   quran: 'gold',
@@ -276,4 +276,3 @@ function circle(g: CanvasRenderingContext2D, x: number, y: number, radius: numbe
   g.beginPath()
   g.arc(x, y, radius, 0, Math.PI * 2)
 }
-
