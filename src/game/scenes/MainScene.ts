@@ -1898,14 +1898,13 @@ export default class MainScene extends Phaser.Scene {
   private spawnOne(): void {
     const { width, height } = this.scale
     const mode = gameMode.getMode()
-    const margin = 70
 
     if (mode === 'morning' || mode === 'evening') {
       const azkarItem = gameMode.getCurrentAzkar()
       if (!azkarItem) return
 
       const cx = width / 2
-      const cy = height / 2 - 40 // التمركز في منتصف الشاشة مع إزاحة خفيفة لأعلى
+      const cy = height + 160
 
       const bubble = new AzkarBubble(this, cx, cy, azkarItem)
       this.add.existing(bubble)
@@ -1931,7 +1930,7 @@ export default class MainScene extends Phaser.Scene {
 
     const def = SEQUENCE_DHIKRS.find((d) => d.id === id)
     const Klass = CLASS_BY_DHIKR[id] ?? ALL_CLASSES[Phaser.Math.Between(0, ALL_CLASSES.length - 1)]
-    const x = Phaser.Math.Between(margin, width - margin)
+    const x = width / 2
     const y = height + 80
     const body = new Klass(this, x, y, {
       dhikrId: id,

@@ -13,6 +13,7 @@ import { setSidebarWelcomeActive, resetSidebarModals } from '../../components/Si
 import { setTopHeaderVisible } from '../../components/TopHeader'
 import SkyLayer from '../objects/SkyLayer'
 import { getThemeFor } from '../../services/TimeThemeService'
+import { showIstighfarArchive } from '../../components/IstighfarArchive'
 
 export default class ZenScene extends Phaser.Scene {
   private halo!: Phaser.GameObjects.Container
@@ -61,9 +62,16 @@ export default class ZenScene extends Phaser.Scene {
     this.counterText.setStroke('#0b1026', 4)
     this.counterText.setDepth(100)
     this.refreshCounter()
+    this.time.addEvent({
+      delay: 30_000,
+      loop: true,
+      callback: this.refreshCounter,
+      callbackScope: this,
+    })
 
     // 4) زر "رجوع" أعلى الشاشة
     this.buildBackButton()
+    this.buildArchiveButton()
 
     // 5) تلميح سفلي
     this.add
@@ -185,6 +193,30 @@ export default class ZenScene extends Phaser.Scene {
     btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, () => {
       this.scene.start('MainScene')
     })
+  }
+
+  /** زر فتح الأرشيف أعلى الشاشة. */
+  private buildArchiveButton(): void {
+    const { width } = this.scale
+    const btn = this.add.container(width - 70, 44)
+    const bg = this.add.graphics()
+    bg.fillStyle(0x1e1b4b, 0.85)
+    bg.fillRoundedRect(-52, -24, 104, 48, 24)
+    bg.lineStyle(2, 0xfbbf24, 0.9)
+    bg.strokeRoundedRect(-52, -24, 104, 48, 24)
+    const label = this.add.text(0, 0, 'الأرشيف', {
+      fontFamily: '"Segoe UI", Tahoma, sans-serif',
+      fontSize: '17px',
+      fontStyle: 'bold',
+      color: '#fde68a',
+    }).setOrigin(0.5)
+    btn.add([bg, label])
+    btn.setDepth(200)
+    btn.setInteractive(
+      new Phaser.Geom.Rectangle(-48, -20, 96, 40),
+      Phaser.Geom.Rectangle.Contains,
+    )
+    btn.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, showIstighfarArchive)
   }
 
   /** تحديث العدّاد المعروض من المخزن. */

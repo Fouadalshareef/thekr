@@ -112,40 +112,166 @@ export function incrementDhikr(id: string, name: string, target: number): DhikrD
 const ISTIGHFAR_KEY = 'albaqiyat-alsalihat:istighfar-data'
 
 export interface IstighfarData {
+  /** عدد مرات الاستغفار في اليوم الحالي فقط. */
   count: number
   lastActive: string
+  /** اليوم المحلي الذي ينتمي إليه count. */
+  day: string
+  /** تفاصيل الأيام المحفوظة ضمن آخر 30 يوماً. */
+  dailyCounts: Record<string, number>
+  /** إجمالي الأيام الأقدم، مجمّعاً حسب الشهر YYYY-MM. */
+  monthlyCounts: Record<string, number>
+  /** الإجمالي التراكمي مدى الحياة. */
+  totalCount: number
 }
 
-/** قراءة بيانات الاستغفار المحفوظة. */
-export function loadIstighfarData(): IstighfarData {
-  try {
-    const raw = localStorage.getItem(ISTIGHFAR_KEY)
-    if (!raw) return { count: 0, lastActive: new Date().toISOString() }
-    const parsed = JSON.parse(raw) as Partial<IstighfarData>
-    return {
-      count: typeof parsed.count === 'number' ? parsed.count : 0,
-      lastActive:
-        typeof parsed.lastActive === 'string'
-          ? parsed.lastActive
-          : new Date().toISOString(),
+function localDayKey(date = new Date()): string {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function dayOffsetKey(offset: number): string {
+  const date = new Date()
+  date.setHours(12, 0, 0, 0)
+  date.setDate(date.getDate() - offset)
+  return localDayKey(date)
+}
+
+function isDayKey(value: string): boolean {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
+function normalizeCounts(value: unknown, keyPattern: RegExp): Record<string, number> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
+  const result: Record<string, number> = {}
+  for (const [key, count] of Object.entries(value)) {
+    if (keyPattern.test(key) && Number.isSafeInteger(count) && count >= 0) {
+      result[key] = count
     }
-  } catch {
-    return { count: 0, lastActive: new Date().toISOString() }
   }
+  return result
+}
+
+function saveIstighfarData(data: IstighfarData): void {
+  localStorage.setItem(ISTIGHFAR_KEY, JSON.stringify(data))
+}
+
+/** قراءة البيانات مع تصفير اليوم وترحيل التفاصيل الأقدم إلى مجاميع شهرية. */
+export function loadIstighfarData(): IstighfarData {
+  const raw = localStorage.getItem(ISTIGHFAR_KEY)
+  if (!raw) {
+    return {
+      count: 0,
+      lastActive: new Date().toISOString(),
+      day: localDayKey(),
+      dailyCounts: {},
+      monthlyCounts: {},
+      totalCount: 0,
+    }
+  }
+
+  let parsed: Partial<IstighfarData>
+  try {
+    parsed = JSON.parse(raw) as Partial<IstighfarData>
+  } catch {
+    return {
+      count: 0,
+      lastActive: new Date().toISOString(),
+      day: localDayKey(),
+      dailyCounts: {},
+      monthlyCounts: {},
+      totalCount: 0,
+    }
+  }
+
+  const today = localDayKey()
+  const hasDailyHistory = parsed.dailyCounts !== undefined
+  const hasMonthlyHistory = parsed.monthlyCounts !== undefined
+  const isLegacyData = !hasDailyHistory && !hasMonthlyHistory
+  const dailyCounts = normalizeCounts(parsed.dailyCounts, /^\d{4}-\d{2}-\d{2}$/)
+  const monthlyCounts = normalizeCounts(parsed.monthlyCounts, /^\d{4}-\d{2}$/)
+  const storedDay = typeof parsed.day === 'string' && isDayKey(parsed.day) ? parsed.day : ''
+  const storedCount =
+    typeof parsed.count === 'number' && Number.isSafeInteger(parsed.count) && parsed.count > 0
+      ? parsed.count
+      : 0
+
+  if (!isLegacyData && storedDay && storedDay <= today && dailyCounts[storedDay] === undefined) {
+    dailyCounts[storedDay] = storedCount
+  }
+
+  const oldestDailyDay = dayOffsetKey(29)
+  for (const [day, count] of Object.entries(dailyCounts)) {
+    if (day < oldestDailyDay) {
+      const month = day.slice(0, 7)
+      monthlyCounts[month] = (monthlyCounts[month] ?? 0) + count
+      delete dailyCounts[day]
+    }
+  }
+
+  const historyTotal =
+    Object.values(dailyCounts).reduce((sum, count) => sum + count, 0) +
+    Object.values(monthlyCounts).reduce((sum, count) => sum + count, 0)
+  const totalCount = Math.max(
+    typeof parsed.totalCount === 'number' && Number.isSafeInteger(parsed.totalCount)
+      ? parsed.totalCount
+      : 0,
+    isLegacyData ? storedCount : 0,
+    historyTotal,
+  )
+  const data: IstighfarData = {
+    count: dailyCounts[today] ?? 0,
+    lastActive:
+      typeof parsed.lastActive === 'string' ? parsed.lastActive : new Date().toISOString(),
+    day: today,
+    dailyCounts,
+    monthlyCounts,
+    totalCount,
+  }
+
+  const normalized = JSON.stringify(data)
+  if (normalized !== raw) localStorage.setItem(ISTIGHFAR_KEY, normalized)
+  return data
 }
 
 /** زيادة عدّاد الاستغفار بمقدار 1 وإرجاع القيمة الجديدة. */
 export function incrementIstighfar(): number {
   const data = loadIstighfarData()
-  const next = data.count + 1
-  localStorage.setItem(
-    ISTIGHFAR_KEY,
-    JSON.stringify({ count: next, lastActive: new Date().toISOString() }),
-  )
-  return next
+  data.count += 1
+  data.dailyCounts[data.day] = data.count
+  data.totalCount += 1
+  data.lastActive = new Date().toISOString()
+  saveIstighfarData(data)
+  return data.count
 }
 
 /** قراءة عدّاد الاستغفار الحالي فقط. */
 export function getIstighfarCount(): number {
   return loadIstighfarData().count
+}
+
+/** قراءة إجمالي الاستغفار التراكمي مدى الحياة. */
+export function getIstighfarTotalCount(): number {
+  return loadIstighfarData().totalCount
+}
+
+export interface IstighfarArchive {
+  totalCount: number
+  daily: { date: string; count: number }[]
+  monthly: { month: string; count: number }[]
+}
+
+/** سجل آخر 30 يوماً (بما فيها الأيام الصفرية) والمجاميع الشهرية الأقدم. */
+export function getIstighfarArchive(): IstighfarArchive {
+  const data = loadIstighfarData()
+  const daily = Array.from({ length: 30 }, (_, offset) => {
+    const date = dayOffsetKey(offset)
+    return { date, count: data.dailyCounts[date] ?? 0 }
+  })
+  const monthly = Object.entries(data.monthlyCounts)
+    .map(([month, count]) => ({ month, count }))
+    .sort((a, b) => b.month.localeCompare(a.month))
+  return { totalCount: data.totalCount, daily, monthly }
 }

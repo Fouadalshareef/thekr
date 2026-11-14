@@ -1,7 +1,7 @@
 /**
  * AzkarBubble.ts — بطاقة تتابعية لأذكار الصباح والمساء.
  * تعرض النص الكامل للذكر مع مؤشر التكرار المطلوب.
- * لا تتحرك عمودياً — تجلس مستقرة في وسط الشاشة.
+ * تصعد من أسفل منتصف الشاشة وتتوقف ثابتة في المركز.
  * عند النقر تُحصى مرة واحدة وتُشعِل حدث DHIKR_COLLECTED.
  */
 import Phaser from 'phaser'
@@ -10,6 +10,7 @@ import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
 import type { AzkarItem } from '../../services/AzkarDB'
+import { getSpeed } from '../../services/SettingsService'
 import { DEPTH_GAMEPLAY } from '../ui/depths'
 
 export default class AzkarBubble extends Phaser.GameObjects.Container {
@@ -36,15 +37,9 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
       Phaser.Geom.Rectangle.Contains,
     )
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.handleTap, this)
-    // ظهور ناعم
-    this.setAlpha(0)
-    this.setScale(0.85)
-    scene.tweens.add({
-      targets: this,
-      alpha: 1,
-      scale: 1,
-      duration: 380,
-      ease: 'Back.easeOut',
+    scene.events.on(Phaser.Scenes.Events.UPDATE, this.onUpdate, this)
+    this.once(Phaser.GameObjects.Events.DESTROY, () => {
+      if (this.scene) this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.onUpdate, this)
     })
   }
 
@@ -127,15 +122,14 @@ export default class AzkarBubble extends Phaser.GameObjects.Container {
       .setOrigin(0.5)
     this.add(hint)
 
-    // نبض خفيف
-    this.scene.tweens.add({
-      targets: this,
-      scale: { from: 1, to: 1.025 },
-      yoyo: true,
-      repeat: -1,
-      duration: 1800,
-      ease: 'Sine.easeInOut',
-    })
+  }
+
+  private onUpdate(_time: number, delta: number): void {
+    if (!this.active || this.scene.data.get('paused') === true) return
+
+    const centerY = this.scene.scale.height / 2
+    this.x = this.scene.scale.width / 2
+    this.y = Math.max(centerY, this.y - 78 * getSpeed() * (delta / 1000))
   }
 
   private getCounterText(): string {

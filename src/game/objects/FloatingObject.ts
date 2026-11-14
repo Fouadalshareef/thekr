@@ -1,6 +1,6 @@
 /**
  * FloatingObject — الفئة الأساسية لكل الأجسام العائمة (Bubble, Balloon, Gem, Lantern).
- * توفر: الحركة الصاعدة السلسة + التماوج الجيبي الأفقي + التحكم بسرعة التصاعد،
+ * توفر: حركة صاعدة مستقيمة تتوقف عند مركز الشاشة والتحكم بسرعة التصاعد،
  * والتفاعل عند الضغط (فرقعة: جزيئات + صوت + اهتزاز + حدث زيادة الرصيد).
  */
 import Phaser from 'phaser'
@@ -8,7 +8,7 @@ import { playDhikrSound } from '../../services/audio'
 import { vibrate } from '../../services/haptics'
 import { emitGoldBurst } from './ParticleBurst'
 import { Events } from '../events'
-import { getSpeed, getOscillationSpeed } from '../../services/SettingsService'
+import { getSpeed } from '../../services/SettingsService'
 import { setCircleHitArea } from '../ui/hitArea'
 import { DEPTH_GAMEPLAY, DEPTH_GAMEPLAY_PARTICLE } from '../ui/depths'
 
@@ -41,19 +41,12 @@ export interface FloatingObjectOptions {
 export abstract class FloatingObject extends Phaser.GameObjects.Container {
   protected readonly opts: FloatingObjectOptions
 
-  private readonly startX: number
-  private phase: number
   private popped = false
   private readonly localHitRadius: number
-  /** هل الجسم ما يزال في مرحلة الاندفاع الأولي السريع بعد الظهور؟ */
-  private burst = true
-
   constructor(scene: Phaser.Scene, x: number, y: number, options: FloatingObjectOptions) {
     super(scene, x, y)
 
     this.opts = options
-    this.startX = x
-    this.phase = Phaser.Math.FloatBetween(0, Math.PI * 2)
 
     // تكبير واضح للجسم ليسهل لمسه
     this.setScale(BODY_SCALE)
@@ -110,9 +103,6 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
     setCircleHitArea(this, localHitR)
     this.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.handlePointerDown, this)
 
-    // اندفاع أولي سريع: الوصول إلى ربع ارتفاع الشاشة خلال 175ms ثم الانتقال للسرعة العادية
-    this.startSpawnBurst()
-
     // الحركة عبر حلقة التحديث؛ وتسجيل الخروج عند التدمير
     scene.events.on(Phaser.Scenes.Events.UPDATE, this.onUpdate, this)
     this.once(Phaser.GameObjects.Events.DESTROY, () => {
@@ -165,29 +155,6 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   /** يرسم كل نوع شكله الخاص داخل هذا الأسلوب. */
   protected abstract buildBody(): void
 
-  /**
-   * اندفاع الظهور السريع: Tween ينقل الجسم فوراً إلى ربع ارتفاع الشاشة
-   * (75% من الأسفل) خلال 175ms، ثم الانتقال الناعم إلى السرعة العادية
-   * المحسوبة من شريط التحكم — لسهولة النقر المكرر السريع بدون انتظار.
-   */
-  private startSpawnBurst(): void {
-    const quarterY = this.scene.scale.height * 0.75
-    // تجاهل الاندفاع إذا وُلد الجسم أعلى من نقطة الربع أصلاً
-    if (this.y <= quarterY) {
-      this.burst = false
-      return
-    }
-    this.scene.tweens.add({
-      targets: this,
-      y: quarterY,
-      duration: 175,
-      ease: 'Quad.easeOut',
-      onComplete: () => {
-        this.burst = false
-      },
-    })
-  }
-
   /** هالة إضافية للفقاعات التالية عند بلوغ كومبو 10 أو 20 أو 50. */
   private buildComboVisual(): void {
     const combo = Number(this.scene.data.get('combo') || 0)
@@ -205,9 +172,8 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   }
 
   /**
-   * تُستدعى بعد buildBody. أُزيلت الهالة المتوهجة (الدائرتان المضيئتان ونبضها)
-   * بناءً على طلب المستخدم لإزالة الهالة الظاهرة حول الأذكار. تبقى حلقة الحافة
-   * البيضاء فقط للأجسام التي ترسم حدودها بنفسها (انظر showEdgeRing).
+   * تُستدعى بعد buildBody. تبقى حلقة الحافة البيضاء للأجسام التي ترسم حدودها
+   * بنفسها (انظر showEdgeRing).
    */
   protected buildGlow(hitRadius: number): void {
     if (!this.showEdgeRing()) return
@@ -235,23 +201,11 @@ export abstract class FloatingObject extends Phaser.GameObjects.Container {
   private onUpdate(_time: number, delta: number): void {
     if (!this.active) return
     if (this.scene.data.get('paused') === true) return
-    // أثناء الاندفاع الأولي يتحكم الـ Tween بالحركة رأسياً — نتركه يعمل فقط
-    if (this.burst) return
     const dt = delta / 1000
 
-    // تصاعد سلس نحو الأعلى
-    this.y -= this.opts.speedBase * getSpeed() * dt
-
-    // تماوج أفقي جيبي بسرعة تردد قابلة للتحكم
-    const oscSpeed = getOscillationSpeed()
-    this.phase += this.opts.wiggleFreq * oscSpeed * dt
-    this.x = this.startX + Math.sin(this.phase * Math.PI * 2) * this.opts.wiggleAmp
-    this.rotation = Math.sin(this.phase * Math.PI * 2) * 0.05 * oscSpeed
-
-    // تستمر الفقاعة بالصعود عبر الواجهة حتى تتجاوز أعلى الشاشة بالكامل.
-    if (this.y < -this.opts.hitRadius * 3) {
-      this.destroy()
-    }
+    this.x = this.scene.scale.width / 2
+    const centerY = this.scene.scale.height / 2
+    this.y = Math.max(centerY, this.y - this.opts.speedBase * getSpeed() * dt)
   }
 
   private handlePointerDown(): void {

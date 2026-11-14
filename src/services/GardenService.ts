@@ -3,7 +3,7 @@
  * يحسب مستوى الحديقة من إجمالي الأذكار التراكمي (المخزن في DhikrStorage)
  * ويعيد قائمة العناصر المفتوحة (زهرة، شجرة، عصافير، ألوان خلفية...).
  */
-import { loadDhikrData, getIstighfarCount } from './DhikrStorage'
+import { loadDhikrData, getIstighfarTotalCount } from './DhikrStorage'
 
 /** كل 500 ذكر يفتح عنصراً جديداً. */
 export const DHIKRS_PER_ELEMENT = 500
@@ -45,7 +45,7 @@ export interface GardenState {
 /** حساب إجمالي الأذكار التراكمي (أذكار + استغفار) من المخزن. */
 export function getTotalGoodDeeds(): number {
   const data = loadDhikrData()
-  const istighfar = getIstighfarCount()
+  const istighfar = getIstighfarTotalCount()
   return data.totalCount + istighfar
 }
 

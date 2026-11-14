@@ -24,7 +24,10 @@ export interface SettingsData {
 }
 
 function todayKey(): string {
-  return new Date().toISOString().slice(0, 10)
+  const date = new Date()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
 }
 
 const DEFAULT_SETTINGS: SettingsData = {
@@ -233,7 +236,10 @@ const MORNING_DONE_KEY = 'azkar_completed_morning'
 const EVENING_DONE_KEY = 'azkar_completed_evening'
 
 function todayStr(): string {
-  return new Date().toISOString().slice(0, 10)
+  const date = new Date()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
 }
 
 /** تعليم أذكار الصباح أو المساء كمنجزة اليوم (تُستدعى عند اكتمالها في اللعب). */
