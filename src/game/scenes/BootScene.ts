@@ -39,9 +39,8 @@ export default class BootScene extends Phaser.Scene {
     // خلفيات المرحلة الثانية (عشب أخضر) - تمييز برمجي واضح
     this.load.image('green-grass-mor', 'game/green_grass_mor.jfif') // خلفية نهار عشب أخضر
     this.load.image('green-grass-ni', 'game/green_grass_ni.jfif') // خلفية ليل عشب أخضر
-    // أيقونات أزرار اللعبة الجديدة (SVG أبيض ناصع — حزمة Game UI Buttons)
-    // تُرسم فوق أزرار Phaser المجسّمة (انظر GameButtonSkin.ts) — بلا خلفية ولا إطار
-    this.load.svg('hud-settings', 'game/icons/settings-gbtn.svg', { width: 256, height: 256 })
+    // أيقونة الإعدادات صورة PNG عالية الدقة، بينما تبقى بقية الأيقونات SVG.
+    this.load.image('hud-settings', 'game/icons/settings.png')
     // Pattern / Farm / Quran: صور PNG جاهزة بدل SVG (مصدرها pi/icons)
     this.load.image('hud-theme',  'icons/icon-pattern.png')
     this.load.image('hud-farm',   'icons/icon-farm.png')

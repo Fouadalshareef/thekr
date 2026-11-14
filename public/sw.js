@@ -39,7 +39,7 @@ const ASSETS = [
   './game/sounds/astaghfirullah.mpeg',
   // أيقونات HUD/MODAL (كل الـ SVG)
   // أزرار اللعبة الجديدة (Game UI Buttons) — أيقونات بيضاء تُرسم فوق أزرار Phaser المجسّمة
-  './game/icons/settings-gbtn.svg',
+  './game/icons/settings.png',
   './icons/icon-pattern.png',
   './icons/icon-farm.png',
   './icons/icon-quran.png',
@@ -57,7 +57,6 @@ const ASSETS = [
   './game/icons/pause-v2.svg',
   './game/icons/play-v2.svg',
   './game/icons/quran-v2.svg',
-  './game/icons/settings-v2.svg',
   './game/icons/theme-v2.svg',
   ...BUILD_ASSETS,
 ]

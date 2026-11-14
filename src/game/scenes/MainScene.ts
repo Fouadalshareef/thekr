@@ -523,7 +523,10 @@ export default class MainScene extends Phaser.Scene {
     this.headerSettingsButton.setPosition(bannerLeft + bannerWidth * 0.9006, bannerTop + bannerHeight * 0.4896)
     const hitAreaSize = Math.max(64, pauseSize * 1.6)
     this.headerSettingsButton.setSize(hitAreaSize, hitAreaSize)
-    this.headerSettingsIcon.setDisplaySize(pauseSize, pauseSize)
+    this.headerSettingsIcon.setDisplaySize(
+      pauseSize,
+      pauseSize * (this.headerSettingsIcon.height / this.headerSettingsIcon.width),
+    )
     this.headerSettingsButton.input!.hitArea.setTo(-hitAreaSize / 2, -hitAreaSize / 2, hitAreaSize, hitAreaSize)
     this.layoutCanvasSidebar(bannerTop + bannerHeight + 44)
   }
@@ -1186,7 +1189,7 @@ export default class MainScene extends Phaser.Scene {
   /** زر الإعدادات داخل الخانة اليمنى للشريط العلوي. */
   private buildHeaderSettingsButton(): void {
     this.headerSettingsButton = this.add.container(0, 0).setDepth(DEPTH_HUD + 2)
-    this.headerSettingsIcon = this.add.image(0, 0, 'hud-settings').setTint(0xffd700)
+    this.headerSettingsIcon = this.add.image(0, 0, 'hud-settings')
     this.headerSettingsButton.add(this.headerSettingsIcon)
     this.headerSettingsButton.setSize(68, 68)
     this.headerSettingsButton.setInteractive(new Phaser.Geom.Rectangle(-34, -34, 68, 68), Phaser.Geom.Rectangle.Contains)

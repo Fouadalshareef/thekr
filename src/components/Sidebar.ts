@@ -137,7 +137,7 @@ export function initSidebar(): void {
       <!-- الإعدادات -->
       <div class="flex flex-col items-center relative">
         <button id="btn-settings" class="w-[58px] h-[58px] -m-1 relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer" aria-label="الإعدادات">
-          <img src="game/icons/settings-gbtn.svg" alt="Settings" class="w-[42px] h-[42px] object-contain pointer-events-none drop-shadow-md" />
+          <img src="game/icons/settings.png" alt="Settings" class="w-[42px] h-[42px] object-contain pointer-events-none drop-shadow-md" />
         </button>
         <span class="label-badge mt-[-8px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-auto cursor-pointer" onclick="document.getElementById('btn-settings')?.click()">الإعدادات</span>
         <!-- شارة التحديث -->
