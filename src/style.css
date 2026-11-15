@@ -153,6 +153,12 @@ body {
   user-select: none;
 }
 
+/* DOM fallback controls use native buttons with immediate mobile taps. */
+#dom-sidebar button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body.phaser-hud-active #dom-sidebar,
 body.phaser-hud-active #top-header {
   display: none !important;

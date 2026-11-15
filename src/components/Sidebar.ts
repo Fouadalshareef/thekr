@@ -112,36 +112,36 @@ export function initSidebar(): void {
 
       <!-- النمط -->
       <div class="flex flex-col items-center">
-        <button id="btn-pattern" class="w-[58px] h-[58px] -m-1 relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer" aria-label="النمط">
-          <img src="icons/icon-pattern.png" alt="Pattern" class="w-11 h-11 object-contain pointer-events-none drop-shadow-md" />
+        <button id="btn-pattern" class="w-[68px] h-[84px] relative flex flex-col items-center justify-center gap-1 outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer [touch-action:manipulation]" aria-label="النمط">
+          <img src="icons/icon-pattern.png" alt="" class="w-11 h-11 object-contain pointer-events-none drop-shadow-md" />
+          <span class="label-badge z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-none">النمط</span>
         </button>
-        <span class="label-badge mt-[-8px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-auto cursor-pointer" onclick="document.getElementById('btn-pattern')?.click()">النمط</span>
       </div>
 
       <!-- المزرعة -->
       <div class="flex flex-col items-center">
-        <button id="btn-farm" class="w-[58px] h-[58px] -m-1 relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer" aria-label="المزرعة">
-          <img src="icons/icon-farm.png" alt="Farm" class="w-11 h-11 object-contain pointer-events-none drop-shadow-md" />
+        <button id="btn-farm" class="w-[68px] h-[84px] relative flex flex-col items-center justify-center gap-1 outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer [touch-action:manipulation]" aria-label="المزرعة">
+          <img src="icons/icon-farm.png" alt="" class="w-11 h-11 object-contain pointer-events-none drop-shadow-md" />
+          <span class="label-badge z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-none">المزرعة</span>
         </button>
-        <span class="label-badge mt-[-8px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-auto cursor-pointer" onclick="document.getElementById('btn-farm')?.click()">المزرعة</span>
       </div>
 
       <!-- المصحف -->
       <div class="flex flex-col items-center">
-        <button id="btn-quran" class="w-[58px] h-[58px] -m-1 relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer" aria-label="المصحف">
-          <img src="icons/icon-quran.png" alt="Quran" class="w-11 h-11 object-contain pointer-events-none drop-shadow-md" />
+        <button id="btn-quran" class="w-[68px] h-[84px] relative flex flex-col items-center justify-center gap-1 outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer [touch-action:manipulation]" aria-label="المصحف">
+          <img src="icons/icon-quran.png" alt="" class="w-11 h-11 object-contain pointer-events-none drop-shadow-md" />
+          <span class="label-badge z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-none">المصحف</span>
         </button>
-        <span class="label-badge mt-[-8px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-auto cursor-pointer" onclick="document.getElementById('btn-quran')?.click()">المصحف</span>
       </div>
 
       <!-- الإعدادات -->
       <div class="flex flex-col items-center relative">
-        <button id="btn-settings" class="w-[58px] h-[58px] -m-1 relative flex items-center justify-center outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer" aria-label="الإعدادات">
-          <img src="game/icons/settings.png" alt="Settings" class="w-[42px] h-[42px] object-contain pointer-events-none drop-shadow-md" />
+        <button id="btn-settings" class="w-[68px] h-[84px] relative flex flex-col items-center justify-center gap-1 outline-none bg-transparent border-none active:scale-95 transition-transform duration-100 ease-out pointer-events-auto cursor-pointer [touch-action:manipulation]" aria-label="الإعدادات">
+          <img src="game/icons/settings.png" alt="" class="w-[42px] h-[42px] object-contain pointer-events-none drop-shadow-md" />
+          <span class="label-badge z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-none">الإعدادات</span>
         </button>
-        <span class="label-badge mt-[-8px] z-10 px-2 py-0.5 rounded-md text-[11px] shadow-sm whitespace-nowrap pointer-events-auto cursor-pointer" onclick="document.getElementById('btn-settings')?.click()">الإعدادات</span>
         <!-- شارة التحديث -->
-        <div id="dom-update-badge" class="absolute top-0 right-0 w-[18px] h-[18px] rounded-full bg-red-500 border-2 border-white shadow-md hidden pointer-events-none" style="animation: badge-pulse 0.6s ease-in-out infinite alternate;">
+        <div id="dom-update-badge" class="absolute top-1 right-1 w-[18px] h-[18px] rounded-full bg-red-500 border-2 border-white shadow-md hidden pointer-events-none" style="animation: badge-pulse 0.6s ease-in-out infinite alternate;">
            <span class="absolute inset-0 flex items-center justify-center text-white text-[10px] font-bold">!</span>
         </div>
       </div>

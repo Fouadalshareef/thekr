@@ -41,6 +41,7 @@ import {
 import { setCircleHitArea } from '../ui/hitArea'
 import { getBaseCameraZoom } from '../PhaserGame'
 import {
+  DEPTH_GAMEPLAY,
   DEPTH_HUD,
   DEPTH_MODAL,
   DEPTH_MODAL_BLOCKER,
@@ -509,7 +510,7 @@ export default class MainScene extends Phaser.Scene {
 
     const settingsIconSize = Math.min(48, bannerWidth * 0.105)
     this.headerSettingsButton.setPosition(bannerLeft + bannerWidth * 0.9006, bannerTop + bannerHeight * 0.4896)
-    const hitAreaSize = Math.max(64, settingsIconSize * 1.6)
+    const hitAreaSize = Math.max(76, settingsIconSize * 1.6)
     this.headerSettingsButton.setSize(hitAreaSize, hitAreaSize)
     this.headerSettingsIcon.setDisplaySize(
       settingsIconSize,
@@ -574,7 +575,8 @@ export default class MainScene extends Phaser.Scene {
       action: () => void,
       onIconCreated?: (icon: Phaser.GameObjects.Image) => void,
     ): Phaser.GameObjects.Container => {
-      const button = this.add.container(42, y).setDepth(DEPTH_HUD + 2)
+      // Keep actionable HUD controls above floating bubbles and below modals.
+      const button = this.add.container(42, y).setDepth(DEPTH_GAMEPLAY + 1)
       // تكبير بصري للأيقونة (58px)
       const image = this.add.image(0, 0, `${texture}-mipped`).setDisplaySize(58, 58)
       onIconCreated?.(image)
@@ -596,9 +598,10 @@ export default class MainScene extends Phaser.Scene {
       // ظل نصّي خفيف جداً
       caption.setShadow(0, 1, 'rgba(0,0,0,0.35)', 1, false, true)
       button.add([image, badge, caption])
-      // توسيع مساحة النقر لتغطي الأيقونة والبطاقة بالكامل بسلاسة وسهولة (76×76)
-      button.setSize(76, 76)
-      button.setInteractive(new Phaser.Geom.Rectangle(-38, -32, 76, 76), Phaser.Geom.Rectangle.Contains)
+      // منطقة لمس واحدة تغطي الأيقونة والفراغ والبطاقة بالكامل.
+      button.setSize(84, 92)
+      button.setInteractive(new Phaser.Geom.Rectangle(-42, -36, 84, 92), Phaser.Geom.Rectangle.Contains)
+      if (button.input) button.input.useHandCursor = true
       button.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, action)
       return button
     }
@@ -872,7 +875,7 @@ export default class MainScene extends Phaser.Scene {
     const by = this.headerSettingsButton.y - 26
 
     this.updateBadge = this.add.container(bx, by)
-    this.updateBadge.setDepth(2200)
+    this.updateBadge.setDepth(DEPTH_GAMEPLAY + 2)
     this.updateBadge.setVisible(false)
 
     const dot = this.add.graphics()
@@ -1168,11 +1171,12 @@ export default class MainScene extends Phaser.Scene {
 
   /** زر الإعدادات داخل الخانة اليمنى للشريط العلوي. */
   private buildHeaderSettingsButton(): void {
-    this.headerSettingsButton = this.add.container(0, 0).setDepth(DEPTH_HUD + 2)
+    this.headerSettingsButton = this.add.container(0, 0).setDepth(DEPTH_GAMEPLAY + 1)
     this.headerSettingsIcon = this.add.image(0, 0, 'hud-settings')
     this.headerSettingsButton.add(this.headerSettingsIcon)
-    this.headerSettingsButton.setSize(68, 68)
-    this.headerSettingsButton.setInteractive(new Phaser.Geom.Rectangle(-34, -34, 68, 68), Phaser.Geom.Rectangle.Contains)
+    this.headerSettingsButton.setSize(76, 76)
+    this.headerSettingsButton.setInteractive(new Phaser.Geom.Rectangle(-38, -38, 76, 76), Phaser.Geom.Rectangle.Contains)
+    if (this.headerSettingsButton.input) this.headerSettingsButton.input.useHandCursor = true
     this.headerSettingsButton.on(Phaser.Input.Events.GAMEOBJECT_POINTER_DOWN, this.onOpenSettings)
     this.headerSettingsButton.setScrollFactor(0)
   }
