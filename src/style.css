@@ -778,7 +778,7 @@ body.modal-open {
 /* الشريط العلوي الحديث (TopHeader) + النوافذ الفاتحة Crisp Modal      */
 /* ------------------------------------------------------------------ */
 
-/* الشريط العلوي: ثلاث مناطق (الاسم يساراً / الإجمالي وسطاً / إيقاف يميناً).
+/* الشريط العلوي: الاسم يساراً والإجمالي في الوسط.
    pointer-events:none على الحاوية حتى لا يحجب لمس الفقاعات، مع
    pointer-events:auto على الأجزاء التفاعلية فقط. */
 .top-header {
@@ -1175,9 +1175,7 @@ body.modal-open {
 /* ------------------------------------------------------------------ */
 /* الأحجام بوحدة cqw فتتوسّع مع عرض اللوحة (container-type أسفله).      */
 /* الشريط = صورة واحدة (src/assets/rk-banner.png) بنسبة 3:1 — لوحة بثلاث  */
-/* فتحات: دائرة يسار كبيرة (15.47%×47.10%) للاسم والمستوى، حبة وسطى      */
-/* (44.71%×29.14%) للإجمالي بسطر أفقي، ودائرة يمين صغيرة (10.87%×33.29%)  */
-/* لأيقونة الإيقاف (بلا زر). النسب مأخوذة من الأصل عبر                    */
+/* فتحات: دائرة يسار كبيرة للاسم والمستوى، وحبة وسطى للإجمالي بسطر أفقي. */
 /*   node scripts/measure-banner.mjs src/assets/rk-banner.png            */
 /*   يسار ≈12.52%/47.44% · وسط ≈53.73%/49.93% · يمين ≈90.06%/48.96%      */
 .rk-header {
@@ -1231,7 +1229,6 @@ body.modal-open {
   gap: 0.04em;
   direction: rtl;
 }
-.rk-slot-right  { left: 90.06%; top: 48.96%; }
 
 /* تسمية داخل الفتحة (بنّي دافئ #4a2306 عالي التباين على الخلفية الكريمية
    + لمعة كريمية دافئة = لمسة فاتحة تناسب الثيم الخشبي/الذهبي). */
@@ -1295,36 +1292,6 @@ body.modal-open {
   transform: scaleX(0.85);
   transform-origin: center;
 }
-
-/* زر الإيقاف/الاستئناف — يمين: الأيقونة مباشرة داخل الدائرة الصغيرة
-   بلا زر ولا خلفية صفراء ولا إطار — حاوية شفافة تماماً. */
-.rk-pause-btn {
-  width: clamp(26px, 10.2cqw, 58px);
-  height: clamp(26px, 10.2cqw, 58px);
-  border: 0;
-  border-radius: 50%;
-  background: none;
-  box-shadow: none;
-  padding: 0;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease, filter 0.1s ease;
-}
-/* كتلة القناع: تُلوّن الأيقونة الأصلية (SVG أبيض مشترك مع HUD) بالبنّي
-   الدافئ #4a2306 دون نسخة ثانية من الملف — مسار pause/play يُمرَّر عبر
-   --rk-pause-ico من TopHeader، فتبقى أيقونات HUD البيضاء كما هي. */
-.rk-pause-ico {
-  width: 76%;
-  height: 76%;
-  display: block;
-  background-color: #4a2306;
-  -webkit-mask: var(--rk-pause-ico) center / contain no-repeat;
-  mask: var(--rk-pause-ico) center / contain no-repeat;
-  filter: drop-shadow(0 1px 1px rgba(255, 244, 220, 0.6));
-}
-.rk-pause-btn:hover { filter: brightness(1.12); }
-.rk-pause-btn:active { transform: translate(-50%, -50%) scale(0.9); }
-.rk-pause-btn:focus-visible { outline: 2px solid #4a2306; outline-offset: 3px; }
 
 /* دعم container queries: تجعل أحجام العناصر تتوسّع مع عرض اللوحة. */
 @supports (container-type: inline-size) {
@@ -1546,21 +1513,5 @@ body.rk-focus-bar-open .rk-header {
   font-family: 'Segoe UI', Tahoma, sans-serif;
 }
 
-/* legacy .top-header-count small + .top-header-pause (compat) */
+/* legacy .top-header-count small (compat) */
 .top-header-count small { font-size: 0.68rem; opacity: 0.92; direction: rtl; }
-.top-header-pause {
-  border: 0; padding: 0;
-  width: 46px; height: 46px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.92);
-  box-shadow: 0 3px 12px rgba(2,44,34,0.22);
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center; justify-content: center;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 0.1s ease, filter 0.15s ease;
-}
-.top-header-pause img { width: 30px; height: 30px; object-fit: contain; display: block; }
-.top-header-pause:hover { filter: brightness(1.06); }
-.top-header-pause:active { transform: scale(0.92); }
-.top-header-pause:focus-visible { outline: 2px solid #059669; outline-offset: 2px; }

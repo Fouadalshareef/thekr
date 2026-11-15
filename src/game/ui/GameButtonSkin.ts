@@ -96,7 +96,7 @@ export const BUTTON_THEMES: Record<ButtonThemeKey, ButtonTheme> = {
 
 
 /** أيقونات شريط الأدوات الجانبي. */
-export type HudIcon = 'gear' | 'sliders' | 'leaf' | 'quran' | 'pause' | 'play' | 'arrow'
+export type HudIcon = 'gear' | 'sliders' | 'leaf' | 'quran' | 'arrow'
 
 /** ربط كل أيقونة بنمطها اللوني (نفس توزيع الحزمة: الإعدادات/الترس = steel …). */
 export const ICON_THEME: Record<HudIcon, ButtonThemeKey> = {
@@ -104,8 +104,6 @@ export const ICON_THEME: Record<HudIcon, ButtonThemeKey> = {
   sliders: 'sunset',
   leaf: 'leaf',
   quran: 'gold',
-  pause: 'coral',
-  play: 'coral',
   arrow: 'violet',
 }
 

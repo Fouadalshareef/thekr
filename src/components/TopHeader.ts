@@ -5,8 +5,7 @@
  *   - يسار (15.47% عرض، 47.10% ارتفاع): دائرة كبيرة ⇒ اسم المستخدم + المستوى.
  *   - وسط (44.71% عرض، 29.14% ارتفاع): الحبة البيضاء يمين النجمة ⇒ الإجمالي
  *     في سطر أفقي واحد (التسمية يمين والرقم يسارها — لا تكديس).
- *   - يمين (10.87% عرض، 33.29% ارتفاع): دائرة صغيرة ⇒ أيقونة الإيقاف/الاستئناف
- *     مباشرة بلا زر، ملوّنة بنّياً عبر CSS mask (لا صورة منسوخة).
+ *   - يمين (10.87% عرض، 33.29% ارتفاع): مساحة زر الإعدادات في مشهد Phaser.
  * كل عنصر يُموضَع بنسبة مئوية من أبعاد اللوحة، فيبقى مضبوطاً على أي مقاس.
  * عند استبدال الصورة: `node scripts/measure-banner.mjs src/assets/rk-banner.png`
  * ثم تُحدَّث النسب هنا وفي .rk-slot-* في style.css من مخرجات القياس.
@@ -27,27 +26,6 @@ import BANNER_URL from '../assets/rk-banner.png'
 let rootEl: HTMLElement | null = null
 let levelEl: HTMLElement | null = null
 let countEl: HTMLElement | null = null
-let pauseBtn: HTMLButtonElement | null = null
-
-/** هل اللعبة متوقفة حالياً (مرآة لحالة MainScene)؟ */
-let paused = false
-
-/** أسماء ملفات أيقونات الإيقاف/التشغيل (SVG في public/game/icons). */
-const PAUSE_ICON = 'game/icons/pause-gbtn.svg'
-const PLAY_ICON  = 'game/icons/play-gbtn.svg'
-
-/**
- * مسار مطلق للأيقونة.
- * السبب: متغيّر --rk-pause-ico يُستهلك داخل `mask: var(...)` في style.css،
- * والمتصفح يحلّ الـ url النسبي فيه بقاعدة الستايل (dist/assets/*.css) لا بقاعدة
- * الورقة ⇒ يصبح المسار dist/assets/game/icons/... (404) وتختفي الأيقونة.
- * الحل: تمرير URL مطلق من document.baseURI (يعمل مع base:'./' على GitHub Pages).
- */
-function iconUrl(file: string): string {
-  return new URL(file, document.baseURI).href
-}
-
-
 
 /** تحديث المستوى (عدد عناصر الحديقة المفتوحة) — يسار اللوحة. */
 function renderLevel(): void {
@@ -61,36 +39,13 @@ function renderCount(): void {
   countEl.textContent = String(getTotalGoodDeeds())
 }
 
-/** مزامنة أيقونة الزر مع حالة الإيقاف الحالية ( عبر متغيّر القناع --rk-pause-ico). */
-function renderPauseIcon(): void {
-  if (!pauseBtn) return
-  const icon = pauseBtn.querySelector<HTMLElement>('.rk-pause-ico')
-  const src = paused ? PLAY_ICON : PAUSE_ICON
-  if (icon && !icon.style.getPropertyValue('--rk-pause-ico').includes(src)) {
-    icon.style.setProperty('--rk-pause-ico', `url("${iconUrl(src)}")`)
-  }
-  pauseBtn.setAttribute('aria-label', paused ? 'استئناف' : 'إيقاف مؤقت')
-  pauseBtn.setAttribute('aria-pressed', String(paused))
-  pauseBtn.title = paused ? 'استئناف' : 'إيقاف مؤقت'
-}
-
 /**
- * إعادة رسم كل ما يتغيّر من خارج المكوّن (الاسم، المستوى، الإجمالي، الإيقاف).
+ * إعادة رسم كل ما يتغيّر من خارج المكوّن (المستوى والإجمالي).
  * تُستدعى عند فتح أي نافذة أو بعد كل ذكر جديد.
  */
 export function refreshTopHeader(): void {
   renderLevel()
   renderCount()
-  renderPauseIcon()
-}
-
-/**
- * ضبط حالة الإيقاف المعروضة في الشريط.
- * المصدر هو MainScene (حالة الفيزياء الحقيقية) — لا نبدّل الحالة هنا.
- */
-export function setTopHeaderPaused(next: boolean): void {
-  paused = next
-  renderPauseIcon()
 }
 
 /**
@@ -139,11 +94,6 @@ export function initTopHeader(): void {
       <span id="top-header-total" class="rk-header-count">0</span>
     </div>
 
-    <!-- يمين: أيقونة الإيقاف/الاستئناف مباشرة داخل الدائرة الصغيرة (بلا زر) -->
-    <button id="top-header-pause" class="rk-slot rk-slot-right rk-pause-btn" type="button"
-            aria-label="إيقاف مؤقت" aria-pressed="false">
-      <span class="rk-pause-ico" aria-hidden="true" style="--rk-pause-ico: url('${iconUrl(PAUSE_ICON)}')"></span>
-    </button>
   `
   // الصورة تُمرَّر عبر --rk-banner. العنوان هنا ناتج عن استيراد Vite فيصير
   // مساراً مطلقاً بالاسم المجزّأ، فيعمل مع base:'./' على GitHub Pages
@@ -154,12 +104,6 @@ export function initTopHeader(): void {
 
   levelEl  = rootEl.querySelector('#top-header-level')
   countEl  = rootEl.querySelector('#top-header-total')
-  pauseBtn = rootEl.querySelector('#top-header-pause')
-
-  // ضغط الزر: نخبر المشهد ليتولى الإيقاف الفعلي.
-  pauseBtn?.addEventListener('click', () => {
-    window.dispatchEvent(new CustomEvent('header-pause-toggle'))
-  })
 
   // قاعدة الرؤية المركزية: نتبع حالة الشريط الجانبي (لعب فعلي فقط).
   onGameUiVisibilityChange((visible) => {

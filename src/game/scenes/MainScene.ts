@@ -53,7 +53,7 @@ import {
   setSidebarModalOpen,
   setSidebarWelcomeActive,
 } from '../../components/Sidebar'
-import { setTopHeaderPaused, setTopHeaderVisible, refreshTopHeader } from '../../components/TopHeader'
+import { setTopHeaderVisible, refreshTopHeader } from '../../components/TopHeader'
 import { isFarmModalOpen, showFarmModal } from '../../components/FarmModal'
 import { isSettingsPanelOpen, showSettingsPanel } from '../../components/SettingsPanel'
 
@@ -146,7 +146,6 @@ export default class MainScene extends Phaser.Scene {
   private azkarCounterBg!: Phaser.GameObjects.Graphics
   private azkarCloseButton!: Phaser.GameObjects.Container
 
-  private paused = false
   private modeUIOpen = false
 
   /** هل اللعبة مفعّلة حسب الإعدادات (يُقرأ من localStorage). */
@@ -175,8 +174,6 @@ export default class MainScene extends Phaser.Scene {
   private sessionText!: Phaser.GameObjects.Text
   private headerSettingsButton!: Phaser.GameObjects.Container
   private headerSettingsIcon!: Phaser.GameObjects.Image
-  private sidebarPauseButton!: Phaser.GameObjects.Container
-  private sidebarPauseIcon!: Phaser.GameObjects.Image
   private topBanner!: Phaser.GameObjects.Image
   private headerLevelText!: Phaser.GameObjects.Text
   private headerLevelValueText!: Phaser.GameObjects.Text
@@ -239,7 +236,6 @@ export default class MainScene extends Phaser.Scene {
     this.sessionCount = 0
     this.comboCount = 0
     this.data.set('combo', 0)
-    this.paused = false
     this.modeUIOpen = false
 
     this.sky = new SkyLayer(this)
@@ -261,7 +257,7 @@ export default class MainScene extends Phaser.Scene {
     this.buildFocusPanel()
     this.buildUpdateBadge()
 
-    // تطبيق إعدادات تشغيل/إيقاف اللعبة والمصحف والأيقونات عند الإقلاع
+    // تطبيق إعدادات تشغيل اللعبة والمصحف والأيقونات عند الإقلاع
     this.gameEnabled = isGameEnabled()
     if (!this.gameEnabled) this.physics.pause()
     this.applyUiSettings()
@@ -321,8 +317,6 @@ export default class MainScene extends Phaser.Scene {
     window.addEventListener('open-mode-panel', this.onOpenModePanel)
     window.addEventListener('open-garden', this.onOpenGarden)
     window.addEventListener('open-settings', this.onOpenSettings)
-    // زر الإيقاف في TopHeader: المشهد هو مصدر الحقيقة، فنتولى التبديل ونحدّث الشريط.
-    window.addEventListener('header-pause-toggle', this.onHeaderPauseToggle)
   }
 
   // ------------------------------------------------------------------
@@ -416,12 +410,6 @@ export default class MainScene extends Phaser.Scene {
     }
     this.pinchState = null
     this.game.registry.set('hdpi-pinch-active', false)
-  }
-
-  /** زر الإيقاف في الشريط العلوي: نفس منطق togglePause لكن مع مزامنة الشريط. */
-  private onHeaderPauseToggle = (): void => {
-    this.togglePause()
-    setTopHeaderPaused(this.paused)
   }
 
   /* ------------------------------------------------------------------ */
@@ -519,13 +507,13 @@ export default class MainScene extends Phaser.Scene {
     this.headerLevelValueText.setPosition(leftCenterX, leftCenterY + 9)
     this.layoutHeaderCount(bannerLeft, bannerWidth, bannerTop + bannerHeight * 0.4993)
 
-    const pauseSize = Math.min(48, bannerWidth * 0.105)
+    const settingsIconSize = Math.min(48, bannerWidth * 0.105)
     this.headerSettingsButton.setPosition(bannerLeft + bannerWidth * 0.9006, bannerTop + bannerHeight * 0.4896)
-    const hitAreaSize = Math.max(64, pauseSize * 1.6)
+    const hitAreaSize = Math.max(64, settingsIconSize * 1.6)
     this.headerSettingsButton.setSize(hitAreaSize, hitAreaSize)
     this.headerSettingsIcon.setDisplaySize(
-      pauseSize,
-      pauseSize * (this.headerSettingsIcon.height / this.headerSettingsIcon.width),
+      settingsIconSize,
+      settingsIconSize * (this.headerSettingsIcon.height / this.headerSettingsIcon.width),
     )
     this.headerSettingsButton.input!.hitArea.setTo(-hitAreaSize / 2, -hitAreaSize / 2, hitAreaSize, hitAreaSize)
     this.layoutCanvasSidebar(bannerTop + bannerHeight + 44)
@@ -550,7 +538,7 @@ export default class MainScene extends Phaser.Scene {
     // مسافة ثابتة بين أزرار الشريط الجانبي (بدون اعتماد على ارتفاع الشاشة)
     // حتى لا تقفز الأزرار عمودياً بين الأجهزة/الأحجام المختلفة.
     const step = SIDEBAR_STEP
-    for (const [index, button] of [this.btnSliders, this.btnLeaf, this.btnQuran, this.sidebarPauseButton].entries()) {
+    for (const [index, button] of [this.btnSliders, this.btnLeaf, this.btnQuran].entries()) {
       button?.setPosition(42, top + index * step)
       button?.setData('homeY', top + index * step)
     }
@@ -618,14 +606,6 @@ export default class MainScene extends Phaser.Scene {
     this.btnSliders = sideButton('hud-theme', 'النمط', top, () => this.onOpenModePanel())
     this.btnLeaf = sideButton('hud-farm', 'المزرعة', top + step, () => this.onOpenGarden())
     this.btnQuran = sideButton('hud-quran', 'المصحف', top + step * 2, () => window.dispatchEvent(new CustomEvent('open-quran')))
-    this.sidebarPauseButton = sideButton(
-      'hud-pause',
-      'إيقاف',
-      top + step * 3,
-      this.onHeaderPauseToggle,
-      (icon) => { this.sidebarPauseIcon = icon },
-    )
-    this.refreshPauseIcon()
     this.setSideMenuVisible(true, true)
   }
 
@@ -635,7 +615,7 @@ export default class MainScene extends Phaser.Scene {
    * تغيير المواضع أثناء فتح/إغلاق النوافذ (خاصة ثبات شارة التحديث).
    */
   private setSideMenuVisible(_open: boolean, instant = false): void {
-    for (const btn of [this.btnLeaf, this.btnQuran, this.sidebarPauseButton]) {
+    for (const btn of [this.btnLeaf, this.btnQuran]) {
       if (!btn) continue
       btn.setVisible(true).setAlpha(1).setScale(1)
       if (instant) {
@@ -824,11 +804,11 @@ export default class MainScene extends Phaser.Scene {
    * ملاحظة مهمة: أيقونات الشريط الجانبي ومفتاح المصحف أصبحا **ثابتين الظاهرة
    * دائماً** (طلب المستخدم) — لا يوجد anymore مفتاح إخفائها، لأن لوحة الإعدادات
    * الجديدة لا تعرض مفتاحاً للمصحف ولا للشريط. لذلك لا نقرأ areIconsEnabled
-   * ولا isQuranEnabled هنا anymore. مفتاح زر الإيقاف انتقل إلى TopHeader.
+   * ولا isQuranEnabled هنا anymore.
    */
   private applyUiSettings(): void {
     this.btnSliders?.setVisible(true).setAlpha(1).setScale(1)
-    for (const b of [this.btnLeaf, this.btnQuran, this.sidebarPauseButton]) {
+    for (const b of [this.btnLeaf, this.btnQuran]) {
       b?.setVisible(true)
     }
     // عناصر الجلسة تبقى ظاهرة كما هي.
@@ -866,7 +846,7 @@ export default class MainScene extends Phaser.Scene {
       for (const b of this.alive) b.destroy()
       this.alive = []
       this.physics.resume()
-      this.data.set('paused', this.paused)
+      this.data.set('paused', false)
       this.spawnIfEmpty()
     } else {
       for (const b of this.alive) b.destroy()
@@ -1038,7 +1018,7 @@ export default class MainScene extends Phaser.Scene {
     // الأيقونة: صورة PNG ثلاثية الأبعاد (38px) داخل الحاضنة، أو SVG للإطارات القديمة
     const displayIconSize = bare ? SIDE_ICON_SIZE : iconSize
     const svgIcon = this.add
-      .image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', pause: 'hud-pause', play: 'hud-play', leaf: 'hud-farm', quran: 'hud-quran', arrow: 'hud-arrow' } as const)[icon])
+      .image(0, 0, ({ gear: 'hud-settings', sliders: 'hud-theme', leaf: 'hud-farm', quran: 'hud-quran', arrow: 'hud-arrow' } as const)[icon])
       .setOrigin(0.5)
       // object-fit: contain مكافئ — العرض والارتفاع بنفس القياس ⇒ بلا تشويه
       .setDisplaySize(displayIconSize, displayIconSize)
@@ -1197,15 +1177,6 @@ export default class MainScene extends Phaser.Scene {
     this.headerSettingsButton.setScrollFactor(0)
   }
 
-  /** تبديل رمز الإيقاف والتشغيل في الموضع الجانبي. */
-  private refreshPauseIcon(): void {
-    if (!this.sidebarPauseIcon) return
-    this.sidebarPauseIcon.setTexture(this.paused ? 'hud-play' : 'hud-pause')
-    this.sidebarPauseIcon.setDisplaySize(46, 46)
-    const label = this.sidebarPauseButton?.list[2] as Phaser.GameObjects.Text | undefined
-    label?.setText(this.paused ? 'استئناف' : 'إيقاف')
-  }
-
   /** عداد الجلسة الحالية أسفل زر الإيقاف — مُدمج وأنيق مع إطار ذهبي رفيع. */
   private buildComboCounter(): void {
     this.comboText = this.add.text(this.scale.width / 2, 82, '', {
@@ -1300,33 +1271,16 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private pauseForModal = (): void => {
-    // إيقاف مؤقت للنوافذ فقط؛ لا نغيّر حالة الزر اليدوية حتى لا تبقى اللعبة عالقة.
+    // إيقاف الحركة والتفاعل أثناء عرض النافذة.
     this.physics.pause()
     this.alive.forEach((bubble) => bubble.setBubbleInteractive(false))
   }
 
   private resumeFromModal = (): void => {
-    if (!this.paused && this.gameEnabled) {
+    if (this.gameEnabled) {
       this.physics.resume()
       this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
       // إن خرجت الفقاعة أعلى الشاشة أثناء فتح النافذة (مجدولة ولم تُولّد)، ولّد التالية الآن
-      this.spawnIfEmpty()
-    }
-  }
-
-  private togglePause(): void {
-    this.paused = !this.paused
-    this.data.set('paused', this.paused)
-    if (this.paused) {
-      this.physics.pause()
-      this.refreshPauseIcon()
-      this.alive.forEach((bubble) => bubble.setBubbleInteractive(false))
-    } else {
-      this.physics.resume()
-      this.refreshPauseIcon()
-      this.alive.forEach((bubble) => bubble.setBubbleInteractive(true))
-      // إصلاح: إن خرجت الفقاعة أعلى الشاشة وتمت جدولتها أثناء الإيقاف،
-      // فإن spawnIfEmpty رُفض بسبب paused وبقيت الشاشة فارغة — ولّدها الآن عند الاستئناف
       this.spawnIfEmpty()
     }
   }
@@ -1677,13 +1631,7 @@ export default class MainScene extends Phaser.Scene {
     setTopHeaderVisible(true)
     this.applyUiSettings()
     if (this.focusPanel.visible) return
-    if (!this.paused) {
-      this.resumeFromModal()
-    } else {
-      // حتى مع الإيقاف اليدوي: جدول محاولة توليد ستُنفَّذ تلقائياً عند الاستئناف
-      // (حلقة إعادة المحاولة في scheduleNext تضمن عدم فقدان الفقاعة).
-      this.scheduleNext()
-    }
+    this.resumeFromModal()
   }
 
   // ------------------------------------------------------------------
@@ -1893,7 +1841,7 @@ export default class MainScene extends Phaser.Scene {
   /** توليد التالي فقط إذا كانت الشاشة فارغة وغير مفتوحة النوافذ. */
   private spawnIfEmpty(): void {
     if (!this.gameEnabled) return
-    if (this.paused || this.modeUIOpen) return
+    if (this.modeUIOpen) return
     if (this.alive.length > 0) return
     this.spawnOne()
   }
@@ -1962,8 +1910,8 @@ export default class MainScene extends Phaser.Scene {
 
   private scheduleNext(): void {
     this.time.delayedCall(NEXT_DELAY, () => {
-      // إن كان التوليد محظوراً مؤقتاً (إيقاف/نافذة مفتوحة) أعد المحاولة بدل فقدان الفقاعة
-      if (this.paused || this.modeUIOpen) {
+      // إن كان التوليد محظوراً مؤقتاً بسبب نافذة مفتوحة فأعد المحاولة بدل فقدان الفقاعة
+      if (this.modeUIOpen) {
         this.scheduleNext()
         return
       }
@@ -2326,7 +2274,6 @@ export default class MainScene extends Phaser.Scene {
     for (const b of this.alive) b.destroy()
     this.alive = []
     this.events.off(Events.DHIKR_COLLECTED, this.onDhikrCollected, this)
-    window.removeEventListener('header-pause-toggle', this.onHeaderPauseToggle)
     this.modeDom?.remove()
     this.modeDom = undefined
     this.focusDom?.remove()
@@ -2418,8 +2365,8 @@ export default class MainScene extends Phaser.Scene {
   }
 
   private showRestBanner(): void {
-    // عدم العرض إذا كان المستخدم يتصفح القوائم بالفعل أو اللعبة متوقفة يدوياً
-    if (this.isResting || this.modeUIOpen || this.paused) {
+    // عدم العرض إذا كان المستخدم يتصفح القوائم بالفعل
+    if (this.isResting || this.modeUIOpen) {
       // نعيد المحاولة بعد 10 ثوانٍ إذا كان مشغولاً
       if (this.restTimerEvent) this.restTimerEvent.destroy()
       this.restTimerEvent = this.time.addEvent({
@@ -2443,7 +2390,7 @@ export default class MainScene extends Phaser.Scene {
 
     const { height } = this.scale
 
-    // تجميد صعود الفقاعات عبر تفعيل الوقف الداخلي بدون تغيير this.paused
+    // تجميد صعود الفقاعات أثناء عرض الاستراحة.
     this.data.set('paused', true)
 
     // طبقة شفافة تغطي الشاشة لمنع تفجير الفقاعات واصطياد اللمسة للإخفاء
@@ -2486,8 +2433,8 @@ export default class MainScene extends Phaser.Scene {
         this.restBanner?.setVisible(false)
         this.isResting = false
         this.data.set('restActive', false)
-        // استعادة حالة الإيقاف الأصلية للعبة
-        this.data.set('paused', this.paused)
+        // استئناف حركة الفقاعات بعد إغلاق بطاقة الاستراحة.
+        this.data.set('paused', false)
         // إعادة إظهار سهم القائمة الجانبية (إن لم تبقَ نافذة أخرى مفتوحة)
         setSidebarModalOpen('rest', false)
         this.applyUiSettings()

@@ -45,8 +45,6 @@ export default class BootScene extends Phaser.Scene {
     this.load.image('hud-theme',  'icons/icon-pattern.png')
     this.load.image('hud-farm',   'icons/icon-farm.png')
     this.load.image('hud-quran',  'icons/icon-quran.png')
-    this.load.svg('hud-pause',    'game/icons/pause-gbtn.svg',    { width: 256, height: 256 })
-    this.load.svg('hud-play',     'game/icons/play-gbtn.svg',     { width: 256, height: 256 })
     // أيقونة سهم فتح/طي القائمة الجانبية
     this.load.svg('hud-arrow',    'game/icons/arrow-gbtn.svg',    { width: 256, height: 256 })
     // أيقونات النوافذ (تبقى بتصميمها الذهبي السابق)
@@ -212,7 +210,7 @@ export default class BootScene extends Phaser.Scene {
 
     // تطبيق ترشيح LINEAR على أيقونة الإعدادات وأيقونات SVG الأخرى
     // لمنع التشوه عند عرضها بأحجام غير أصلية.
-    for (const key of ['hud-settings', 'hud-pause', 'hud-play', 'hud-arrow'] as const) {
+    for (const key of ['hud-settings', 'hud-arrow'] as const) {
       if (this.textures.exists(key)) {
         this.textures.get(key).setFilter(Phaser.Textures.FilterMode.LINEAR)
       }
