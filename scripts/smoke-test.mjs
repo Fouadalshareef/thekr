@@ -269,9 +269,49 @@ async function main() {
   await new Promise((r) => setTimeout(r, 1000))
   await clickGame(page3, 56, 62) // فتح القائمة الجانبية بزر السهم
   await clickGame(page3, 56, 234) // قائمة الأنماط
-  await clickGame(page3, 240, 505) // "تخصيص"
+  await page3.$eval('.mode-dom-card[data-mode="focus"]', (item) => item.click())
   check(await hasContent(page3), 'لوحة اختيار الذكر المخصص تُفتح')
-  await clickGame(page3, 240, 283) // اختيار أول ذكر في القائمة
+  const categories = await page3.$$eval('.focus-dom-category-card strong', (items) =>
+    items.map((item) => item.textContent),
+  )
+  check(categories.includes('جوامع الذكر') && categories.includes('جوامع الأدعية النبوية'), 'قائمتا جوامع الذكر والأدعية النبوية ظاهرتان')
+  await page3.$eval('.focus-dom-category-card', (item) => item.click())
+  const firstReaderItem = await page3.evaluate(() => ({
+    text: document.querySelector('.comprehensive-text')?.textContent ?? '',
+    guidance: document.querySelector('.comprehensive-reading-guidance')?.textContent ?? '',
+    height: document.querySelector('.comprehensive-text')?.getBoundingClientRect().height ?? 0,
+  }))
+  check(
+    firstReaderItem.text.startsWith('سبحان الله وبحمده، عدد خلقه') &&
+      firstReaderItem.guidance.includes('اضغط بعد قراءة'),
+    'قارئ جوامع الذكر يعرض النص الكامل وإرشاد الانتقال',
+  )
+  await page3.$eval('.comprehensive-text', (card) => card.click())
+  const secondReaderItem = await page3.evaluate(() => ({
+    text: document.querySelector('.comprehensive-text')?.textContent ?? '',
+    height: document.querySelector('.comprehensive-text')?.getBoundingClientRect().height ?? 0,
+  }))
+  check(
+    secondReaderItem.text.startsWith('سبحان الله عدد ما خلق في السماء') &&
+      secondReaderItem.height > firstReaderItem.height,
+    'النقر ينتقل للنص التالي ويزيد ارتفاع البطاقة تلقائياً للنص الأطول',
+  )
+
+  await page3.$eval('.focus-dom-back', (button) => button.click())
+  await page3.$eval('.focus-dom-category-card:nth-child(2)', (item) => item.click())
+  const firstSupplication = await page3.$eval(
+    '.comprehensive-text',
+    (card) => card.textContent ?? '',
+  )
+  check(
+    firstSupplication.startsWith('اللهم أنت ربي لا إله إلا أنت') &&
+      firstSupplication.includes('فاغفر لي'),
+    'قسم الأدعية يعرض نص سيد الاستغفار كاملاً',
+  )
+
+  await page3.$eval('.focus-dom-back', (button) => button.click())
+  await page3.$eval('.focus-dom-basic-list .focus-dom-card', (item) => item.click())
+  await page3.$eval('.focus-dom-start', (button) => button.click())
   check(await hasContent(page3), 'اختيار ذكر مخصص يعمل ويعود للمشهد')
 
   // ---------- النتيجة ----------

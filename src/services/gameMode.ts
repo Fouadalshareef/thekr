@@ -17,6 +17,12 @@ export interface DhikrDef {
   target: number
 }
 
+export interface ComprehensiveDhikrCategory {
+  id: string
+  title: string
+  items: readonly DhikrDef[]
+}
+
 /** الأذكار الأساسية في النمط المترابط وقائمة التخصيص. */
 export const SEQUENCE_DHIKRS: readonly DhikrDef[] = [
   { id: 'subhanallah', name: 'سُبْحَانَ الله', target: 33 },
@@ -48,8 +54,67 @@ export const DHIKR_VIRTUES: Record<string, DhikrVirtue> = {
   salawat: { recommended: 10, hadith: 'قال رسول الله ﷺ: «من صلى عليَّ واحدة صلى الله عليه بها عشراً» — رواه مسلم.' },
 }
 
-/** خيارات النمط المخصص. */
-export const FOCUS_OPTIONS: readonly DhikrDef[] = SEQUENCE_DHIKRS
+/** جوامع الذكر والأدعية النبوية المتاحة للقراءة والاختيار في النمط المخصص فقط. */
+export const COMPREHENSIVE_DHIKR_CATEGORIES: readonly ComprehensiveDhikrCategory[] = [
+  {
+    id: 'comprehensive-dhikr',
+    title: 'جوامع الذكر',
+    items: [
+      {
+        id: 'comprehensive-subhanallah',
+        name: 'سبحان الله وبحمده، عدد خلقه، ورضا نفسه، وزنة عرشه، ومداد كلماته',
+        target: 3,
+      },
+      {
+        id: 'comprehensive-tasbih-count',
+        name: 'سبحان الله عدد ما خلق في السماء، وسبحان الله عدد ما خلق في الأرض، وسبحان الله عدد ما بين ذلك، وسبحان الله عدد ما هو خالق، والله أكبر مثل ذلك، والحمد لله مثل ذلك، ولا حول ولا قوة إلا بالله مثل ذلك',
+        target: 1,
+      },
+    ],
+  },
+  {
+    id: 'comprehensive-prophetic-supplications',
+    title: 'جوامع الأدعية النبوية',
+    items: [
+      {
+        id: 'sayyid-al-istighfar',
+        name: 'اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك علي، وأبوء بذنبي فاغفر لي، إنه لا يغفر الذنوب إلا أنت',
+        target: 1,
+      },
+      {
+        id: 'comprehensive-dunya-akhirah',
+        name: 'اللهم أصلح لي ديني الذي هو عصمة أمري، وأصلح لي دنياي التي فيها معاشي، وأصلح لي آخرتي التي فيها معادي، واجعل الحياة زيادةً لي في كل خيرٍ، واجعل الموت راحةً لي من كل شرٍّ',
+        target: 1,
+      },
+      {
+        id: 'comprehensive-good-and-evil',
+        name: 'اللهم إني أسألك من الخير كله، عاجله وآجله، ما علمتُ منه وما لم أعلَم، وأعوذ بك من الشر كله، عاجله وآجله، ما علمتُ منه وما لم أعلَم',
+        target: 1,
+      },
+      {
+        id: 'refuge-from-weakness',
+        name: 'اللهم إني أعوذ بك من العجز والكسل والجبن والهرم والبخل، وأعوذ بك من عذاب القبر، ومن فتنة المحيا والممات',
+        target: 1,
+      },
+      {
+        id: 'forgiveness-mercy-wellbeing',
+        name: 'اللهم اغفر لي وارحمني وعافني وارزقني',
+        target: 1,
+      },
+      {
+        id: 'comprehensive-prayer-for-good',
+        name: 'اللهم إني أسألك من الخير كله عاجله وآجله، ما علمتُ منه وما لم أعلم.. وأعوذ بك من الشر كله عاجله وآجله، ما علمتُ منه وما لم أعلم.. وأسألك الجنة وما قرّب إليها من قول أو عمل.. وأعوذ بك من النار وما قرّب إليها من قول أو عمل.. وأسألك مما سألك به عبدك ونبيك محمد ﷺ.. وأعوذ بك مما تعوذ منه عبدك ونبيك محمد ﷺ.. وما قضيتَ لي من قضاء؛ فاجعل عاقبته رشدا',
+        target: 1,
+      },
+    ],
+  },
+]
+
+/** خيارات النمط المخصص؛ الأذكار الجامعة لا تدخل في النمطين المترابط أو الشامل. */
+export const FOCUS_OPTIONS: readonly DhikrDef[] = [
+  ...SEQUENCE_DHIKRS,
+  ...COMPREHENSIVE_DHIKR_CATEGORIES.flatMap((category) => category.items),
+]
 
 class GameModeManager {
   private mode: GameMode = 'sequence'

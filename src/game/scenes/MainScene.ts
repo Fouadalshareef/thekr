@@ -20,7 +20,14 @@ import GardenLayer from '../objects/GardenLayer'
 import SkyLayer from '../objects/SkyLayer'
 import { Events } from '../events'
 import { incrementDhikr } from '../../services/DhikrStorage'
-import { SEQUENCE_DHIKRS, FOCUS_OPTIONS, DHIKR_VIRTUES, gameMode, type GameMode } from '../../services/gameMode'
+import {
+  COMPREHENSIVE_DHIKR_CATEGORIES,
+  SEQUENCE_DHIKRS,
+  FOCUS_OPTIONS,
+  DHIKR_VIRTUES,
+  gameMode,
+  type GameMode,
+} from '../../services/gameMode'
 import { recordTodayDhikr, isGameEnabled, markAzkarDone } from '../../services/SettingsService'
 import { getTotalGoodDeeds, getGardenState } from '../../services/GardenService'
 import { hasPendingUpdate } from '../../services/AppVersion'
@@ -1784,19 +1791,144 @@ export default class MainScene extends Phaser.Scene {
     const content = document.createElement('div')
     content.className = 'focus-dom-content'
     content.dir = 'rtl'
-    content.innerHTML = '<header class="focus-dom-header"><div><p class="focus-dom-eyebrow">التخصيص</p><h2>اختر ذكراً للتكرار</h2><p>اختر الذكر لعرض فضله والبدء بهدوء.</p></div><button class="focus-dom-close" type="button" aria-label="إغلاق">×</button></header><div class="focus-dom-list"></div>'
-    const list = content.querySelector('.focus-dom-list') as HTMLElement
-    FOCUS_OPTIONS.forEach((dhikr, index) => {
+    content.innerHTML = '<header class="focus-dom-header"><div><p class="focus-dom-eyebrow">التخصيص</p><h2>اختر ذكراً للتكرار</h2><p>اختر ذكراً من القائمة، أو تصفح أحد القسمين الجامعين.</p></div><button class="focus-dom-close" type="button" aria-label="إغلاق">×</button></header><div class="focus-dom-list"><section class="focus-dom-category-section"><h3 class="focus-dom-section-title">الأقسام الجامعة</h3><div class="focus-dom-category-list"></div></section><section><h3 class="focus-dom-section-title">الأذكار الأساسية</h3><div class="focus-dom-basic-list"></div></section></div>'
+    const categoryList = content.querySelector('.focus-dom-category-list') as HTMLElement
+    COMPREHENSIVE_DHIKR_CATEGORIES.forEach((category, index) => {
+      const card = document.createElement('button')
+      card.type = 'button'
+      card.className = 'focus-dom-category-card'
+      const title = document.createElement('strong')
+      title.textContent = category.title
+      const summary = document.createElement('span')
+      summary.textContent = `${category.items.length} أذكار وأدعية`
+      card.append(title, summary)
+      card.addEventListener('click', () => this.showComprehensiveReader(root, index, 0))
+      categoryList.appendChild(card)
+    })
+    const basicList = content.querySelector('.focus-dom-basic-list') as HTMLElement
+    SEQUENCE_DHIKRS.forEach((dhikr, index) => {
       const card = document.createElement('button')
       card.type = 'button'; card.className = 'focus-dom-card'
-      card.innerHTML = `<span class="focus-dom-number">${index + 1}</span><span class="focus-dom-text"><span class="focus-dom-name">${dhikr.name}</span><span class="focus-dom-count">${dhikr.target} مرة</span></span>`
-      card.addEventListener('click', () => this.showDhikrVirtue(root, index)); list.appendChild(card)
+      const number = document.createElement('span')
+      number.className = 'focus-dom-number'
+      number.textContent = String(index + 1)
+      const text = document.createElement('span')
+      text.className = 'focus-dom-text'
+      const name = document.createElement('span')
+      name.className = 'focus-dom-name'
+      name.textContent = dhikr.name
+      const count = document.createElement('span')
+      count.className = 'focus-dom-count'
+      count.textContent = `${dhikr.target} مرة`
+      text.append(name, count)
+      card.append(number, text)
+      card.addEventListener('click', () => this.showDhikrVirtue(root, index))
+      basicList.appendChild(card)
     })
     content.querySelector('.focus-dom-close')?.addEventListener('click', () => {
       this.toggleFocusPanel(false)
       this.closeModePanel()
     })
     root.appendChild(content); this.focusDom = root
+  }
+
+  private showComprehensiveReader(root: HTMLElement, categoryIndex: number, itemIndex: number): void {
+    const category = COMPREHENSIVE_DHIKR_CATEGORIES[categoryIndex]
+    if (!category) return
+    const content = root.querySelector('.focus-dom-content')
+    if (!content) return
+    content.replaceChildren()
+
+    const back = document.createElement('button')
+    back.type = 'button'
+    back.className = 'focus-dom-back'
+    back.textContent = '‹ العودة إلى الأقسام'
+    back.addEventListener('click', () => this.buildFocusDomView(root))
+    content.appendChild(back)
+
+    const heading = document.createElement('header')
+    heading.className = 'focus-dom-header comprehensive-reader-header'
+    const headingText = document.createElement('div')
+    const eyebrow = document.createElement('p')
+    eyebrow.className = 'focus-dom-eyebrow'
+    eyebrow.textContent = 'قراءة متأنية'
+    const title = document.createElement('h2')
+    title.textContent = category.title
+    const progress = document.createElement('p')
+    headingText.append(eyebrow, title, progress)
+    heading.appendChild(headingText)
+    content.appendChild(heading)
+
+    const reader = document.createElement('article')
+    reader.className = 'comprehensive-reader'
+    reader.dir = 'rtl'
+    const textCard = document.createElement('div')
+    textCard.className = 'comprehensive-text'
+    textCard.setAttribute('role', 'button')
+    textCard.tabIndex = 0
+    const guidance = document.createElement('p')
+    guidance.className = 'comprehensive-reading-guidance'
+    guidance.textContent = 'اضغط بعد قراءة الذكر أو الدعاء للانتقال إلى التالي'
+    reader.append(textCard, guidance)
+    content.appendChild(reader)
+
+    const navigation = document.createElement('div')
+    navigation.className = 'comprehensive-reader-navigation'
+    const previous = document.createElement('button')
+    previous.type = 'button'
+    previous.className = 'comprehensive-reader-nav'
+    previous.textContent = 'السابق'
+    const next = document.createElement('button')
+    next.type = 'button'
+    next.className = 'comprehensive-reader-nav'
+    next.textContent = 'التالي'
+    navigation.append(previous, next)
+    content.appendChild(navigation)
+
+    const start = document.createElement('button')
+    start.type = 'button'
+    start.className = 'focus-dom-start'
+    start.textContent = 'ابدأ بهذا الذكر'
+    content.appendChild(start)
+
+    const renderItem = (index: number): void => {
+      const item = category.items[index]
+      if (!item) return
+      itemIndex = index
+      textCard.textContent = item.name
+      progress.textContent = `النص ${index + 1} من ${category.items.length}`
+      previous.disabled = index === 0
+      next.disabled = index === category.items.length - 1
+      start.textContent = item.target > 1 ? `ابدأ (${item.target} مرات)` : 'ابدأ بهذا الذكر'
+    }
+
+    const advance = (): void => {
+      if (itemIndex < category.items.length - 1) renderItem(itemIndex + 1)
+    }
+    textCard.addEventListener('click', advance)
+    textCard.addEventListener('keydown', (event: KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        advance()
+      }
+    })
+    previous.addEventListener('click', () => renderItem(itemIndex - 1))
+    next.addEventListener('click', advance)
+    start.addEventListener('click', () => {
+      const item = category.items[itemIndex]
+      const focusIndex = FOCUS_OPTIONS.findIndex((option) => option.id === item?.id)
+      if (focusIndex >= 0) this.startFocusDhikr(focusIndex)
+    })
+    renderItem(itemIndex)
+  }
+
+  private startFocusDhikr(index: number): void {
+    gameMode.setMode('focus', index)
+    this.closeModePanel()
+    this.toggleFocusPanel(false)
+    this.physics.resume()
+    this.updateAzkarCounter()
+    this.spawnIfEmpty()
   }
 
   private toggleFocusPanel(show: boolean): void {
